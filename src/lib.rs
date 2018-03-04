@@ -201,7 +201,7 @@ fn clamp<T : Clone + Ord>(val: T, min_n: Option<T>, max_n: Option<T>) -> T {
     unimplemented!();
 }
 
-fn peek<T>(array: &Vec<T>, i: usize) -> &T {
+fn peek<T>(array: &Vec<T>, i: usize) -> Option<&T> {
     unimplemented!();
 }
 
