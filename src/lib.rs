@@ -198,7 +198,29 @@ fn commit_char<'a>(result: &mut Result<'a>, orig_ch: char) {
 //------------------------------------------------------------------------------
 
 fn clamp<T : Clone + Ord>(val: T, min_n: Option<T>, max_n: Option<T>) -> T {
-    unimplemented!();
+    if let Some(low) = min_n {
+        if low >= val {
+            return low;
+        }
+    }
+    if let Some(high) = max_n {
+        if high <= val {
+            return high;
+        }
+    }
+    val
+}
+
+#[cfg(test)]
+#[test]
+fn clamp_works() {
+    assert_eq!(clamp(1, Some(3), Some(5)), 3);
+    assert_eq!(clamp(9, Some(3), Some(5)), 5);
+    assert_eq!(clamp(1, Some(3), None), 3);
+    assert_eq!(clamp(5, Some(3), None), 5);
+    assert_eq!(clamp(1, None, Some(5)), 1);
+    assert_eq!(clamp(9, None, Some(5)), 5);
+    assert_eq!(clamp(1, None, None), 1);
 }
 
 fn peek<T>(array: &Vec<T>, i: usize) -> Option<&T> {
