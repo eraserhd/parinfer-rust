@@ -70,9 +70,13 @@ fn transform_changes<'a>(changes: &Vec<Change<'a>>) -> HashMap<(u32, u32), Trans
 pub struct Options<'a> {
     cursor_x: u32,
     cursor_line: u32,
+    prev_cursor_x: Option<u32>,
+    prev_cursor_line: Option<u32>,
+    selection_start_line: Option<u32>,
     changes: Vec<Change<'a>>,
     partial_result: bool,
-    force_balance: bool
+    force_balance: bool,
+    return_parens: bool
 }
 
 //------------------------------------------------------------------------------
@@ -83,17 +87,30 @@ pub struct Options<'a> {
 // of a given text, we mutate this structure to update the state of our
 // system.
 
-pub enum Mode {
-    Indent,
-    Paren
-}
-
-pub struct Paren {
+struct Paren {
     line_no: u32,
     ch: char,
     x: u32,
-    paren_stack: Vec<Paren>,
     indent_delta: i32
+}
+
+struct ParenTrailClamped {
+    start_x: u32,
+    end_x: u32,
+    openers: Vec<Paren>
+}
+
+struct ParenTrail {
+    line_no: Option<u32>,
+    start_x: Option<u32>,
+    end_x: Option<u32>,
+    openers: Vec<Paren>,
+    clamped: Option<ParenTrailClamped>
+}
+
+pub enum Mode {
+    Indent,
+    Paren
 }
 
 enum TrackingArgTabStop {
@@ -107,6 +124,16 @@ pub struct Result<'a> {
     orig_text: &'a str,
     changes: HashMap<(u32, u32), TransformedChange<'a>>,
     tracking_arg_tab_stop: TrackingArgTabStop
+}
+
+fn initial_paren_trail() -> ParenTrail {
+    ParenTrail {
+        line_no: None,
+        start_x: None,
+        end_x: None,
+        openers: vec![], 
+        clamped: None
+    }
 }
 
 fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode) -> Result<'a> {
@@ -148,7 +175,21 @@ fn replace_within_string(orig: &str, start: usize, end: usize, replace: &str) ->
 }
 
 fn repeat_string(text: &str, n: usize) -> String {
-    unimplemented!();
+    let mut s = String::new();
+    for _ in (0..n) {
+        s.push_str(text);
+    }
+    s
+}
+
+#[cfg(test)]
+#[test]
+fn repeat_string_works() {
+    assert_eq!(repeat_string("a", 2), "aa");
+    assert_eq!(repeat_string("aa", 3), "aaaaaa");
+    assert_eq!(repeat_string("aa", 0), "");
+    assert_eq!(repeat_string("", 0), "");
+    assert_eq!(repeat_string("", 5), "");
 }
 
 fn get_line_ending(text: &str) -> &'static str {
@@ -455,7 +496,7 @@ fn finalize_result<'a>(result: &mut Result<'a>) {
 
 // process_error
 
-fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode) {
+fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> Result<'a> {
     unimplemented!();
 }
 
@@ -467,14 +508,15 @@ fn public_result<'a>(result: Result<'a>) -> Result<'a> {
     unimplemented!();
 }
 
-fn indent_mode<'a>(text: &'a str, options: Options<'a>) {
-    unimplemented!();
+pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) {
+    public_result(process_text(text, options, Mode::Indent, false));
 }
 
-fn paren_mode<'a>(text: &'a str, options: Options<'a>) {
-    unimplemented!();
+pub fn paren_mode<'a>(text: &'a str, options: Options<'a>) {
+    public_result(process_text(text, options, Mode::Paren, false));
 }
 
-fn smart_mode<'a>(text: &'a str, options: Options<'a>) {
-    unimplemented!();
+pub fn smart_mode<'a>(text: &'a str, options: Options<'a>) {
+    let smart = options.selection_start_line == None;
+    public_result(process_text(text, options, Mode::Indent, smart));
 }
