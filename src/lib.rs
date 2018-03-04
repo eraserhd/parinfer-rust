@@ -3,10 +3,9 @@ extern crate regex;
 use regex::Regex;
 use std::collections::HashMap;
 
-pub enum Mode {
-    Indent,
-    Paren
-}
+//------------------------------------------------------------------------------
+// Constants / Predicates
+//------------------------------------------------------------------------------
 
 const BACKSLASH : &'static str = "\\";
 const BLANK_SPACE : &'static str = " ";
@@ -35,27 +34,6 @@ fn match_paren(paren: &str) -> Option<&'static str> {
 fn match_paren_works() {
     assert_eq!(match_paren("}"), Some("{"));
     assert_eq!(match_paren("x"), None);
-}
-
-fn is_open_paren(paren: &str) -> bool {
-    match paren {
-        "{" | "[" | "(" => true,
-        _ => false
-    }
-}
-
-#[cfg(test)]
-#[test]
-fn is_open_paren_works() {
-    assert!(is_open_paren("("));
-    assert!(!is_open_paren("}"));
-}
-
-fn is_close_paren(paren: &str) -> bool {
-    match paren {
-        "}" | "]" | ")" => true,
-        _ => false
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -105,6 +83,11 @@ pub struct Options<'a> {
 // of a given text, we mutate this structure to update the state of our
 // system.
 
+pub enum Mode {
+    Indent,
+    Paren
+}
+
 pub struct Paren {
     line_no: u32,
     ch: char,
@@ -113,10 +96,17 @@ pub struct Paren {
     indent_delta: i32
 }
 
+enum TrackingArgTabStop {
+    NotSearching,
+    Space,
+    Arg
+}
+
 pub struct Result<'a> {
     mode: Mode,
     orig_text: &'a str,
-    changes: HashMap<(u32, u32), TransformedChange<'a>>
+    changes: HashMap<(u32, u32), TransformedChange<'a>>,
+    tracking_arg_tab_stop: TrackingArgTabStop
 }
 
 fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode) -> Result<'a> {
@@ -245,16 +235,63 @@ fn peek_works() {
 }
 
 //------------------------------------------------------------------------------
-// Character functions
+// Questions about characters
 //------------------------------------------------------------------------------
+
+fn is_open_paren(paren: &str) -> bool {
+    match paren {
+        "{" | "[" | "(" => true,
+        _ => false
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn is_open_paren_works() {
+    assert!(is_open_paren("("));
+    assert!(!is_open_paren("}"));
+}
+
+fn is_close_paren(paren: &str) -> bool {
+    match paren {
+        "}" | "]" | ")" => true,
+        _ => false
+    }
+}
 
 fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren>, ch: char) {
     unimplemented!();
 }
 
+fn is_whitespace<'a>(result: &Result<'a>) -> bool {
+    unimplemented!();
+}
+
+fn is_closable<'a>(result: &Result<'a>) -> bool {
+    unimplemented!();
+}
+
+//------------------------------------------------------------------------------
+// Advanced operations on characters
+//------------------------------------------------------------------------------
+
+fn check_cursor_holding<'a>(result: &Result<'a>) -> bool {
+    unimplemented!();
+}
+
+fn track_arg_tab_stop<'a>(result: &Result<'a>, state: TrackingArgTabStop) -> bool {
+    unimplemented!();
+}
+
+//------------------------------------------------------------------------------
+// Literal character events
+//------------------------------------------------------------------------------
+
 fn on_open_paren<'a>(result: &mut Result<'a>) {
     unimplemented!();
 }
+
+// set_closer
 
 fn on_matched_close_paren<'a>(result: &mut Result<'a>) {
     unimplemented!();
@@ -291,6 +328,10 @@ fn on_backslash<'a>(result: &mut Result<'a>) {
 fn after_backslash<'a>(result: &mut Result<'a>) {
     unimplemented!();
 }
+
+//------------------------------------------------------------------------------
+// Character dispatch
+//------------------------------------------------------------------------------
 
 fn on_char<'a>(result: &mut Result<'a>) {
     unimplemented!();
@@ -431,5 +472,9 @@ fn indent_mode<'a>(text: &'a str, options: Options<'a>) {
 }
 
 fn paren_mode<'a>(text: &'a str, options: Options<'a>) {
+    unimplemented!();
+}
+
+fn smart_mode<'a>(text: &'a str, options: Options<'a>) {
     unimplemented!();
 }
