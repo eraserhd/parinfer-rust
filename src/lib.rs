@@ -69,8 +69,8 @@ fn transform_changes<'a>(changes: &Vec<Change<'a>>) -> HashMap<(u32, u32), Trans
 }
 
 pub struct Options<'a> {
-    cursor_x: u32,
-    cursor_line: u32,
+    cursor_x: Option<u32>,
+    cursor_line: Option<u32>,
     prev_cursor_x: Option<u32>,
     prev_cursor_line: Option<u32>,
     selection_start_line: Option<u32>,
@@ -122,8 +122,46 @@ enum TrackingArgTabStop {
 
 pub struct Result<'a> {
     mode: Mode,
+    smart: bool,
+
     orig_text: &'a str,
+    orig_cursor_x: Option<u32>,
+    orig_cursor_line: Option<u32>,
+
+    input_lines: Vec<&'a str>,
+    input_line_no: u32,
+    input_x: u32,
+
+    lines: Vec<String>,
+    line_no: Option<u32>,
+    ch: &'a str,
+    x: u32,
+    indent_x: Option<u32>,
+
+    paren_stack: Vec<Paren>,
+
+    paren_trail: ParenTrail,
+
+    return_parens: bool,
+
+    selection_start_line: Option<u32>,
+
     changes: HashMap<(u32, u32), TransformedChange<'a>>,
+
+    is_in_code: bool,
+    is_escaping: bool,
+    is_escaped: bool,
+    is_in_str: bool,
+    is_in_comment: bool,
+    comment_x: Option<u32>,
+
+    quote_danger: bool,
+    tracking_indent: bool,
+    skip_char: bool,
+    success: bool,
+    partial_result: bool,
+    force_balance: bool,
+
     tracking_arg_tab_stop: TrackingArgTabStop
 }
 
@@ -137,11 +175,49 @@ fn initial_paren_trail() -> ParenTrail {
     }
 }
 
-fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode) -> Result<'a> {
+fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> Result<'a> {
     Result {
         mode: mode,
+        smart: smart,
+
         orig_text: text,
+        orig_cursor_x: options.cursor_x,
+        orig_cursor_line: options.cursor_line,
+
+        input_lines: text.lines().collect(), 
+        input_line_no: 0,
+        input_x: 0,
+
+        lines: vec![],
+        line_no: None,
+        ch: &text[0..0],
+        x: 0,
+        indent_x: None,
+
+        paren_stack: vec![],
+
+        paren_trail: initial_paren_trail(),
+
+        return_parens: false,
+
+        selection_start_line: None,
+
         changes: transform_changes(&options.changes),
+
+        is_in_code: true,
+        is_escaping: false,
+        is_escaped: false,
+        is_in_str: false,
+        is_in_comment: false,
+        comment_x: None,
+
+        quote_danger: false,
+        tracking_indent: false,
+        skip_char: false,
+        success: false,
+        partial_result: false,
+        force_balance: false,
+
         tracking_arg_tab_stop: TrackingArgTabStop::NotSearching
     }
 }
@@ -157,19 +233,20 @@ pub enum Error {
     UnclosedParen,
     UnmatchedCloseParen,
     UnmatchedOpenParen,
+    LeadingCloseParen,
     Unhandled 
 }
 
-fn error_message(error: &Error) -> &'static str {
+fn error_message(error: Error) -> &'static str {
     match error {
-        QuoteDanger => "Quotes must balanced inside comment blocks.",
-        EolBackslash => "Line cannot end in a hanging backslash.",
-        UnclosedQuote => "String is missing a closing quote.",
-        UnclosedParen => "Unclosed open-paren.",
-        UnmatchedCloseParen => "Unmatched close-paren.",
-        UnmatchedOpenParen => "Unmatched open-paren.",
-        LeadingCloseParen => "Line cannot lead with a close-paren.",
-        Unhandled => "Unhandled error.",
+        Error::QuoteDanger => "Quotes must balanced inside comment blocks.",
+        Error::EolBackslash => "Line cannot end in a hanging backslash.",
+        Error::UnclosedQuote => "String is missing a closing quote.",
+        Error::UnclosedParen => "Unclosed open-paren.",
+        Error::UnmatchedCloseParen => "Unmatched close-paren.",
+        Error::UnmatchedOpenParen => "Unmatched open-paren.",
+        Error::LeadingCloseParen => "Line cannot lead with a close-paren.",
+        Error::Unhandled => "Unhandled error.",
     }
 }
 
@@ -250,7 +327,7 @@ fn init_line<'a>(result: &mut Result<'a>, line: &str) {
     unimplemented!();
 }
 
-fn commit_char<'a>(result: &mut Result<'a>, orig_ch: char) {
+fn commit_char<'a>(result: &mut Result<'a>, orig_ch: &'a str) {
     unimplemented!();
 }
 
@@ -512,8 +589,25 @@ fn set_tab_stops<'a>(result: &mut Result<'a>) {
 // High-level processing functions
 //------------------------------------------------------------------------------
 
-fn process_char<'a>(result: &mut Result<'a>, ch: char) {
-    unimplemented!();
+fn process_char<'a>(result: &mut Result<'a>, ch: &'a str) {
+    let orig_ch = ch;
+
+    result.ch = ch;
+    result.skip_char = false;
+
+    handle_change_delta(result);
+
+    if result.tracking_indent {
+        check_indent(result);
+    }
+
+    if result.skip_char {
+        result.ch = "";
+    } else {
+        on_char(result);
+    }
+
+    commit_char(result, orig_ch);
 }
 
 fn process_line<'a>(reuslt: &mut Result<'a>, line_no: u32) {
