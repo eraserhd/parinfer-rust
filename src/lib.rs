@@ -151,17 +151,26 @@ fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode) -> Re
 //------------------------------------------------------------------------------
 
 pub enum Error {
-    ErrorQuoteDanger,
-    ErrorEolBackslash,
-    ErrorUnclosedQuote,
-    ErrorUnclosedParen,
-    ErrorUnmatchedCloseParen,
-    ErrorUnmatchedOpenParen,
-    ErrorUnhandled 
+    QuoteDanger,
+    EolBackslash,
+    UnclosedQuote,
+    UnclosedParen,
+    UnmatchedCloseParen,
+    UnmatchedOpenParen,
+    Unhandled 
 }
 
-fn error_message(error: Error) -> &'static str {
-    unimplemented!();
+fn error_message(error: &Error) -> &'static str {
+    match error {
+        QuoteDanger => "Quotes must balanced inside comment blocks.",
+        EolBackslash => "Line cannot end in a hanging backslash.",
+        UnclosedQuote => "String is missing a closing quote.",
+        UnclosedParen => "Unclosed open-paren.",
+        UnmatchedCloseParen => "Unmatched close-paren.",
+        UnmatchedOpenParen => "Unmatched open-paren.",
+        LeadingCloseParen => "Line cannot lead with a close-paren.",
+        Unhandled => "Unhandled error.",
+    }
 }
 
 fn cache_error_pos(result: &mut Result, error: Error) {
