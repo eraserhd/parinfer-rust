@@ -224,7 +224,24 @@ fn clamp_works() {
 }
 
 fn peek<T>(array: &Vec<T>, i: usize) -> Option<&T> {
-    unimplemented!();
+    if i >= array.len() {
+        None
+    } else {
+        Some(&array[array.len() - 1 - i])
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn peek_works() {
+    assert_eq!(peek(&vec!['a'], 0), Some(&'a'));
+    assert_eq!(peek(&vec!['a'], 1), None);
+    assert_eq!(peek(&vec!['a', 'b', 'c'], 0), Some(&'c'));
+    assert_eq!(peek(&vec!['a', 'b', 'c'], 1), Some(&'b'));
+    assert_eq!(peek(&vec!['a', 'b', 'c'], 5), None);
+    let empty : Vec<char> = vec![];
+    assert_eq!(peek(&empty, 0), None);
+    assert_eq!(peek(&empty, 1), None);
 }
 
 //------------------------------------------------------------------------------
