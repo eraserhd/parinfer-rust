@@ -40,6 +40,7 @@ fn match_paren_works() {
 // Options Structure
 //------------------------------------------------------------------------------
 
+#[derive(Clone, Copy)]
 pub struct Change<'a> {
     x: u32,
     line_no: u32,
@@ -137,7 +138,12 @@ fn initial_paren_trail() -> ParenTrail {
 }
 
 fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode) -> Result<'a> {
-    unimplemented!();
+    Result {
+        mode: mode,
+        orig_text: text,
+        changes: transform_changes(&options.changes),
+        tracking_arg_tab_stop: TrackingArgTabStop::NotSearching
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -197,7 +203,18 @@ fn repeat_string_works() {
 }
 
 fn get_line_ending(text: &str) -> &'static str {
-    unimplemented!();
+    if text.chars().any(|ch| ch == '\r') {
+        "\r\n"
+    } else {
+        "\n"
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn get_line_ending_works() {
+    assert_eq!(get_line_ending("foo\nbar"), "\n");
+    assert_eq!(get_line_ending("foo\r\nbar"), "\r\n");
 }
 
 //------------------------------------------------------------------------------
