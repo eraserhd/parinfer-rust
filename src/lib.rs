@@ -171,15 +171,19 @@ fn error(result: &mut Result, name: Error) {
 //------------------------------------------------------------------------------
 
 fn replace_within_string(orig: &str, start: usize, end: usize, replace: &str) -> String {
-    unimplemented!();
+    String::from(&orig[0..start]) + replace + &orig[end..]
+}
+
+#[cfg(test)]
+#[test]
+fn replace_within_string_works() {
+    assert_eq!(replace_within_string("aaa", 0, 2, ""), "a");
+    assert_eq!(replace_within_string("aaa", 0, 1, "b"), "baa");
+    assert_eq!(replace_within_string("aaa", 0, 2, "b"), "ba");
 }
 
 fn repeat_string(text: &str, n: usize) -> String {
-    let mut s = String::new();
-    for _ in (0..n) {
-        s.push_str(text);
-    }
-    s
+    String::from(text).repeat(n)
 }
 
 #[cfg(test)]
