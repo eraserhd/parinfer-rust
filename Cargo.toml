@@ -1,0 +1,7 @@
+[package]
+name = "parinfer"
+version = "0.1.0"
+authors = ["Jason Felice <jason.m.felice@gmail.com>"]
+
+[dependencies]
+regex = "0.2"
