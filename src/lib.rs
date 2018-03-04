@@ -169,9 +169,41 @@ fn get_line_ending(text: &str) -> &'static str {
 // Line operations
 //------------------------------------------------------------------------------
 
+fn is_cursor_affected<'a>(result: &Result<'a>, start: u32, end: u32) -> bool {
+    unimplemented!();
+}
+
+fn shift_cursor_on_edit<'a>(result: &mut Result<'a>, line_no: u32, start: u32, end: u32, replace: &str) {
+    unimplemented!();
+}
+
+fn replace_within_line<'a>(result: &mut Result<'a>, line_no: u32, start: u32, end: u32, replace: &str) {
+    unimplemented!();
+}
+
+fn insert_within_line<'a>(result: &mut Result<'a>, line_no: u32, idx: u32, insert: &str) {
+    unimplemented!();
+}
+
+fn init_line<'a>(result: &mut Result<'a>, line: &str) {
+    unimplemented!();
+}
+
+fn commit_char<'a>(result: &mut Result<'a>, orig_ch: char) {
+    unimplemented!();
+}
+
 //------------------------------------------------------------------------------
 // Misc Utils
 //------------------------------------------------------------------------------
+
+fn clamp<T : Clone + Ord>(val: T, min_n: Option<T>, max_n: Option<T>) -> T {
+    unimplemented!();
+}
+
+fn peek<T>(array: &Vec<T>, i: usize) -> &T {
+    unimplemented!();
+}
 
 //------------------------------------------------------------------------------
 // Character functions
