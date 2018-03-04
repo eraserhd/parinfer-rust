@@ -1,7 +1,7 @@
-extern crate regex;
-
-use regex::Regex;
 use std::collections::HashMap;
+
+pub type LineNumber = usize;
+pub type Column = usize;
 
 //------------------------------------------------------------------------------
 // Constants / Predicates
@@ -14,8 +14,6 @@ const DOUBLE_QUOTE : &'static str = "\"";
 const NEWLINE : &'static str = "\n";
 const SEMICOLON : &'static str = ";";
 const TAB : &'static str = "\t";
-
-const LINE_ENDING_REGEX : &'static str = r"\r?\n";
 
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
@@ -42,38 +40,38 @@ fn match_paren_works() {
 
 #[derive(Clone, Copy)]
 pub struct Change<'a> {
-    x: u32,
-    line_no: u32,
+    x: Column,
+    line_no: LineNumber,
     old_text: &'a str,
     new_text: &'a str,
 }
 
 struct TransformedChange<'a> {
-    x: u32,
-    line_no: u32,
+    x: Column,
+    line_no: LineNumber,
     old_text: &'a str,
     new_text: &'a str,
-    old_end_x: u32,
-    new_end_x: u32,
-    new_end_line_no: u32,
-    lookup_line_no: u32,
-    lookup_x: u32
+    old_end_x: Column,
+    new_end_x: Column,
+    new_end_line_no: LineNumber,
+    lookup_line_no: LineNumber,
+    lookup_x: Column
 }
 
 fn transform_change<'a>(change: &Change<'a>) -> TransformedChange<'a> {
     unimplemented!();
 }
 
-fn transform_changes<'a>(changes: &Vec<Change<'a>>) -> HashMap<(u32, u32), TransformedChange<'a>> {
+fn transform_changes<'a>(changes: &Vec<Change<'a>>) -> HashMap<(LineNumber, Column), TransformedChange<'a>> {
     unimplemented!();
 }
 
 pub struct Options<'a> {
-    cursor_x: Option<u32>,
-    cursor_line: Option<u32>,
-    prev_cursor_x: Option<u32>,
-    prev_cursor_line: Option<u32>,
-    selection_start_line: Option<u32>,
+    cursor_x: Option<Column>,
+    cursor_line: Option<LineNumber>,
+    prev_cursor_x: Option<Column>,
+    prev_cursor_line: Option<LineNumber>,
+    selection_start_line: Option<LineNumber>,
     changes: Vec<Change<'a>>,
     partial_result: bool,
     force_balance: bool,
@@ -89,22 +87,22 @@ pub struct Options<'a> {
 // system.
 
 struct Paren {
-    line_no: u32,
+    line_no: LineNumber,
     ch: char,
-    x: u32,
+    x: Column,
     indent_delta: i32
 }
 
 struct ParenTrailClamped {
-    start_x: u32,
-    end_x: u32,
+    start_x: Column,
+    end_x: Column,
     openers: Vec<Paren>
 }
 
 struct ParenTrail {
-    line_no: Option<u32>,
-    start_x: Option<u32>,
-    end_x: Option<u32>,
+    line_no: Option<LineNumber>,
+    start_x: Option<Column>,
+    end_x: Option<Column>,
     openers: Vec<Paren>,
     clamped: Option<ParenTrailClamped>
 }
@@ -125,18 +123,18 @@ pub struct Result<'a> {
     smart: bool,
 
     orig_text: &'a str,
-    orig_cursor_x: Option<u32>,
-    orig_cursor_line: Option<u32>,
+    orig_cursor_x: Option<Column>,
+    orig_cursor_line: Option<LineNumber>,
 
     input_lines: Vec<&'a str>,
-    input_line_no: u32,
-    input_x: u32,
+    input_line_no: LineNumber,
+    input_x: Column,
 
     lines: Vec<String>,
-    line_no: Option<u32>,
+    line_no: Option<LineNumber>,
     ch: &'a str,
-    x: u32,
-    indent_x: Option<u32>,
+    x: Column,
+    indent_x: Option<Column>,
 
     paren_stack: Vec<Paren>,
 
@@ -144,16 +142,16 @@ pub struct Result<'a> {
 
     return_parens: bool,
 
-    selection_start_line: Option<u32>,
+    selection_start_line: Option<LineNumber>,
 
-    changes: HashMap<(u32, u32), TransformedChange<'a>>,
+    changes: HashMap<(LineNumber, Column), TransformedChange<'a>>,
 
     is_in_code: bool,
     is_escaping: bool,
     is_escaped: bool,
     is_in_str: bool,
     is_in_comment: bool,
-    comment_x: Option<u32>,
+    comment_x: Option<Column>,
 
     quote_danger: bool,
     tracking_indent: bool,
@@ -610,7 +608,7 @@ fn process_char<'a>(result: &mut Result<'a>, ch: &'a str) {
     commit_char(result, orig_ch);
 }
 
-fn process_line<'a>(reuslt: &mut Result<'a>, line_no: u32) {
+fn process_line<'a>(result: &mut Result<'a>, line_no: usize) {
     unimplemented!();
 }
 
@@ -621,7 +619,15 @@ fn finalize_result<'a>(result: &mut Result<'a>) {
 // process_error
 
 fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> Result<'a> {
-    unimplemented!();
+    let mut result = get_initial_result(text, options, mode, smart);
+
+    for i in 0..result.input_lines.len() {
+        result.input_line_no = i;
+        process_line(&mut result, i);
+    }
+    finalize_result(&mut result);
+
+    result
 }
 
 //------------------------------------------------------------------------------
