@@ -428,7 +428,7 @@ fn is_closable<'a>(result: &Result<'a>) -> bool {
 // Advanced operations on characters
 //------------------------------------------------------------------------------
 
-fn check_cursor_holding<'a>(result: &Result<'a>) -> bool {
+fn check_cursor_holding<'a>(result: &Result<'a>) -> std::result::Result<bool, Error> {
     unimplemented!();
 }
 
@@ -450,7 +450,7 @@ fn on_matched_close_paren<'a>(result: &mut Result<'a>) {
     unimplemented!();
 }
 
-fn on_unmatched_close_paren<'a>(result: &mut Result<'a>) {
+fn on_unmatched_close_paren<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
@@ -478,7 +478,7 @@ fn on_backslash<'a>(result: &mut Result<'a>) {
     unimplemented!();
 }
 
-fn after_backslash<'a>(result: &mut Result<'a>) {
+fn after_backslash<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
@@ -546,7 +546,7 @@ fn invalidate_paren_trail<'a>(result: &mut Result<'a>) {
     unimplemented!();
 }
 
-fn check_unmatched_outside_paren_trail<'a>(result: &mut Result<'a>) {
+fn check_unmatched_outside_paren_trail<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
@@ -566,11 +566,15 @@ fn correct_indent<'a>(result: &mut Result<'a>) {
     unimplemented!();
 }
 
-fn on_indent<'a>(result: &mut Result<'a>) {
+fn on_indent<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
-fn on_leading_close_paren<'a>(result: &mut Result<'a>) {
+fn check_leading_close_paren<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+    unimplemented!();
+}
+
+fn on_leading_close_paren<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
@@ -619,13 +623,15 @@ fn process_line<'a>(result: &mut Result<'a>, line_no: usize) {
     unimplemented!();
 }
 
-fn finalize_result<'a>(result: &mut Result<'a>) {
+fn finalize_result<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
-// process_error
+fn process_error<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+    unimplemented!();
+}
 
-fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> Result<'a> {
+fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> std::result::Result<Result<'a>, Error> {
     let mut result = get_initial_result(text, options, mode, smart);
 
     for i in 0..result.input_lines.len() {
@@ -634,7 +640,7 @@ fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool
     }
     finalize_result(&mut result);
 
-    result
+    Ok(result)
 }
 
 //------------------------------------------------------------------------------
@@ -645,15 +651,15 @@ fn public_result<'a>(result: Result<'a>) -> Result<'a> {
     unimplemented!();
 }
 
-pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) {
-    public_result(process_text(text, options, Mode::Indent, false));
+pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) -> std::result::Result<Result<'a>, Error> {
+    process_text(text, options, Mode::Indent, false).map(public_result)
 }
 
-pub fn paren_mode<'a>(text: &'a str, options: Options<'a>) {
-    public_result(process_text(text, options, Mode::Paren, false));
+pub fn paren_mode<'a>(text: &'a str, options: Options<'a>) -> std::result::Result<Result<'a>, Error> {
+    process_text(text, options, Mode::Paren, false).map(public_result)
 }
 
-pub fn smart_mode<'a>(text: &'a str, options: Options<'a>) {
+pub fn smart_mode<'a>(text: &'a str, options: Options<'a>) -> std::result::Result<Result<'a>, Error> {
     let smart = options.selection_start_line == None;
-    public_result(process_text(text, options, Mode::Indent, smart));
+    process_text(text, options, Mode::Indent, smart).map(public_result)
 }
