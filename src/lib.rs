@@ -87,25 +87,25 @@ pub struct Options<'a> {
 // of a given text, we mutate this structure to update the state of our
 // system.
 
-struct Paren {
+struct Paren<'a> {
     line_no: LineNumber,
-    ch: char,
+    ch: &'a str,
     x: Column,
     indent_delta: i32
 }
 
-struct ParenTrailClamped {
+struct ParenTrailClamped<'a> {
     start_x: Column,
     end_x: Column,
-    openers: Vec<Paren>
+    openers: Vec<Paren<'a>>
 }
 
-struct ParenTrail {
+struct ParenTrail<'a> {
     line_no: Option<LineNumber>,
     start_x: Option<Column>,
     end_x: Option<Column>,
-    openers: Vec<Paren>,
-    clamped: Option<ParenTrailClamped>
+    openers: Vec<Paren<'a>>,
+    clamped: Option<ParenTrailClamped<'a>>
 }
 
 pub enum Mode {
@@ -137,9 +137,9 @@ pub struct State<'a> {
     x: Column,
     indent_x: Option<Column>,
 
-    paren_stack: Vec<Paren>,
+    paren_stack: Vec<Paren<'a>>,
 
-    paren_trail: ParenTrail,
+    paren_trail: ParenTrail<'a>,
 
     return_parens: bool,
 
@@ -171,7 +171,7 @@ pub struct State<'a> {
     error_pos_cache: HashMap<ErrorType, Error>
 }
 
-fn initial_paren_trail() -> ParenTrail {
+fn initial_paren_trail<'a>() -> ParenTrail<'a> {
     ParenTrail {
         line_no: None,
         start_x: None,
@@ -470,8 +470,18 @@ fn is_close_paren(paren: &str) -> bool {
     }
 }
 
-fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren>, ch: char) {
-    unimplemented!();
+fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren<'a>>, ch: &'a str) -> bool {
+    if paren_stack.is_empty() {
+        return false;
+    }
+    if let Some(paren) = peek(paren_stack, 0) {
+        if let Some(close) = match_paren(ch) {
+            if paren.ch == close {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 fn is_whitespace<'a>(result: &State<'a>) -> bool {
