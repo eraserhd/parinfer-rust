@@ -79,7 +79,7 @@ pub struct Options<'a> {
 }
 
 //------------------------------------------------------------------------------
-// Result Structure
+// State Structure (was Result)
 //------------------------------------------------------------------------------
 
 // This represents the running result. As we scan through each character
@@ -118,7 +118,7 @@ enum TrackingArgTabStop {
     Arg
 }
 
-pub struct Result<'a> {
+pub struct State<'a> {
     mode: Mode,
     smart: bool,
 
@@ -173,8 +173,8 @@ fn initial_paren_trail() -> ParenTrail {
     }
 }
 
-fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> Result<'a> {
-    Result {
+fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> State<'a> {
+    State {
         mode: mode,
         smart: smart,
 
@@ -254,14 +254,16 @@ fn error_message(error: ErrorType) -> &'static str {
         ErrorType::UnmatchedOpenParen => "Unmatched open-paren.",
         ErrorType::LeadingCloseParen => "Line cannot lead with a close-paren.",
         ErrorType::Unhandled => "Unhandled error.",
+        
+        ErrorType::Restart => "Restart requested (you shouldn't see this)."
     }
 }
 
-fn cache_error_pos(result: &mut Result, error: Error) {
+fn cache_error_pos(result: &mut State, error: Error) {
     unimplemented!();
 }
 
-fn error(result: &mut Result, name: Error) {
+fn error(result: &mut State, name: Error) {
     unimplemented!();
 }
 
@@ -314,27 +316,27 @@ fn get_line_ending_works() {
 // Line operations
 //------------------------------------------------------------------------------
 
-fn is_cursor_affected<'a>(result: &Result<'a>, start: u32, end: u32) -> bool {
+fn is_cursor_affected<'a>(result: &State<'a>, start: u32, end: u32) -> bool {
     unimplemented!();
 }
 
-fn shift_cursor_on_edit<'a>(result: &mut Result<'a>, line_no: u32, start: u32, end: u32, replace: &str) {
+fn shift_cursor_on_edit<'a>(result: &mut State<'a>, line_no: u32, start: u32, end: u32, replace: &str) {
     unimplemented!();
 }
 
-fn replace_within_line<'a>(result: &mut Result<'a>, line_no: u32, start: u32, end: u32, replace: &str) {
+fn replace_within_line<'a>(result: &mut State<'a>, line_no: u32, start: u32, end: u32, replace: &str) {
     unimplemented!();
 }
 
-fn insert_within_line<'a>(result: &mut Result<'a>, line_no: u32, idx: u32, insert: &str) {
+fn insert_within_line<'a>(result: &mut State<'a>, line_no: u32, idx: u32, insert: &str) {
     unimplemented!();
 }
 
-fn init_line<'a>(result: &mut Result<'a>, line: &str) {
+fn init_line<'a>(result: &mut State<'a>, line: &str) {
     unimplemented!();
 }
 
-fn commit_char<'a>(result: &mut Result<'a>, orig_ch: &'a str) {
+fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
     unimplemented!();
 }
 
@@ -418,11 +420,11 @@ fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren>, ch: char) {
     unimplemented!();
 }
 
-fn is_whitespace<'a>(result: &Result<'a>) -> bool {
+fn is_whitespace<'a>(result: &State<'a>) -> bool {
     unimplemented!();
 }
 
-fn is_closable<'a>(result: &Result<'a>) -> bool {
+fn is_closable<'a>(result: &State<'a>) -> bool {
     unimplemented!();
 }
 
@@ -430,11 +432,11 @@ fn is_closable<'a>(result: &Result<'a>) -> bool {
 // Advanced operations on characters
 //------------------------------------------------------------------------------
 
-fn check_cursor_holding<'a>(result: &Result<'a>) -> std::result::Result<bool, Error> {
+fn check_cursor_holding<'a>(result: &State<'a>) -> std::result::Result<bool, Error> {
     unimplemented!();
 }
 
-fn track_arg_tab_stop<'a>(result: &Result<'a>, state: TrackingArgTabStop) -> bool {
+fn track_arg_tab_stop<'a>(result: &State<'a>, state: TrackingArgTabStop) -> bool {
     unimplemented!();
 }
 
@@ -442,45 +444,45 @@ fn track_arg_tab_stop<'a>(result: &Result<'a>, state: TrackingArgTabStop) -> boo
 // Literal character events
 //------------------------------------------------------------------------------
 
-fn on_open_paren<'a>(result: &mut Result<'a>) {
+fn on_open_paren<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
 // set_closer
 
-fn on_matched_close_paren<'a>(result: &mut Result<'a>) {
+fn on_matched_close_paren<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn on_unmatched_close_paren<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+fn on_unmatched_close_paren<'a>(result: &mut State<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
-fn on_close_paren<'a>(result: &mut Result<'a>) {
+fn on_close_paren<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn on_tab<'a>(result: &mut Result<'a>) {
+fn on_tab<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn on_semicolon<'a>(result: &mut Result<'a>) {
+fn on_semicolon<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn on_newline<'a>(result: &mut Result<'a>) {
+fn on_newline<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn on_quote<'a>(result: &mut Result<'a>) {
+fn on_quote<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn on_backslash<'a>(result: &mut Result<'a>) {
+fn on_backslash<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn after_backslash<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+fn after_backslash<'a>(result: &mut State<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
@@ -488,7 +490,7 @@ fn after_backslash<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error
 // Character dispatch
 //------------------------------------------------------------------------------
 
-fn on_char<'a>(result: &mut Result<'a>) {
+fn on_char<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
@@ -496,19 +498,19 @@ fn on_char<'a>(result: &mut Result<'a>) {
 // Cursor functions
 //------------------------------------------------------------------------------
 
-fn is_cursor_on_left<'a>(result: &Result<'a>) -> bool {
+fn is_cursor_on_left<'a>(result: &State<'a>) -> bool {
     unimplemented!();
 }
 
-fn is_cursor_on_right<'a>(result: &Result<'a>) -> bool {
+fn is_cursor_on_right<'a>(result: &State<'a>) -> bool {
     unimplemented!();
 }
 
-fn is_cursor_in_comment<'a>(result: &Result<'a>) -> bool {
+fn is_cursor_in_comment<'a>(result: &State<'a>) -> bool {
     unimplemented!();
 }
 
-fn handle_change_delta<'a>(result: &Result<'a>) {
+fn handle_change_delta<'a>(result: &State<'a>) {
     unimplemented!();
 }
 
@@ -516,43 +518,43 @@ fn handle_change_delta<'a>(result: &Result<'a>) {
 // Paren Trail functions
 //------------------------------------------------------------------------------
 
-fn reset_paren_trail<'a>(result: &mut Result<'a>, line_no: u32, x: u32) {
+fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: u32, x: u32) {
     unimplemented!();
 }
 
-fn clamp_paren_trail_to_cursor<'a>(result: &mut Result<'a>) {
+fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn pop_paren_trail<'a>(result: &mut Result<'a>) {
+fn pop_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn get_parent_opener_index<'a>(result: &mut Result<'a>, index_x: u32) -> u32 {
+fn get_parent_opener_index<'a>(result: &mut State<'a>, index_x: u32) -> u32 {
     unimplemented!();
 }
 
-fn correct_paren_trail<'a>(result: &mut Result<'a>, index_x: u32) {
+fn correct_paren_trail<'a>(result: &mut State<'a>, index_x: u32) {
     unimplemented!();
 }
 
-fn clean_paren_trail<'a>(result: &mut Result<'a>) {
+fn clean_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn append_paren_trail<'a>(result: &mut Result<'a>) {
+fn append_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn invalidate_paren_trail<'a>(result: &mut Result<'a>) {
+fn invalidate_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn check_unmatched_outside_paren_trail<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+fn check_unmatched_outside_paren_trail<'a>(result: &mut State<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
-fn finish_new_paren_trail<'a>(result: &mut Result<'a>) {
+fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
@@ -560,39 +562,39 @@ fn finish_new_paren_trail<'a>(result: &mut Result<'a>) {
 // Indentation functions
 //------------------------------------------------------------------------------
 
-fn change_indent<'a>(result: &mut Result<'a>, delta: i32) {
+fn change_indent<'a>(result: &mut State<'a>, delta: i32) {
     unimplemented!();
 }
 
-fn correct_indent<'a>(result: &mut Result<'a>) {
+fn correct_indent<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn on_indent<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+fn on_indent<'a>(result: &mut State<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
-fn check_leading_close_paren<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+fn check_leading_close_paren<'a>(result: &mut State<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
-fn on_leading_close_paren<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+fn on_leading_close_paren<'a>(result: &mut State<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
-fn shift_comment_line<'a>(result: &mut Result<'a>) {
+fn shift_comment_line<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn check_indent<'a>(result: &mut Result<'a>) {
+fn check_indent<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn init_indent<'a>(result: &mut Result<'a>) {
+fn init_indent<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn set_tab_stops<'a>(result: &mut Result<'a>) {
+fn set_tab_stops<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
@@ -600,7 +602,7 @@ fn set_tab_stops<'a>(result: &mut Result<'a>) {
 // High-level processing functions
 //------------------------------------------------------------------------------
 
-fn process_char<'a>(result: &mut Result<'a>, ch: &'a str) {
+fn process_char<'a>(result: &mut State<'a>, ch: &'a str) {
     let orig_ch = ch;
 
     result.ch = ch;
@@ -621,19 +623,19 @@ fn process_char<'a>(result: &mut Result<'a>, ch: &'a str) {
     commit_char(result, orig_ch);
 }
 
-fn process_line<'a>(result: &mut Result<'a>, line_no: usize) {
+fn process_line<'a>(result: &mut State<'a>, line_no: usize) {
     unimplemented!();
 }
 
-fn finalize_result<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+fn finalize_result<'a>(result: &mut State<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
-fn process_error<'a>(result: &mut Result<'a>) -> std::result::Result<(), Error> {
+fn process_error<'a>(result: &mut State<'a>) -> std::result::Result<(), Error> {
     unimplemented!();
 }
 
-fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> std::result::Result<Result<'a>, Error> {
+fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> std::result::Result<State<'a>, Error> {
     let mut result = get_initial_result(text, options, mode, smart);
 
     for i in 0..result.input_lines.len() {
@@ -649,19 +651,19 @@ fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool
 // Public API
 //------------------------------------------------------------------------------
 
-fn public_result<'a>(result: Result<'a>) -> Result<'a> {
+fn public_result<'a>(result: State<'a>) -> State<'a> {
     unimplemented!();
 }
 
-pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) -> std::result::Result<Result<'a>, Error> {
+pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) -> std::result::Result<State<'a>, Error> {
     process_text(text, options, Mode::Indent, false).map(public_result)
 }
 
-pub fn paren_mode<'a>(text: &'a str, options: Options<'a>) -> std::result::Result<Result<'a>, Error> {
+pub fn paren_mode<'a>(text: &'a str, options: Options<'a>) -> std::result::Result<State<'a>, Error> {
     process_text(text, options, Mode::Paren, false).map(public_result)
 }
 
-pub fn smart_mode<'a>(text: &'a str, options: Options<'a>) -> std::result::Result<Result<'a>, Error> {
+pub fn smart_mode<'a>(text: &'a str, options: Options<'a>) -> std::result::Result<State<'a>, Error> {
     let smart = options.selection_start_line == None;
     process_text(text, options, Mode::Indent, smart).map(public_result)
 }
