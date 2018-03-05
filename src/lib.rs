@@ -349,7 +349,7 @@ fn replace_within_line<'a>(result: &mut State<'a>, line_no: u32, start: u32, end
 }
 
 fn insert_within_line<'a>(result: &mut State<'a>, line_no: u32, idx: u32, insert: &str) {
-    unimplemented!();
+    replace_within_line(result, line_no, idx, idx, insert);
 }
 
 fn init_line<'a>(result: &mut State<'a>, line: &str) {
