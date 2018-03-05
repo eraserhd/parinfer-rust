@@ -355,7 +355,11 @@ fn shift_cursor_on_edit<'a>(result: &mut State<'a>, line_no: LineNumber, start: 
 }
 
 fn replace_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, start: Column, end: Column, replace: &str) {
-    unimplemented!();
+    let line = result.lines[line_no].clone();
+    let new_line = replace_within_string(&line, start, end, replace);
+    result.lines[line_no] = new_line;
+
+    shift_cursor_on_edit(result, line_no, start, end, replace);
 }
 
 fn insert_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, idx: Column, insert: &str) {
