@@ -142,6 +142,9 @@ pub struct State<'a> {
 
     return_parens: bool,
 
+    cursor_x: Option<Column>,
+    cursor_line: Option<LineNumber>,
+
     selection_start_line: Option<LineNumber>,
 
     changes: HashMap<(LineNumber, Column), TransformedChange<'a>>,
@@ -197,6 +200,9 @@ fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart
         paren_trail: initial_paren_trail(),
 
         return_parens: false,
+
+        cursor_x: options.cursor_x,
+        cursor_line: options.cursor_line,
 
         selection_start_line: None,
 
@@ -265,7 +271,7 @@ fn cache_error_pos(result: &mut State, error: Error) {
     unimplemented!();
 }
 
-fn error(result: &mut State, name: Error) {
+fn error(result: &mut State, name: Error) -> Result<()> {
     unimplemented!();
 }
 
@@ -318,12 +324,24 @@ fn get_line_ending_works() {
 // Line operations
 //------------------------------------------------------------------------------
 
-fn is_cursor_affected<'a>(result: &State<'a>, start: u32, end: u32) -> bool {
-    unimplemented!();
+fn is_cursor_affected<'a>(result: &State<'a>, start: Column, end: Column) -> bool {
+    match result.cursor_x {
+        Some(x) if x == start && x == end => x == 0,
+        Some(x) => x >= end,
+        None => false
+    }
 }
 
-fn shift_cursor_on_edit<'a>(result: &mut State<'a>, line_no: u32, start: u32, end: u32, replace: &str) {
-    unimplemented!();
+fn shift_cursor_on_edit<'a>(result: &mut State<'a>, line_no: LineNumber, start: Column, end: Column, replace: &str) {
+    let old_length = end - start;
+    let new_length = replace.len();
+    let dx = new_length as i64 - old_length as i64;
+
+    if let (Some(cursor_x), Some(cursor_line)) = (result.cursor_x, result.cursor_line) {
+        if dx != 0 && cursor_line == line_no && is_cursor_affected(result, start, end) {
+            result.cursor_x = Some(((cursor_x as i64) + dx) as usize);
+        }
+    }
 }
 
 fn replace_within_line<'a>(result: &mut State<'a>, line_no: u32, start: u32, end: u32, replace: &str) {
