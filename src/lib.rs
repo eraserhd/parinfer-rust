@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 pub type LineNumber = usize;
 pub type Column = usize;
+type Delta = i64;
 
 //------------------------------------------------------------------------------
 // Constants / Predicates
@@ -344,20 +345,20 @@ fn is_cursor_affected<'a>(result: &State<'a>, start: Column, end: Column) -> boo
 fn shift_cursor_on_edit<'a>(result: &mut State<'a>, line_no: LineNumber, start: Column, end: Column, replace: &str) {
     let old_length = end - start;
     let new_length = replace.len();
-    let dx = new_length as i64 - old_length as i64;
+    let dx = new_length as Delta - old_length as Delta;
 
     if let (Some(cursor_x), Some(cursor_line)) = (result.cursor_x, result.cursor_line) {
         if dx != 0 && cursor_line == line_no && is_cursor_affected(result, start, end) {
-            result.cursor_x = Some(((cursor_x as i64) + dx) as usize);
+            result.cursor_x = Some(((cursor_x as Delta) + dx) as usize);
         }
     }
 }
 
-fn replace_within_line<'a>(result: &mut State<'a>, line_no: u32, start: u32, end: u32, replace: &str) {
+fn replace_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, start: Column, end: Column, replace: &str) {
     unimplemented!();
 }
 
-fn insert_within_line<'a>(result: &mut State<'a>, line_no: u32, idx: u32, insert: &str) {
+fn insert_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, idx: Column, insert: &str) {
     replace_within_line(result, line_no, idx, idx, insert);
 }
 
@@ -379,6 +380,13 @@ fn init_line<'a>(result: &mut State<'a>, line: &str) {
 }
 
 fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
+    let ch = result.ch;
+    if orig_ch != ch {
+        let line_no = result.line_no;
+        let x = result.x;
+        replace_within_line(result, line_no, x, x + orig_ch.len(), ch);
+        result.indent_delta -= orig_ch.len() as Delta - ch.len() as Delta;
+    }
     unimplemented!();
 }
 
