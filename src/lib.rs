@@ -224,7 +224,7 @@ fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart
 // Possible Errors
 //------------------------------------------------------------------------------
 
-pub enum Error {
+pub enum ErrorType {
     QuoteDanger,
     EolBackslash,
     UnclosedQuote,
@@ -235,16 +235,23 @@ pub enum Error {
     Unhandled 
 }
 
-fn error_message(error: Error) -> &'static str {
+pub struct Error {
+    name: ErrorType,
+    message: &'static str,
+    line_no: LineNumber,
+    x: Column
+}
+
+fn error_message(error: ErrorType) -> &'static str {
     match error {
-        Error::QuoteDanger => "Quotes must balanced inside comment blocks.",
-        Error::EolBackslash => "Line cannot end in a hanging backslash.",
-        Error::UnclosedQuote => "String is missing a closing quote.",
-        Error::UnclosedParen => "Unclosed open-paren.",
-        Error::UnmatchedCloseParen => "Unmatched close-paren.",
-        Error::UnmatchedOpenParen => "Unmatched open-paren.",
-        Error::LeadingCloseParen => "Line cannot lead with a close-paren.",
-        Error::Unhandled => "Unhandled error.",
+        ErrorType::QuoteDanger => "Quotes must balanced inside comment blocks.",
+        ErrorType::EolBackslash => "Line cannot end in a hanging backslash.",
+        ErrorType::UnclosedQuote => "String is missing a closing quote.",
+        ErrorType::UnclosedParen => "Unclosed open-paren.",
+        ErrorType::UnmatchedCloseParen => "Unmatched close-paren.",
+        ErrorType::UnmatchedOpenParen => "Unmatched open-paren.",
+        ErrorType::LeadingCloseParen => "Line cannot lead with a close-paren.",
+        ErrorType::Unhandled => "Unhandled error.",
     }
 }
 
