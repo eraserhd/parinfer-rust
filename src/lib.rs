@@ -475,7 +475,7 @@ fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren>, ch: char) {
 }
 
 fn is_whitespace<'a>(result: &State<'a>) -> bool {
-    unimplemented!();
+    !result.is_escaped && (result.ch == BLANK_SPACE || result.ch == DOUBLE_SPACE)
 }
 
 fn is_closable<'a>(result: &State<'a>) -> bool {
