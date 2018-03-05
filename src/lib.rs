@@ -232,7 +232,9 @@ pub enum ErrorType {
     UnmatchedCloseParen,
     UnmatchedOpenParen,
     LeadingCloseParen,
-    Unhandled 
+    Unhandled,
+
+    Restart
 }
 
 pub struct Error {
