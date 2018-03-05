@@ -131,7 +131,7 @@ pub struct State<'a> {
     input_x: Column,
 
     lines: Vec<String>,
-    line_no: Option<LineNumber>,
+    line_no: LineNumber,
     ch: &'a str,
     x: Column,
     indent_x: Option<Column>,
@@ -163,7 +163,11 @@ pub struct State<'a> {
     partial_result: bool,
     force_balance: bool,
 
-    tracking_arg_tab_stop: TrackingArgTabStop
+    indent_delta: i64,
+
+    tracking_arg_tab_stop: TrackingArgTabStop,
+
+    error_pos_cache: HashMap<ErrorType, Error>
 }
 
 fn initial_paren_trail() -> ParenTrail {
@@ -190,7 +194,7 @@ fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart
         input_x: 0,
 
         lines: vec![],
-        line_no: None,
+        line_no: 0,
         ch: &text[0..0],
         x: 0,
         indent_x: None,
@@ -222,7 +226,11 @@ fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart
         partial_result: false,
         force_balance: false,
 
-        tracking_arg_tab_stop: TrackingArgTabStop::NotSearching
+        indent_delta: 0,
+
+        tracking_arg_tab_stop: TrackingArgTabStop::NotSearching,
+
+        error_pos_cache: HashMap::new()
     }
 }
 
@@ -230,6 +238,7 @@ fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart
 // Possible Errors
 //------------------------------------------------------------------------------
 
+#[derive(PartialEq, Eq, Hash)]
 pub enum ErrorType {
     QuoteDanger,
     EolBackslash,
@@ -353,7 +362,20 @@ fn insert_within_line<'a>(result: &mut State<'a>, line_no: u32, idx: u32, insert
 }
 
 fn init_line<'a>(result: &mut State<'a>, line: &str) {
-    unimplemented!();
+    result.x = 0;
+    result.line_no += 1;
+
+    // reset line-specific state
+    result.indent_x = None;
+    result.comment_x = None;
+    result.indent_delta = 0;
+
+    result.error_pos_cache.remove(&ErrorType::UnmatchedCloseParen);
+    result.error_pos_cache.remove(&ErrorType::UnmatchedOpenParen);
+    result.error_pos_cache.remove(&ErrorType::LeadingCloseParen);
+
+    result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
+    result.tracking_indent = !result.is_in_str;
 }
 
 fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
