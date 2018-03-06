@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::borrow::Cow;
 
 pub type LineNumber = usize;
 pub type Column = usize;
@@ -131,7 +132,7 @@ pub struct State<'a> {
     input_line_no: LineNumber,
     input_x: Column,
 
-    lines: Vec<String>,
+    lines: Vec<Cow<'a, str>>,
     line_no: LineNumber,
     ch: &'a str,
     x: Column,
@@ -357,7 +358,7 @@ fn shift_cursor_on_edit<'a>(result: &mut State<'a>, line_no: LineNumber, start: 
 fn replace_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, start: Column, end: Column, replace: &str) {
     let line = result.lines[line_no].clone();
     let new_line = replace_within_string(&line, start, end, replace);
-    result.lines[line_no] = new_line;
+    result.lines[line_no] = Cow::from(new_line);
 
     shift_cursor_on_edit(result, line_no, start, end, replace);
 }
