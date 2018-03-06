@@ -280,7 +280,7 @@ fn error_message(error: ErrorType) -> &'static str {
     }
 }
 
-fn cache_error_pos(result: &mut State, error: Error) {
+fn cache_error_pos(result: &mut State, error: ErrorType) {
     unimplemented!();
 }
 
@@ -554,11 +554,21 @@ fn on_newline<'a>(result: &mut State<'a>) {
 }
 
 fn on_quote<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    if result.is_in_str {
+        result.is_in_str = false;
+    } else if result.is_in_comment {
+        result.quote_danger = !result.quote_danger;
+        if result.quote_danger {
+            cache_error_pos(result, ErrorType::QuoteDanger);
+        }
+    } else {
+        result.is_in_str = true;
+        cache_error_pos(result, ErrorType::UnclosedQuote);
+    }
 }
 
 fn on_backslash<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    result.is_escaping = true;
 }
 
 fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
