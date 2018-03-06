@@ -644,20 +644,25 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
 //------------------------------------------------------------------------------
 
 fn is_cursor_left_of<'a>(cursor_x: Option<Column>, cursor_line: Option<LineNumber>,
-                         x: Option<Column>, line_no: Option<LineNumber>) -> bool {
+                         x: Option<Column>, line_no: LineNumber) -> bool {
   if let (Some(x), Some(cursor_x)) = (x, cursor_x) {
-    cursor_line == line_no && cursor_x <= x // inclusive since (cursorX = x) implies (x-1 < cursor < x)
+    cursor_line == Some(line_no) && cursor_x <= x // inclusive since (cursorX = x) implies (x-1 < cursor < x)
   } else {
     false
   }
 }
 
-fn is_cursor_on_right<'a>(result: &State<'a>) -> bool {
-    unimplemented!();
+fn is_cursor_right_of<'a>(cursor_x: Option<Column>, cursor_line: Option<LineNumber>,
+                          x: Option<Column>, line_no: LineNumber) -> bool {
+  if let (Some(x), Some(cursor_x)) = (x, cursor_x) {
+    cursor_line == Some(line_no) && cursor_x > x
+  } else {
+    false
+  }
 }
 
-fn is_cursor_in_comment<'a>(result: &State<'a>) -> bool {
-    unimplemented!();
+fn is_cursor_in_comment<'a>(result: &State<'a>, cursor_x: Option<Column>, cursor_line: Option<LineNumber>) -> bool {
+    is_cursor_right_of(cursor_x, cursor_line, result.comment_x, result.line_no)
 }
 
 fn handle_change_delta<'a>(result: &State<'a>) {
@@ -712,8 +717,15 @@ fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
 // Indentation functions
 //------------------------------------------------------------------------------
 
-fn change_indent<'a>(result: &mut State<'a>, delta: i32) {
-    unimplemented!();
+fn add_indent<'a>(result: &mut State<'a>, delta: Delta) {
+  let orig_indent = result.x;
+  let new_indent = (orig_indent as Delta + delta) as Column;
+  let indent_str = repeat_string(BLANK_SPACE, new_indent);
+  let line_no = result.line_no;
+  replace_within_line(result, line_no, 0, orig_indent, &indent_str);
+  result.x = new_indent;
+  result.indent_x = Some(new_indent);
+  result.indent_delta += delta;
 }
 
 fn correct_indent<'a>(result: &mut State<'a>) {
