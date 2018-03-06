@@ -542,7 +542,9 @@ fn on_close_paren<'a>(result: &mut State<'a>) {
 }
 
 fn on_tab<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    if result.is_in_code {
+        result.ch = DOUBLE_SPACE;
+    }
 }
 
 fn on_semicolon<'a>(result: &mut State<'a>) {
@@ -588,11 +590,11 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
 // Character dispatch
 //------------------------------------------------------------------------------
 
-fn on_char<'a>(result: &mut State<'a>) {
+fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     let mut ch = result.ch;
     result.is_escaped = false;
 
-    if result.is_escaping      { after_backslash(result); }
+    if result.is_escaping      { after_backslash(result)?; }
     else if is_open_paren(ch)  { on_open_paren(result); }
     else if is_close_paren(ch) { on_close_paren(result); }
     else if ch == DOUBLE_QUOTE { on_quote(result); }
@@ -615,6 +617,8 @@ fn on_char<'a>(result: &mut State<'a>) {
     if state != TrackingArgTabStop::NotSearching {
         track_arg_tab_stop(result, state);
     }
+
+    Ok(())
 }
 
 //------------------------------------------------------------------------------
@@ -725,7 +729,7 @@ fn set_tab_stops<'a>(result: &mut State<'a>) {
 // High-level processing functions
 //------------------------------------------------------------------------------
 
-fn process_char<'a>(result: &mut State<'a>, ch: &'a str) {
+fn process_char<'a>(result: &mut State<'a>, ch: &'a str) -> Result<()> {
     let orig_ch = ch;
 
     result.ch = ch;
@@ -740,10 +744,12 @@ fn process_char<'a>(result: &mut State<'a>, ch: &'a str) {
     if result.skip_char {
         result.ch = "";
     } else {
-        on_char(result);
+        on_char(result)?;
     }
 
     commit_char(result, orig_ch);
+
+    Ok(())
 }
 
 fn process_line<'a>(result: &mut State<'a>, line_no: usize) {
@@ -765,7 +771,7 @@ fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool
         result.input_line_no = i;
         process_line(&mut result, i);
     }
-    finalize_result(&mut result);
+    finalize_result(&mut result)?;
 
     Ok(result)
 }

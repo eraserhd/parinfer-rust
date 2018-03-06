@@ -1,0 +1,20 @@
+    Finished dev [unoptimized + debuginfo] target(s) in 0.0 secs
+     Running target/debug/deps/parinfer-6c69f4ed4cb94a91
+
+running 7 tests
+test clamp_works ... ok
+test is_open_paren_works ... ok
+test match_paren_works ... ok
+test get_line_ending_works ... ok
+test repeat_string_works ... ok
+test peek_works ... ok
+test replace_within_string_works ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+
+   Doc-tests parinfer
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+
