@@ -92,7 +92,7 @@ struct Paren<'a> {
     line_no: LineNumber,
     ch: &'a str,
     x: Column,
-    indent_delta: i32,
+    indent_delta: Delta,
     arg_x: Option<Column>
 }
 
@@ -726,6 +726,12 @@ fn add_indent<'a>(result: &mut State<'a>, delta: Delta) {
   result.x = new_indent;
   result.indent_x = Some(new_indent);
   result.indent_delta += delta;
+}
+
+fn should_add_opener_indent<'a>(result: &State<'a>, opener: &Paren<'a>) -> bool {
+  // Don't add opener.indentDelta if the user already added it.
+  // (happens when multiple lines are indented together)
+  opener.indent_delta != result.indent_delta
 }
 
 fn correct_indent<'a>(result: &mut State<'a>) {
