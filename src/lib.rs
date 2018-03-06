@@ -556,7 +556,8 @@ fn on_semicolon<'a>(result: &mut State<'a>) {
 }
 
 fn on_newline<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    result.is_in_comment = false;
+    result.ch = "";
 }
 
 fn on_quote<'a>(result: &mut State<'a>) {
