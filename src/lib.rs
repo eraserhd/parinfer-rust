@@ -718,20 +718,20 @@ fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
 //------------------------------------------------------------------------------
 
 fn add_indent<'a>(result: &mut State<'a>, delta: Delta) {
-  let orig_indent = result.x;
-  let new_indent = (orig_indent as Delta + delta) as Column;
-  let indent_str = repeat_string(BLANK_SPACE, new_indent);
-  let line_no = result.line_no;
-  replace_within_line(result, line_no, 0, orig_indent, &indent_str);
-  result.x = new_indent;
-  result.indent_x = Some(new_indent);
-  result.indent_delta += delta;
+    let orig_indent = result.x;
+    let new_indent = (orig_indent as Delta + delta) as Column;
+    let indent_str = repeat_string(BLANK_SPACE, new_indent);
+    let line_no = result.line_no;
+    replace_within_line(result, line_no, 0, orig_indent, &indent_str);
+    result.x = new_indent;
+    result.indent_x = Some(new_indent);
+    result.indent_delta += delta;
 }
 
 fn should_add_opener_indent<'a>(result: &State<'a>, opener: &Paren<'a>) -> bool {
-  // Don't add opener.indentDelta if the user already added it.
-  // (happens when multiple lines are indented together)
-  opener.indent_delta != result.indent_delta
+    // Don't add opener.indent_delta if the user already added it.
+    // (happens when multiple lines are indented together)
+    opener.indent_delta != result.indent_delta
 }
 
 fn correct_indent<'a>(result: &mut State<'a>) {
