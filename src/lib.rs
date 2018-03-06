@@ -115,7 +115,7 @@ pub enum Mode {
     Paren
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 enum TrackingArgTabStop {
     NotSearching,
     Space,
@@ -570,7 +570,32 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
 //------------------------------------------------------------------------------
 
 fn on_char<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    let mut ch = result.ch;
+    result.is_escaped = false;
+
+    if result.is_escaping      { after_backslash(result); }
+    else if is_open_paren(ch)  { on_open_paren(result); }
+    else if is_close_paren(ch) { on_close_paren(result); }
+    else if ch == DOUBLE_QUOTE { on_quote(result); }
+    else if ch == SEMICOLON    { on_semicolon(result); }
+    else if ch == BACKSLASH    { on_backslash(result); }
+    else if ch == TAB          { on_tab(result); }
+    else if ch == NEWLINE      { on_newline(result); }
+
+    ch = result.ch;
+
+    result.is_in_code = !result.is_in_comment && !result.is_in_str;
+
+    if is_closable(result) {
+        let line_no = result.line_no;
+        let x = result.x;
+        reset_paren_trail(result, line_no, x + ch.len());
+    }
+
+    let state = result.tracking_arg_tab_stop;
+    if state != TrackingArgTabStop::NotSearching {
+        track_arg_tab_stop(result, state);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -597,7 +622,7 @@ fn handle_change_delta<'a>(result: &State<'a>) {
 // Paren Trail functions
 //------------------------------------------------------------------------------
 
-fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: u32, x: u32) {
+fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column) {
     unimplemented!();
 }
 
