@@ -369,7 +369,7 @@ fn insert_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, idx: Colu
     replace_within_line(result, line_no, idx, idx, insert);
 }
 
-fn init_line<'a>(result: &mut State<'a>, line: &str) {
+fn init_line<'a>(result: &mut State<'a>) {
     result.x = 0;
     result.line_no += 1;
 
@@ -524,6 +524,11 @@ fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
 //------------------------------------------------------------------------------
 
 fn on_open_paren<'a>(result: &mut State<'a>) {
+    if result.is_in_code {
+    }
+
+    if result.return_parens {
+    }
     unimplemented!();
 }
 
@@ -537,14 +542,16 @@ fn on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     unimplemented!();
 }
 
-fn on_close_paren<'a>(result: &mut State<'a>) {
+fn on_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     if result.is_in_code {
         if is_valid_close_paren(&result.paren_stack, result.ch) {
             on_matched_close_paren(result);
         } else {
-            on_unmatched_close_paren(result);
+            on_unmatched_close_paren(result)?;
         }
     }
+
+    Ok(())
 }
 
 fn on_tab<'a>(result: &mut State<'a>) {
@@ -607,7 +614,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
 
     if result.is_escaping      { after_backslash(result)?; }
     else if is_open_paren(ch)  { on_open_paren(result); }
-    else if is_close_paren(ch) { on_close_paren(result); }
+    else if is_close_paren(ch) { on_close_paren(result)?; }
     else if ch == DOUBLE_QUOTE { on_quote(result); }
     else if ch == SEMICOLON    { on_semicolon(result); }
     else if ch == BACKSLASH    { on_backslash(result); }
@@ -763,8 +770,29 @@ fn process_char<'a>(result: &mut State<'a>, ch: &'a str) -> Result<()> {
     Ok(())
 }
 
-fn process_line<'a>(result: &mut State<'a>, line_no: usize) {
-    unimplemented!();
+fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
+    init_line(result);
+    result.lines.push(Cow::from(result.input_lines[line_no]));
+
+    set_tab_stops(result);
+
+    for x in 0..result.input_lines[line_no].len() {
+        result.input_x = x;
+        let ch = &result.input_lines[line_no][x..x];
+        process_char(result, ch)?;
+    }
+    process_char(result, NEWLINE)?;
+
+    if !result.force_balance {
+        check_unmatched_outside_paren_trail(result)?;
+        check_leading_close_paren(result)?;
+    }
+
+    if Some(result.line_no) == result.paren_trail.line_no {
+        finish_new_paren_trail(result);
+    }
+
+    Ok(())
 }
 
 fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
@@ -780,7 +808,7 @@ fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool
 
     for i in 0..result.input_lines.len() {
         result.input_line_no = i;
-        process_line(&mut result, i);
+        process_line(&mut result, i)?;
     }
     finalize_result(&mut result)?;
 
