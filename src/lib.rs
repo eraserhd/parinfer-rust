@@ -92,7 +92,8 @@ struct Paren<'a> {
     line_no: LineNumber,
     ch: &'a str,
     x: Column,
-    indent_delta: i32
+    indent_delta: i32,
+    arg_x: Option<Column>
 }
 
 struct ParenTrailClamped<'a> {
@@ -114,6 +115,7 @@ pub enum Mode {
     Paren
 }
 
+#[derive(PartialEq, Eq)]
 enum TrackingArgTabStop {
     NotSearching,
     Space,
@@ -503,8 +505,18 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
     unimplemented!();
 }
 
-fn track_arg_tab_stop<'a>(result: &State<'a>, state: TrackingArgTabStop) -> bool {
-    unimplemented!();
+fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
+    if state == TrackingArgTabStop::Space {
+        if result.is_in_code && is_whitespace(result) {
+            result.tracking_arg_tab_stop = TrackingArgTabStop::Arg;
+        }
+    } else if state == TrackingArgTabStop::Arg {
+        if !is_whitespace(result) {
+            let opener = result.paren_stack.last_mut().unwrap();
+            opener.arg_x = Some(result.x);
+            result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
