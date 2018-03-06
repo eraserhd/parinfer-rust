@@ -490,7 +490,9 @@ fn is_whitespace<'a>(result: &State<'a>) -> bool {
 }
 
 fn is_closable<'a>(result: &State<'a>) -> bool {
-    unimplemented!();
+    let ch = result.ch;
+    let closer = is_close_paren(ch) && !result.is_escaped;
+    return result.is_in_code && !is_whitespace(result) && ch != "" && !closer;
 }
 
 //------------------------------------------------------------------------------
