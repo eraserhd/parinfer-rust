@@ -284,7 +284,7 @@ fn cache_error_pos(result: &mut State, error: Error) {
     unimplemented!();
 }
 
-fn error(result: &mut State, name: Error) -> Result<()> {
+fn error(result: &mut State, name: ErrorType) -> Result<()> {
     unimplemented!();
 }
 
@@ -562,7 +562,16 @@ fn on_backslash<'a>(result: &mut State<'a>) {
 }
 
 fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
-    unimplemented!();
+    result.is_escaping = false;
+    result.is_escaped = true;
+
+    if result.ch == NEWLINE {
+        if result.is_in_code {
+            return error(result, ErrorType::EolBackslash);
+        }
+    }
+
+    Ok(())
 }
 
 //------------------------------------------------------------------------------
