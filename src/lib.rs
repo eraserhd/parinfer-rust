@@ -643,8 +643,13 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
 // Cursor functions
 //------------------------------------------------------------------------------
 
-fn is_cursor_on_left<'a>(result: &State<'a>) -> bool {
-    unimplemented!();
+fn is_cursor_left_of<'a>(cursor_x: Option<Column>, cursor_line: Option<LineNumber>,
+                         x: Option<Column>, line_no: Option<LineNumber>) -> bool {
+  if let (Some(x), Some(cursor_x)) = (x, cursor_x) {
+    cursor_line == line_no && cursor_x <= x // inclusive since (cursorX = x) implies (x-1 < cursor < x)
+  } else {
+    false
+  }
 }
 
 fn is_cursor_on_right<'a>(result: &State<'a>) -> bool {
