@@ -731,15 +731,38 @@ fn shift_comment_line<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn check_indent<'a>(result: &mut State<'a>) {
+fn on_comment_line<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn init_indent<'a>(result: &mut State<'a>) {
-    unimplemented!();
+fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
+    if is_close_paren(result.ch) {
+        on_leading_close_paren(result)?;
+    } else if result.ch == SEMICOLON {
+        // comments don't count as indentation points
+        on_comment_line(result);
+        result.tracking_indent = false;
+    } else if result.ch != NEWLINE &&
+              result.ch != BLANK_SPACE &&
+              result.ch != TAB {
+        on_indent(result)?;
+    }
+
+    Ok(())
+}
+
+fn get_tab_stop_line<'a>(result: &State<'a>) -> LineNumber {
+    match result.selection_start_line {
+        Some(line) => line,
+        None => result.cursor_line.unwrap()
+    }
 }
 
 fn set_tab_stops<'a>(result: &mut State<'a>) {
+    if get_tab_stop_line(result) != result.line_no {
+        return;
+    }
+
     unimplemented!();
 }
 
@@ -756,7 +779,7 @@ fn process_char<'a>(result: &mut State<'a>, ch: &'a str) -> Result<()> {
     handle_change_delta(result);
 
     if result.tracking_indent {
-        check_indent(result);
+        check_indent(result)?;
     }
 
     if result.skip_char {
