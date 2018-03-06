@@ -392,7 +392,7 @@ fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
         replace_within_line(result, line_no, x, x + orig_ch.len(), ch);
         result.indent_delta -= orig_ch.len() as Delta - ch.len() as Delta;
     }
-    unimplemented!();
+    result.x += ch.len();
 }
 
 //------------------------------------------------------------------------------
