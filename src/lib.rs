@@ -548,7 +548,11 @@ fn on_tab<'a>(result: &mut State<'a>) {
 }
 
 fn on_semicolon<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    if result.is_in_code {
+        result.is_in_comment = true;
+        result.comment_x = Some(result.x);
+        result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
+    }
 }
 
 fn on_newline<'a>(result: &mut State<'a>) {
