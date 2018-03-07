@@ -692,7 +692,7 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, index_x: u32) -> u32 {
     unimplemented!();
 }
 
-fn correct_paren_trail<'a>(result: &mut State<'a>, index_x: u32) {
+fn correct_paren_trail<'a>(result: &mut State<'a>, index_x: usize) {
     unimplemented!();
 }
 
@@ -759,7 +759,31 @@ fn correct_indent<'a>(result: &mut State<'a>) {
 }
 
 fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
-    unimplemented!();
+    result.indent_x = Some(result.x);
+    result.tracking_indent = false;
+
+    if result.quote_danger {
+        error(result, ErrorType::QuoteDanger)?;
+    }
+
+    match result.mode {
+        Mode::Indent => {
+            let x = result.x;
+            correct_paren_trail(result, x);
+
+            let to_add = match peek(&result.paren_stack, 0) {
+                Some(opener) if should_add_opener_indent(result, opener) => Some(opener.indent_delta),
+                _ => None
+            };
+
+            if let Some(adjust) = to_add {
+                add_indent(result, adjust);
+            }
+        },
+        Mode::Paren => correct_indent(result)
+    }
+
+    Ok(())
 }
 
 fn check_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
