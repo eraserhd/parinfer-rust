@@ -787,7 +787,12 @@ fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
 }
 
 fn check_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
-    unimplemented!();
+    if result.error_pos_cache.contains_key(&ErrorType::LeadingCloseParen) &&
+      result.paren_trail.line_no == Some(result.line_no) {
+        error(result, ErrorType::LeadingCloseParen)?;
+    }
+
+    Ok(())
 }
 
 fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
