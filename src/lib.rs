@@ -93,6 +93,7 @@ struct Paren<'a> {
     ch: &'a str,
     x: Column,
     indent_delta: Delta,
+    max_child_indent: Option<Column>,
     arg_x: Option<Column>
 }
 
@@ -167,6 +168,7 @@ pub struct State<'a> {
     partial_result: bool,
     force_balance: bool,
 
+    max_indent: Option<Column>,
     indent_delta: i64,
 
     tracking_arg_tab_stop: TrackingArgTabStop,
@@ -230,6 +232,7 @@ fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart
         partial_result: false,
         force_balance: false,
 
+        max_indent: None,
         indent_delta: 0,
 
         tracking_arg_tab_stop: TrackingArgTabStop::NotSearching,
@@ -735,7 +738,24 @@ fn should_add_opener_indent<'a>(result: &State<'a>, opener: &Paren<'a>) -> bool 
 }
 
 fn correct_indent<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    let orig_indent = result.x as Delta;
+    let mut new_indent = orig_indent as Delta;
+    let mut min_indent = 0;
+    let mut max_indent = result.max_indent.map(|x| x as Delta);
+
+    if let Some(opener) = peek(&result.paren_stack, 0) {
+        min_indent = opener.x + 1;
+        max_indent = opener.max_child_indent.map(|x| x as Delta);
+        if should_add_opener_indent(result, opener) {
+            new_indent += opener.indent_delta;
+        }
+    }
+
+    new_indent = clamp(new_indent, Some(min_indent as Delta), max_indent);
+
+    if new_indent != orig_indent {
+        add_indent(result, new_indent - orig_indent);
+    }
 }
 
 fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
