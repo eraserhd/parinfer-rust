@@ -173,7 +173,7 @@ pub struct State<'a> {
 
     tracking_arg_tab_stop: TrackingArgTabStop,
 
-    error_pos_cache: HashMap<ErrorType, Error>
+    error_pos_cache: HashMap<ErrorName, Error>
 }
 
 fn initial_paren_trail<'a>() -> ParenTrail<'a> {
@@ -186,7 +186,7 @@ fn initial_paren_trail<'a>() -> ParenTrail<'a> {
     }
 }
 
-fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> State<'a> {
+fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: bool) -> State<'a> {
     State {
         mode: mode,
         smart: smart,
@@ -246,7 +246,7 @@ fn get_initial_result<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart
 //------------------------------------------------------------------------------
 
 #[derive(PartialEq, Eq, Hash)]
-pub enum ErrorType {
+pub enum ErrorName {
     QuoteDanger,
     EolBackslash,
     UnclosedQuote,
@@ -260,7 +260,7 @@ pub enum ErrorType {
 }
 
 pub struct Error {
-    name: ErrorType,
+    name: ErrorName,
     message: &'static str,
     line_no: LineNumber,
     x: Column
@@ -268,26 +268,26 @@ pub struct Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-fn error_message(error: ErrorType) -> &'static str {
+fn error_message(error: ErrorName) -> &'static str {
     match error {
-        ErrorType::QuoteDanger => "Quotes must balanced inside comment blocks.",
-        ErrorType::EolBackslash => "Line cannot end in a hanging backslash.",
-        ErrorType::UnclosedQuote => "String is missing a closing quote.",
-        ErrorType::UnclosedParen => "Unclosed open-paren.",
-        ErrorType::UnmatchedCloseParen => "Unmatched close-paren.",
-        ErrorType::UnmatchedOpenParen => "Unmatched open-paren.",
-        ErrorType::LeadingCloseParen => "Line cannot lead with a close-paren.",
-        ErrorType::Unhandled => "Unhandled error.",
+        ErrorName::QuoteDanger => "Quotes must balanced inside comment blocks.",
+        ErrorName::EolBackslash => "Line cannot end in a hanging backslash.",
+        ErrorName::UnclosedQuote => "String is missing a closing quote.",
+        ErrorName::UnclosedParen => "Unclosed open-paren.",
+        ErrorName::UnmatchedCloseParen => "Unmatched close-paren.",
+        ErrorName::UnmatchedOpenParen => "Unmatched open-paren.",
+        ErrorName::LeadingCloseParen => "Line cannot lead with a close-paren.",
+        ErrorName::Unhandled => "Unhandled error.",
         
-        ErrorType::Restart => "Restart requested (you shouldn't see this)."
+        ErrorName::Restart => "Restart requested (you shouldn't see this)."
     }
 }
 
-fn cache_error_pos(result: &mut State, error: ErrorType) {
+fn cache_error_pos(result: &mut State, error: ErrorName) {
     unimplemented!();
 }
 
-fn error(result: &mut State, name: ErrorType) -> Result<()> {
+fn error(result: &mut State, name: ErrorName) -> Result<()> {
     unimplemented!();
 }
 
@@ -381,9 +381,9 @@ fn init_line<'a>(result: &mut State<'a>) {
     result.comment_x = None;
     result.indent_delta = 0;
 
-    result.error_pos_cache.remove(&ErrorType::UnmatchedCloseParen);
-    result.error_pos_cache.remove(&ErrorType::UnmatchedOpenParen);
-    result.error_pos_cache.remove(&ErrorType::LeadingCloseParen);
+    result.error_pos_cache.remove(&ErrorName::UnmatchedCloseParen);
+    result.error_pos_cache.remove(&ErrorName::UnmatchedOpenParen);
+    result.error_pos_cache.remove(&ErrorName::LeadingCloseParen);
 
     result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
     result.tracking_indent = !result.is_in_str;
@@ -582,11 +582,11 @@ fn on_quote<'a>(result: &mut State<'a>) {
     } else if result.is_in_comment {
         result.quote_danger = !result.quote_danger;
         if result.quote_danger {
-            cache_error_pos(result, ErrorType::QuoteDanger);
+            cache_error_pos(result, ErrorName::QuoteDanger);
         }
     } else {
         result.is_in_str = true;
-        cache_error_pos(result, ErrorType::UnclosedQuote);
+        cache_error_pos(result, ErrorName::UnclosedQuote);
     }
 }
 
@@ -600,7 +600,7 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
 
     if result.ch == NEWLINE {
         if result.is_in_code {
-            return error(result, ErrorType::EolBackslash);
+            return error(result, ErrorName::EolBackslash);
         }
     }
 
@@ -763,7 +763,7 @@ fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
     result.tracking_indent = false;
 
     if result.quote_danger {
-        error(result, ErrorType::QuoteDanger)?;
+        error(result, ErrorName::QuoteDanger)?;
     }
 
     match result.mode {
@@ -787,9 +787,9 @@ fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
 }
 
 fn check_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
-    if result.error_pos_cache.contains_key(&ErrorType::LeadingCloseParen) &&
+    if result.error_pos_cache.contains_key(&ErrorName::LeadingCloseParen) &&
       result.paren_trail.line_no == Some(result.line_no) {
-        error(result, ErrorType::LeadingCloseParen)?;
+        error(result, ErrorName::LeadingCloseParen)?;
     }
 
     Ok(())
@@ -800,10 +800,10 @@ fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
         Mode::Indent => {
             if !result.force_balance {
                 if result.smart {
-                    error(result, ErrorType::LeadingCloseParen)?;
+                    error(result, ErrorName::LeadingCloseParen)?;
                 }
-                if !result.error_pos_cache.contains_key(&ErrorType::LeadingCloseParen) {
-                    cache_error_pos(result, ErrorType::LeadingCloseParen);
+                if !result.error_pos_cache.contains_key(&ErrorName::LeadingCloseParen) {
+                    cache_error_pos(result, ErrorName::LeadingCloseParen);
                 }
             }
             result.skip_char = true;
@@ -813,7 +813,7 @@ fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
                 if result.smart {
                     result.skip_char = true;
                 } else {
-                    error(result, ErrorType::UnmatchedCloseParen)?;
+                    error(result, ErrorName::UnmatchedCloseParen)?;
                 }
             } else if is_cursor_left_of(result.cursor_x, result.cursor_line, Some(result.x), result.line_no) {
                 let line_no = result.line_no;
@@ -951,20 +951,30 @@ fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
     unimplemented!();
 }
 
-fn process_error<'a>(result: &mut State<'a>) -> Result<()> {
+fn process_error<'a>(result: &mut State<'a>) -> Result<State<'a>> {
     unimplemented!();
 }
 
-fn process_text<'a>(text: &'a str, options: Options<'a>, mode: Mode, smart: bool) -> Result<State<'a>> {
-    let mut result = get_initial_result(text, options, mode, smart);
+fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: bool) -> Result<State<'a>> {
+    let mut result = get_initial_result(text, &options, mode, smart);
 
+    let mut process_result : Result<()> = Ok(());
     for i in 0..result.input_lines.len() {
         result.input_line_no = i;
-        process_line(&mut result, i)?;
+        process_result = process_line(&mut result, i);
+        if let Err(_) = process_result {
+            break;
+        }
     }
-    finalize_result(&mut result)?;
+    if let Ok(_) = process_result {
+        process_result = finalize_result(&mut result);
+    }
 
-    Ok(result)
+    match process_result {
+        Err(Error { name: ErrorName::Restart, .. }) => process_text(text, &options, Mode::Paren, smart),
+        Err(_) => process_error(&mut result),
+        _ => Ok(result)
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -976,14 +986,14 @@ fn public_result<'a>(result: State<'a>) -> State<'a> {
 }
 
 pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) -> Result<State<'a>> {
-    process_text(text, options, Mode::Indent, false).map(public_result)
+    process_text(text, &options, Mode::Indent, false).map(public_result)
 }
 
 pub fn paren_mode<'a>(text: &'a str, options: Options<'a>) -> Result<State<'a>> {
-    process_text(text, options, Mode::Paren, false).map(public_result)
+    process_text(text, &options, Mode::Paren, false).map(public_result)
 }
 
 pub fn smart_mode<'a>(text: &'a str, options: Options<'a>) -> Result<State<'a>> {
     let smart = options.selection_start_line == None;
-    process_text(text, options, Mode::Indent, smart).map(public_result)
+    process_text(text, &options, Mode::Indent, smart).map(public_result)
 }
