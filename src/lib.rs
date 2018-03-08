@@ -796,11 +796,38 @@ fn check_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
 }
 
 fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
-    unimplemented!();
-}
+    match result.mode {
+        Mode::Indent => {
+            if !result.force_balance {
+                if result.smart {
+                    error(result, ErrorType::LeadingCloseParen)?;
+                }
+                if !result.error_pos_cache.contains_key(&ErrorType::LeadingCloseParen) {
+                    cache_error_pos(result, ErrorType::LeadingCloseParen);
+                }
+            }
+            result.skip_char = true;
+        },
+        Mode::Paren => {
+            if !is_valid_close_paren(&result.paren_stack, result.ch) {
+                if result.smart {
+                    result.skip_char = true;
+                } else {
+                    error(result, ErrorType::UnmatchedCloseParen)?;
+                }
+            } else if is_cursor_left_of(result.cursor_x, result.cursor_line, Some(result.x), result.line_no) {
+                let line_no = result.line_no;
+                let x = result.x;
+                reset_paren_trail(result, line_no, x);
+                on_indent(result)?;
+            } else {
+                append_paren_trail(result);
+                result.skip_char = true;
+            }
+        }
+    }
 
-fn shift_comment_line<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    Ok(())
 }
 
 fn on_comment_line<'a>(result: &mut State<'a>) {
