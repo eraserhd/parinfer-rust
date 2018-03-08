@@ -688,7 +688,7 @@ fn pop_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
-fn get_parent_opener_index<'a>(result: &mut State<'a>, index_x: u32) -> u32 {
+fn get_parent_opener_index<'a>(result: &mut State<'a>, index_x: usize) -> usize {
     unimplemented!();
 }
 
@@ -831,7 +831,37 @@ fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
 }
 
 fn on_comment_line<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    let paren_trail_length = result.paren_trail.openers.len();
+
+    // restore the openers matching the previous paren trail
+    if let Mode::Paren = result.mode {
+        for j in 0..paren_trail_length {
+            if let Some(opener) = peek(&result.paren_trail.openers, j) {
+                result.paren_stack.push(Paren { ..*opener });
+            }
+        }
+    };
+
+    let x = result.x;
+    let i = get_parent_opener_index(result, x);
+    let mut indent_to_add : Delta = 0;
+    if let Some(opener) = peek(&result.paren_stack, i) {
+        // shift the comment line based on the parent open paren
+        if should_add_opener_indent(result, opener) {
+            indent_to_add = opener.indent_delta;
+        }
+        // TODO: store some information here if we need to place close-parens after comment lines
+    }
+    if indent_to_add != 0 {
+        add_indent(result, indent_to_add);
+    }
+
+    // repop the openers matching the previous paren trail
+    if let Mode::Paren = result.mode {
+        for _ in 0..paren_trail_length {
+            result.paren_stack.pop();
+        }
+    }
 }
 
 fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
