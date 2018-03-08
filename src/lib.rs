@@ -61,7 +61,42 @@ struct TransformedChange<'a> {
 }
 
 fn transform_change<'a>(change: &Change<'a>) -> TransformedChange<'a> {
-    unimplemented!();
+  let new_lines : Vec<&'a str> = change.new_text.lines().collect();
+  let old_lines : Vec<&'a str> = change.old_text.lines().collect();
+
+  // single line case:
+  //     (defn foo| [])
+  //              ^ newEndX, newEndLineNo
+  //           +++
+
+  // multi line case:
+  //     (defn foo
+  //           ++++
+  //        "docstring."
+  //     ++++++++++++++++
+  //       |[])
+  //     ++^ newEndX, newEndLineNo
+
+  let last_old_line_len = old_lines[old_lines.len()-1].len();
+  let last_new_line_len = new_lines[new_lines.len()-1].len();
+
+  let old_end_x = (if old_lines.len() == 1 { change.x } else { 0 }) + last_old_line_len;
+  let new_end_x = (if new_lines.len() == 1 { change.x } else { 0 }) + last_new_line_len;
+  let new_end_line_no = change.line_no + (new_lines.len()-1);
+
+  TransformedChange {
+    x: change.x,
+    line_no: change.line_no,
+    old_text: change.old_text,
+    new_text: change.new_text,
+
+    old_end_x: old_end_x,
+    new_end_x: new_end_x,
+    new_end_line_no: new_end_line_no,
+
+    lookup_line_no: new_end_line_no,
+    lookup_x: new_end_x
+  }
 }
 
 fn transform_changes<'a>(changes: &Vec<Change<'a>>) -> HashMap<(LineNumber, Column), TransformedChange<'a>> {
