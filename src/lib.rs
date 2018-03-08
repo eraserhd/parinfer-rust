@@ -287,7 +287,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
 // Possible Errors
 //------------------------------------------------------------------------------
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub enum ErrorName {
     QuoteDanger,
     EolBackslash,
@@ -303,8 +303,10 @@ pub enum ErrorName {
 pub struct Error {
     name: ErrorName,
     message: &'static str,
+    x: Column,
     line_no: LineNumber,
-    x: Column
+    input_x: Column,
+    input_line_no: LineNumber,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -323,8 +325,16 @@ fn error_message(error: ErrorName) -> &'static str {
     }
 }
 
-fn cache_error_pos(result: &mut State, error: ErrorName) {
-    unimplemented!();
+fn cache_error_pos(result: &mut State, name: ErrorName) {
+    let error = Error {
+        name,
+        message: "",
+        line_no: result.line_no,
+        x: result.x,
+        input_line_no: result.input_line_no,
+        input_x: result.input_x
+    };
+    result.error_pos_cache.insert(name, error);
 }
 
 fn error(result: &mut State, name: ErrorName) -> Result<()> {
