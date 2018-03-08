@@ -173,6 +173,7 @@ pub struct State<'a> {
 
     tracking_arg_tab_stop: TrackingArgTabStop,
 
+    error: Option<Error>,
     error_pos_cache: HashMap<ErrorName, Error>
 }
 
@@ -237,6 +238,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
 
         tracking_arg_tab_stop: TrackingArgTabStop::NotSearching,
 
+        error: None,
         error_pos_cache: HashMap::new()
     }
 }
@@ -254,7 +256,6 @@ pub enum ErrorName {
     UnmatchedCloseParen,
     UnmatchedOpenParen,
     LeadingCloseParen,
-    Unhandled,
 
     Restart
 }
@@ -277,7 +278,6 @@ fn error_message(error: ErrorName) -> &'static str {
         ErrorName::UnmatchedCloseParen => "Unmatched close-paren.",
         ErrorName::UnmatchedOpenParen => "Unmatched open-paren.",
         ErrorName::LeadingCloseParen => "Line cannot lead with a close-paren.",
-        ErrorName::Unhandled => "Unhandled error.",
         
         ErrorName::Restart => "Restart requested (you shouldn't see this)."
     }
@@ -951,8 +951,9 @@ fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
     unimplemented!();
 }
 
-fn process_error<'a>(result: &mut State<'a>) -> Result<State<'a>> {
-    unimplemented!();
+fn process_error<'a>(result: &mut State<'a>, e: Error) {
+    result.success = false;
+    result.error = Some(e);
 }
 
 fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: bool) -> Result<State<'a>> {
@@ -972,7 +973,10 @@ fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: boo
 
     match process_result {
         Err(Error { name: ErrorName::Restart, .. }) => process_text(text, &options, Mode::Paren, smart),
-        Err(_) => process_error(&mut result),
+        Err(e) => {
+            process_error(&mut result, e);
+            Ok(result)
+        }
         _ => Ok(result)
     }
 }
