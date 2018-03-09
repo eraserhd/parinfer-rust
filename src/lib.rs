@@ -134,7 +134,9 @@ struct Paren<'a> {
     x: Column,
     indent_delta: Delta,
     max_child_indent: Option<Column>,
-    arg_x: Option<Column>
+    arg_x: Option<Column>,
+    input_line_no: LineNumber,
+    input_x: Column
 }
 
 struct ParenTrailClamped<'a> {
@@ -338,7 +340,43 @@ fn cache_error_pos(result: &mut State, name: ErrorName) {
 }
 
 fn error(result: &mut State, name: ErrorName) -> Result<()> {
-    unimplemented!();
+    let (line_no, x) = match (result.partial_result, result.error_pos_cache.get(&name)) {
+        (true,  Some(cache)) => (cache.line_no, cache.x),
+        (false, Some(cache)) => (cache.input_line_no, cache.input_x),
+        (true,  None)        => (result.line_no, result.x),
+        (false, None)        => (result.input_line_no, result.input_x)
+    };
+
+    let mut e = Error {
+        name,
+        line_no,
+        x,
+        message: error_message(name),
+        input_line_no: result.input_line_no,
+        input_x: result.input_x
+    };
+
+    if name == ErrorName::UnmatchedCloseParen {
+        // extra error info for locating the open-paren that it should've matched
+        if let Some(cache) = result.error_pos_cache.get(&ErrorName::UnmatchedOpenParen) {
+            if let Some(opener) = peek(&result.paren_stack, 0) {
+            /*
+              e.extra = {
+                  name: ErrorName::UnmatchedOpenParen,
+                  lineNo: cache ? cache[key_line_no] : opener[key_line_no],
+                  x: cache ? cache[key_x] : opener[key_x]
+              };
+              */
+            }
+        }
+    } else if name == ErrorName::UnclosedParen {
+        if let Some(opener) = peek(&result.paren_stack, 0) {
+            e.line_no = if result.partial_result { opener.line_no } else { opener.input_line_no };
+            e.x = if result.partial_result { opener.x } else { opener.input_x };
+        }
+    }
+
+    Err(e)
 }
 
 //------------------------------------------------------------------------------
