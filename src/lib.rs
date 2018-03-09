@@ -128,6 +128,7 @@ pub struct Options<'a> {
 // of a given text, we mutate this structure to update the state of our
 // system.
 
+#[derive(Clone)]
 struct Paren<'a> {
     line_no: LineNumber,
     ch: &'a str,
@@ -140,8 +141,8 @@ struct Paren<'a> {
 }
 
 struct ParenTrailClamped<'a> {
-    start_x: Column,
-    end_x: Column,
+    start_x: Option<Column>,
+    end_x: Option<Column>,
     openers: Vec<Paren<'a>>
 }
 
@@ -153,6 +154,7 @@ struct ParenTrail<'a> {
     clamped: Option<ParenTrailClamped<'a>>
 }
 
+#[derive(PartialEq, Eq)]
 pub enum Mode {
     Indent,
     Paren
@@ -616,17 +618,50 @@ fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
 
 fn on_open_paren<'a>(result: &mut State<'a>) {
     if result.is_in_code {
-    }
+        let opener = Paren {
+            input_line_no: result.input_line_no,
+            input_x: result.input_x,
 
-    if result.return_parens {
+            line_no: result.line_no,
+            x: result.x,
+            ch: result.ch,
+            indent_delta: result.indent_delta,
+            max_child_indent: None,
+
+            arg_x: None
+        };
+
+        result.paren_stack.push(opener);
+        result.tracking_arg_tab_stop = TrackingArgTabStop::Space;
     }
-    unimplemented!();
 }
 
-// set_closer
+fn on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+    let opener = (*peek(&result.paren_stack, 0).unwrap()).clone();
+    if result.return_parens {
+        //setCloser(opener, result.lineNo, result.x, result.ch);
+    }
 
-fn on_matched_close_paren<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    result.paren_trail.end_x = Some(result.x + 1);
+    result.paren_trail.openers.push(opener);
+
+    if result.mode == Mode::Indent && result.smart && check_cursor_holding(result)? {
+        let orig_start_x = result.paren_trail.start_x;
+        let orig_end_x = result.paren_trail.end_x;
+        let orig_openers = result.paren_trail.openers.clone();
+        let x = result.x;
+        let line_no = result.line_no;
+        reset_paren_trail(result, line_no, x+1);
+        result.paren_trail.clamped = Some(ParenTrailClamped {
+            start_x:  orig_start_x,
+            end_x: orig_end_x,
+            openers: orig_openers
+        });
+    }
+    result.paren_stack.pop();
+    result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
+
+    Ok(())
 }
 
 fn on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
