@@ -200,6 +200,8 @@ pub struct State<'a> {
 
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
+    prev_cursor_x: Option<Column>,
+    prev_cursor_line: Option<Column>,
 
     selection_start_line: Option<LineNumber>,
 
@@ -266,6 +268,8 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
 
         cursor_x: options.cursor_x,
         cursor_line: options.cursor_line,
+        prev_cursor_x: options.prev_cursor_x,
+        prev_cursor_line: options.prev_cursor_line,
 
         selection_start_line: None,
 
@@ -588,7 +592,35 @@ fn is_closable<'a>(result: &State<'a>) -> bool {
 //------------------------------------------------------------------------------
 
 fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
-    unimplemented!();
+    let opener = peek(&result.paren_stack, 0).unwrap();
+    let hold_min_x = peek(&result.paren_stack, 1).map(|p| p.x+1).unwrap_or(0);
+    let hold_max_x = opener.x;
+
+    let holding = (
+      result.cursor_line == Some(opener.line_no) &&
+      result.cursor_x.map(|x| hold_min_x <= x).unwrap_or(false) &&
+      result.cursor_x.map(|x| x <= hold_max_x).unwrap_or(false)
+    );
+    let should_check_prev = result.changes.is_empty() && result.prev_cursor_line != None;
+    if should_check_prev {
+        let prev_holding = (
+          result.prev_cursor_line == Some(opener.line_no) &&
+          result.prev_cursor_x.map(|x| hold_min_x <= x).unwrap_or(false) &&
+          result.prev_cursor_x.map(|x| x <= hold_max_x).unwrap_or(false)
+        );
+        if prev_holding && !holding {
+            return Err(Error {
+                name: ErrorName::Restart,
+                x: 0,
+                input_line_no: 0,
+                input_x: 0,
+                line_no: 0,
+                message: ""
+            });
+        }
+    }
+
+    Ok(holding)
 }
 
 fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
