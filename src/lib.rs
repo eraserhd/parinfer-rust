@@ -1402,8 +1402,13 @@ fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn make_tab_stop<'a>(result: &State<'a>, paren: &Paren<'a>) -> TabStop<'a> {
-    unimplemented!();
+fn make_tab_stop<'a>(result: &State<'a>, opener: &Paren<'a>) -> TabStop<'a> {
+    TabStop {
+        ch: opener.ch,
+        x: opener.x,
+        line_no: opener.line_no,
+        arg_x: opener.arg_x
+    }
 }
 
 fn get_tab_stop_line<'a>(result: &State<'a>) -> LineNumber {
