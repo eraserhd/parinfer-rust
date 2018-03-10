@@ -1077,8 +1077,30 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
     panic!("no i returned here?");
 }
 
-fn correct_paren_trail<'a>(result: &mut State<'a>, index_x: usize) {
-    unimplemented!();
+// INDENT MODE: correct paren trail from indentation
+fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
+    let mut parens = String::new();
+
+    let index = get_parent_opener_index(result, indent_x);
+    for i in 0..index {
+        let opener = result.paren_stack.pop().unwrap();
+        let close_ch = match_paren(opener.ch).unwrap();
+        result.paren_trail.openers.push(opener);
+        parens.push_str(close_ch);
+
+        if result.return_parens {
+            //FIXME:
+            //set_closer(opener, result.paren_trail.line_no, result.paren_trail.start_x+i, close_ch);
+        }
+    }
+
+    if let Some(line_no) = result.paren_trail.line_no {
+        let start_x = result.paren_trail.start_x.unwrap();
+        let end_x = result.paren_trail.end_x.unwrap();
+        replace_within_line(result, line_no, start_x, end_x, &parens[..]);
+        result.paren_trail.end_x = result.paren_trail.start_x.map(|x| x + parens.len());
+        remember_paren_trail(result);
+    }
 }
 
 fn clean_paren_trail<'a>(result: &mut State<'a>) {
@@ -1098,6 +1120,10 @@ fn check_unmatched_outside_paren_trail<'a>(result: &mut State<'a>) -> Result<()>
 }
 
 fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
+    unimplemented!();
+}
+
+fn remember_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
