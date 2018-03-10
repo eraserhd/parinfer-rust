@@ -1445,7 +1445,21 @@ fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
 }
 
 fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
-    unimplemented!();
+    if result.quote_danger { error(result, ErrorName::QuoteDanger)?; }
+    if result.is_in_str    { error(result, ErrorName::UnclosedQuote)?; }
+
+    if result.paren_stack.len() != 0 {
+        if result.mode == Mode::Paren {
+            error(result, ErrorName::UnclosedParen)?;
+        }
+    }
+    if result.mode == Mode::Indent {
+        init_line(result);
+        on_indent(result)?;
+    }
+    result.success = true;
+
+    Ok(())
 }
 
 fn process_error<'a>(result: &mut State<'a>, e: Error) {
