@@ -419,21 +419,6 @@ fn repeat_string_works() {
     assert_eq!(repeat_string("", 5), "");
 }
 
-fn get_line_ending(text: &str) -> &'static str {
-    if text.chars().any(|ch| ch == '\r') {
-        "\r\n"
-    } else {
-        "\n"
-    }
-}
-
-#[cfg(test)]
-#[test]
-fn get_line_ending_works() {
-    assert_eq!(get_line_ending("foo\nbar"), "\n");
-    assert_eq!(get_line_ending("foo\r\nbar"), "\r\n");
-}
-
 //------------------------------------------------------------------------------
 // Line operations
 //------------------------------------------------------------------------------
