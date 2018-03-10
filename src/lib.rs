@@ -696,7 +696,7 @@ fn on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
 fn on_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     if result.is_in_code {
         if is_valid_close_paren(&result.paren_stack, result.ch) {
-            on_matched_close_paren(result);
+            on_matched_close_paren(result)?;
         } else {
             on_unmatched_close_paren(result)?;
         }
