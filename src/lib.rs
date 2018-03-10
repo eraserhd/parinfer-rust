@@ -887,8 +887,194 @@ fn pop_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
-fn get_parent_opener_index<'a>(result: &mut State<'a>, index_x: usize) -> usize {
-    unimplemented!();
+fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize {
+    for i in 0..result.paren_stack.len() {
+        let opener = peek(&result.paren_stack, i).unwrap().clone();
+        let opener_index = result.paren_stack.len() - i - 1;
+
+        let curr_outside = opener.x < indent_x;
+
+        let prev_indent_x = indent_x as Delta - result.indent_delta;
+        let prev_outside = opener.x as Delta - opener.indent_delta < prev_indent_x;
+
+        let mut is_parent = false;
+
+        if prev_outside && curr_outside {
+            is_parent = true;
+        }
+        else if !prev_outside && !curr_outside {
+            is_parent = false;
+        }
+        else if prev_outside && !curr_outside {
+            // POSSIBLE FRAGMENTATION
+            // (foo    --\
+            //            +--- FRAGMENT `(foo bar)` => `(foo) bar`
+            // bar)    --/
+
+            // 1. PREVENT FRAGMENTATION
+            // ```in
+            //   (foo
+            // ++
+            //   bar
+            // ```
+            // ```out
+            //   (foo
+            //     bar
+            // ```
+            if result.indent_delta == 0 {
+                is_parent = true;
+            }
+
+            // 2. ALLOW FRAGMENTATION
+            // ```in
+            // (foo
+            //   bar
+            // --
+            // ```
+            // ```out
+            // (foo)
+            // bar
+            // ```
+            else if opener.indent_delta == 0 {
+                is_parent = false;
+            }
+
+            else {
+                // TODO: identify legitimate cases where both are nonzero
+
+                // allow the fragmentation by default
+                is_parent = false;
+
+                // TODO: should we throw to exit instead?  either of:
+                // 1. give up, just `throw error(...)`
+                // 2. fallback to paren mode to preserve structure
+            }
+        }
+        else if !prev_outside && curr_outside {
+            // POSSIBLE ADOPTION
+            // (foo)   --\
+            //            +--- ADOPT `(foo) bar` => `(foo bar)`
+            //   bar   --/
+
+            {
+
+                let next_opener = peek(&result.paren_stack, i+1);
+
+                // 1. DISALLOW ADOPTION
+                // ```in
+                //   (foo
+                // --
+                //     (bar)
+                // --
+                //     baz)
+                // ```
+                // ```out
+                // (foo
+                //   (bar)
+                //   baz)
+                // ```
+                // OR
+                // ```in
+                //   (foo
+                // --
+                //     (bar)
+                // -
+                //     baz)
+                // ```
+                // ```out
+                // (foo
+                //  (bar)
+                //  baz)
+                // ```
+                if next_opener.map(|no| no.indent_delta <= opener.indent_delta).unwrap_or(false) {
+                    // we can only disallow adoption if nextOpener.indentDelta will actually
+                    // prevent the indentX from being in the opener's threshold.
+                    if indent_x as Delta + next_opener.unwrap().indent_delta > opener.x as Delta {
+                        is_parent = true;
+                    }
+                    else {
+                        is_parent = false;
+                    }
+                }
+
+                // 2. ALLOW ADOPTION
+                // ```in
+                // (foo
+                //     (bar)
+                // --
+                //     baz)
+                // ```
+                // ```out
+                // (foo
+                //   (bar
+                //     baz))
+                // ```
+                // OR
+                // ```in
+                //   (foo
+                // -
+                //     (bar)
+                // --
+                //     baz)
+                // ```
+                // ```out
+                //  (foo
+                //   (bar)
+                //    baz)
+                // ```
+                else if next_opener.map(|no| no.indent_delta > opener.indent_delta).unwrap_or(false) {
+                    is_parent = true;
+                }
+
+                // 3. ALLOW ADOPTION
+                // ```in
+                //   (foo)
+                // --
+                //   bar
+                // ```
+                // ```out
+                // (foo
+                //   bar)
+                // ```
+                // OR
+                // ```in
+                // (foo)
+                //   bar
+                // ++
+                // ```
+                // ```out
+                // (foo
+                //   bar
+                // ```
+                // OR
+                // ```in
+                //  (foo)
+                // +
+                //   bar
+                // ++
+                // ```
+                // ```out
+                //  (foo
+                //   bar)
+                // ```
+                else if result.indent_delta > opener.indent_delta {
+                    is_parent = true;
+                }
+
+            }
+
+            if is_parent { // if new parent
+                // Clear `indentDelta` since it is reserved for previous child lines only.
+                result.paren_stack[opener_index].indent_delta = 0;
+            }
+        }
+
+        if is_parent {
+            return i;
+        }
+    }
+
+    panic!("no i returned here?");
 }
 
 fn correct_paren_trail<'a>(result: &mut State<'a>, index_x: usize) {
