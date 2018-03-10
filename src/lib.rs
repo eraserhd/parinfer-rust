@@ -875,7 +875,16 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
 }
 
 fn pop_paren_trail<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    let start_x = result.paren_trail.start_x;
+    let end_x = result.paren_trail.end_x;
+
+    if start_x == end_x {
+        return;
+    }
+
+    while let Some(paren) = result.paren_trail.openers.pop() {
+        result.paren_stack.push(paren);
+    }
 }
 
 fn get_parent_opener_index<'a>(result: &mut State<'a>, index_x: usize) -> usize {
