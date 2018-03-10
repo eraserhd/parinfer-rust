@@ -1155,6 +1155,21 @@ fn invalidate_paren_trail<'a>(result: &mut State<'a>) {
     result.paren_trail = initial_paren_trail();
 }
 
+fn check_unmatched_outside_paren_trail<'a>(result: &mut State<'a>) -> Result<()> {
+    let mut do_error = false;
+    if let Some(cache) = result.error_pos_cache.get(&ErrorName::UnmatchedCloseParen) {
+        if result.paren_trail.start_x.map(|x| cache.x < x).unwrap_or(false) {
+            do_error = true;
+        }
+    }
+
+    if do_error {
+        error(result, ErrorName::UnmatchedCloseParen)?;
+    }
+
+    Ok(())
+}
+
 fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
     if let Some(parent) = result.paren_stack.last_mut() {
         parent.max_child_indent = Some(opener.x);
@@ -1163,19 +1178,15 @@ fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
     }
 }
 
-fn check_unmatched_outside_paren_trail<'a>(result: &mut State<'a>) -> Result<()> {
-    unimplemented!();
-}
-
-fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
-    unimplemented!();
-}
-
 fn remember_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
 fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
+    unimplemented!();
+}
+
+fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
