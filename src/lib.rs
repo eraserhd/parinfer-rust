@@ -154,6 +154,12 @@ struct ParenTrail<'a> {
     clamped: Option<ParenTrailClamped<'a>>
 }
 
+struct ReturnedParenTrail {
+    line_no: LineNumber,
+    start_x: Column,
+    end_x: Column
+}
+
 #[derive(PartialEq, Eq)]
 pub enum Mode {
     Indent,
@@ -188,6 +194,7 @@ pub struct State<'a> {
     paren_stack: Vec<Paren<'a>>,
 
     paren_trail: ParenTrail<'a>,
+    paren_trails: Vec<ReturnedParenTrail>,
 
     return_parens: bool,
 
@@ -253,6 +260,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
         paren_stack: vec![],
 
         paren_trail: initial_paren_trail(),
+        paren_trails: vec![],
 
         return_parens: false,
 
@@ -1187,7 +1195,22 @@ fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    if result.is_in_str {
+        invalidate_paren_trail(result);
+    }
+    else if result.mode == Mode::Indent {
+        clamp_paren_trail_to_cursor(result);
+        pop_paren_trail(result);
+    }
+    else if result.mode == Mode::Paren {
+        if let Some(paren) = peek(&result.paren_trail.openers, 0).map(Clone::clone) {
+            set_max_indent(result, &paren);
+        }
+        if Some(result.line_no) != result.cursor_line {
+            clean_paren_trail(result);
+        }
+        remember_paren_trail(result);
+    }
 }
 
 //------------------------------------------------------------------------------
