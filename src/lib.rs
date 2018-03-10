@@ -816,8 +816,12 @@ fn is_cursor_in_comment<'a>(result: &State<'a>, cursor_x: Option<Column>, cursor
     is_cursor_right_of(cursor_x, cursor_line, result.comment_x, result.line_no)
 }
 
-fn handle_change_delta<'a>(result: &State<'a>) {
-    unimplemented!();
+fn handle_change_delta<'a>(result: &mut State<'a>) {
+    if !result.changes.is_empty() && (result.smart || result.mode == Mode::Paren) {
+        if let Some(change) = result.changes.get(&(result.input_line_no, result.input_x)) {
+            result.indent_delta += change.new_end_x as Delta - change.old_end_x as Delta;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
