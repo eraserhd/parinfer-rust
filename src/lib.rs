@@ -1134,10 +1134,28 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn append_paren_trail<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    let opener = result.paren_stack.pop().unwrap();
+    let close_ch = match_paren(opener.ch).unwrap();
+    if result.return_parens {
+        //FIXME:
+        //set_closer(opener, result.paren_trail.line_no, result.paren_trail.end_x, close_ch);
+    }
+
+    set_max_indent(result, &opener);
+    let line_no = result.paren_trail.line_no.unwrap();
+    let end_x = result.paren_trail.end_x.unwrap();
+    insert_within_line(result, line_no, end_x, close_ch);
+
+    result.paren_trail.end_x = result.paren_trail.end_x.map(|x| x + 1);
+    result.paren_trail.openers.push(opener);
+    update_remembered_paren_trail(result);
 }
 
 fn invalidate_paren_trail<'a>(result: &mut State<'a>) {
+    unimplemented!();
+}
+
+fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
     unimplemented!();
 }
 
@@ -1150,6 +1168,10 @@ fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn remember_paren_trail<'a>(result: &mut State<'a>) {
+    unimplemented!();
+}
+
+fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
 
