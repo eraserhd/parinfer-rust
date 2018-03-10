@@ -833,18 +833,45 @@ fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column)
     result.paren_trail.start_x = Some(x);
     result.paren_trail.end_x = Some(x);
     result.paren_trail.openers = vec![];
+    //FIXME:
     //result.paren_trail.clamped.start_x = None;
     //result.paren_trail.clamped.end_x = None;
     //result.paren_trail.clamped.openers = vec![];
 }
 
-fn is_cursor_clamping_paren_trail<'a>(result: &State<'a>, cursor_x: Option<Column>, cursor_line: Option<LineNumber>) {
+fn is_cursor_clamping_paren_trail<'a>(result: &State<'a>, cursor_x: Option<Column>, cursor_line: Option<LineNumber>) -> bool {
     is_cursor_right_of(cursor_x, cursor_line, result.paren_trail.start_x, result.line_no) &&
-        !is_cursor_in_comment(result, cursor_x, cursor_line);
+        !is_cursor_in_comment(result, cursor_x, cursor_line)
 }
 
+// INDENT MODE: allow the cursor to clamp the paren trail
 fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    let clamping = is_cursor_clamping_paren_trail(result, result.cursor_x, result.cursor_line);
+    if clamping {
+        let start_x = result.paren_trail.start_x.unwrap();
+        let end_x = result.paren_trail.end_x.unwrap();
+
+        let new_start_x = std::cmp::max(start_x, result.cursor_x.unwrap());
+        let new_end_x = std::cmp::max(end_x, result.cursor_x.unwrap());
+
+        let line = &result.lines[result.line_no];
+        let mut remove_count = 0;
+        for i in start_x..new_start_x {
+            if is_close_paren(&line[i..i]) {
+                remove_count += 1;
+            }
+        }
+
+        result.paren_trail.openers = (&result.paren_trail.openers[..remove_count]).to_vec();
+        result.paren_trail.start_x = Some(new_start_x);
+        result.paren_trail.end_x = Some(new_end_x);
+
+        /* FIXME:
+        result.paren_trail.clamped.openers = openers.slice(0, remove_count);
+        result.paren_trail.clamped.startX = start_x;
+        result.paren_trail.clamped.endX = end_x;
+        */
+    }
 }
 
 fn pop_paren_trail<'a>(result: &mut State<'a>) {
