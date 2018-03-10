@@ -1152,7 +1152,7 @@ fn append_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn invalidate_paren_trail<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    result.paren_trail = initial_paren_trail();
 }
 
 fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
