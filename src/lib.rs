@@ -829,7 +829,13 @@ fn handle_change_delta<'a>(result: &mut State<'a>) {
 //------------------------------------------------------------------------------
 
 fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column) {
-    unimplemented!();
+    result.paren_trail.line_no = Some(line_no);
+    result.paren_trail.start_x = Some(x);
+    result.paren_trail.end_x = Some(x);
+    result.paren_trail.openers = vec![];
+    //result.paren_trail.clamped.start_x = None;
+    //result.paren_trail.clamped.end_x = None;
+    //result.paren_trail.clamped.openers = vec![];
 }
 
 fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
