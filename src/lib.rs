@@ -1104,7 +1104,33 @@ fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
 }
 
 fn clean_paren_trail<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    let start_x = result.paren_trail.start_x;
+    let end_x = result.paren_trail.end_x;
+
+    if start_x == end_x || Some(result.line_no) != result.paren_trail.line_no {
+        return;
+    }
+
+    let start_x = start_x.unwrap();
+    let end_x = end_x.unwrap();
+
+    let mut new_trail = String::new();
+    let mut space_count = 0;
+    for i in start_x..end_x {
+        let ch = &result.lines[result.line_no][i..i];
+        if is_close_paren(ch) {
+            new_trail.push_str(ch);
+        }
+        else {
+            space_count += 1;
+        }
+    }
+
+    if space_count > 0 {
+        let line_no = result.line_no;
+        replace_within_line(result, line_no, start_x, end_x, &new_trail[..]);
+        result.paren_trail.end_x = result.paren_trail.end_x.map(|x| x - space_count);
+    }
 }
 
 fn append_paren_trail<'a>(result: &mut State<'a>) {
