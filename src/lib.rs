@@ -1156,7 +1156,11 @@ fn invalidate_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
-    unimplemented!();
+    if let Some(parent) = result.paren_stack.last_mut() {
+        parent.max_child_indent = Some(opener.x);
+    } else {
+        result.max_indent = Some(opener.x);
+    }
 }
 
 fn check_unmatched_outside_paren_trail<'a>(result: &mut State<'a>) -> Result<()> {
