@@ -1483,7 +1483,7 @@ fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: boo
 //------------------------------------------------------------------------------
 
 fn public_result<'a>(result: State<'a>) -> State<'a> {
-    unimplemented!();
+    result
 }
 
 pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) -> Result<State<'a>> {
