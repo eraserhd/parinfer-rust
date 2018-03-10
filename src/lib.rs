@@ -665,7 +665,32 @@ fn on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
 }
 
 fn on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
-    unimplemented!();
+    match result.mode {
+        Mode::Paren => {
+            let in_leading_paren_trail = result.paren_trail.line_no == Some(result.line_no) && result.paren_trail.start_x == result.indent_x;
+            let can_remove = result.smart && in_leading_paren_trail;
+            if !can_remove {
+                error(result, ErrorName::UnmatchedCloseParen)?;
+            }
+        },
+        Mode::Indent => {
+            if !result.error_pos_cache.contains_key(&ErrorName::UnmatchedCloseParen)  {
+                cache_error_pos(result, ErrorName::UnmatchedCloseParen);
+                if peek(&result.paren_stack, 0).is_some() {
+                    cache_error_pos(result, ErrorName::UnmatchedOpenParen);
+                    let opener = peek(&result.paren_stack, 0).unwrap();
+                    if let Some(err) = result.error_pos_cache.get_mut(&ErrorName::UnmatchedOpenParen) {
+                        err.input_line_no = opener.input_line_no;
+                        err.input_x = opener.input_x;
+                    }
+                }
+            }
+        }
+
+    }
+    result.ch = "";
+
+    Ok(())
 }
 
 fn on_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
