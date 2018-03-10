@@ -173,6 +173,13 @@ enum TrackingArgTabStop {
     Arg
 }
 
+pub struct TabStop<'a> {
+    ch: &'a str,
+    x: Column,
+    line_no: LineNumber,
+    arg_x: Option<Column>
+}
+
 pub struct State<'a> {
     mode: Mode,
     smart: bool,
@@ -192,6 +199,8 @@ pub struct State<'a> {
     indent_x: Option<Column>,
 
     paren_stack: Vec<Paren<'a>>,
+
+    tab_stops: Vec<TabStop<'a>>,
 
     paren_trail: ParenTrail<'a>,
     paren_trails: Vec<ReturnedParenTrail>,
@@ -260,6 +269,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
         indent_x: None,
 
         paren_stack: vec![],
+        tab_stops: vec![],
 
         paren_trail: initial_paren_trail(),
         paren_trails: vec![],
@@ -596,18 +606,16 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
     let hold_min_x = peek(&result.paren_stack, 1).map(|p| p.x+1).unwrap_or(0);
     let hold_max_x = opener.x;
 
-    let holding = (
-      result.cursor_line == Some(opener.line_no) &&
+    let holding = result.cursor_line == Some(opener.line_no) &&
       result.cursor_x.map(|x| hold_min_x <= x).unwrap_or(false) &&
       result.cursor_x.map(|x| x <= hold_max_x).unwrap_or(false)
-    );
+      ;
     let should_check_prev = result.changes.is_empty() && result.prev_cursor_line != None;
     if should_check_prev {
-        let prev_holding = (
-          result.prev_cursor_line == Some(opener.line_no) &&
-          result.prev_cursor_x.map(|x| hold_min_x <= x).unwrap_or(false) &&
-          result.prev_cursor_x.map(|x| x <= hold_max_x).unwrap_or(false)
-        );
+      let prev_holding = result.prev_cursor_line == Some(opener.line_no) &&
+        result.prev_cursor_x.map(|x| hold_min_x <= x).unwrap_or(false) &&
+        result.prev_cursor_x.map(|x| x <= hold_max_x).unwrap_or(false)
+        ;
         if prev_holding && !holding {
             return Err(Error {
                 name: ErrorName::Restart,
@@ -1394,6 +1402,10 @@ fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
+fn make_tab_stop<'a>(result: &State<'a>, paren: &Paren<'a>) -> TabStop<'a> {
+    unimplemented!();
+}
+
 fn get_tab_stop_line<'a>(result: &State<'a>) -> LineNumber {
     match result.selection_start_line {
         Some(line) => line,
@@ -1406,7 +1418,24 @@ fn set_tab_stops<'a>(result: &mut State<'a>) {
         return;
     }
 
-    unimplemented!();
+    result.tab_stops = result.paren_stack.iter().map(|paren| make_tab_stop(result, paren)).collect();
+
+    if result.mode == Mode::Paren {
+        let paren_trail_tabs : Vec<_> = result.paren_trail.openers.iter().rev()
+            .map(|paren| make_tab_stop(result, paren))
+            .collect();
+        result.tab_stops.extend(paren_trail_tabs);
+    }
+
+    // remove argX if it falls to the right of the next stop
+    for i in 1..result.tab_stops.len() {
+        let x = result.tab_stops[i].x;
+        if let Some(prev_arg_x) = result.tab_stops[i-1].arg_x {
+            if prev_arg_x >= x {
+                result.tab_stops[i-1].arg_x = None;
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
