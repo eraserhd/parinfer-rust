@@ -42,10 +42,10 @@ fn match_paren_works() {
 
 #[derive(Clone, Copy)]
 pub struct Change<'a> {
-    x: Column,
-    line_no: LineNumber,
-    old_text: &'a str,
-    new_text: &'a str,
+    pub x: Column,
+    pub line_no: LineNumber,
+    pub old_text: &'a str,
+    pub new_text: &'a str,
 }
 
 struct TransformedChange<'a> {
@@ -109,15 +109,15 @@ fn transform_changes<'a>(changes: &Vec<Change<'a>>) -> HashMap<(LineNumber, Colu
 }
 
 pub struct Options<'a> {
-    cursor_x: Option<Column>,
-    cursor_line: Option<LineNumber>,
-    prev_cursor_x: Option<Column>,
-    prev_cursor_line: Option<LineNumber>,
-    selection_start_line: Option<LineNumber>,
-    changes: Vec<Change<'a>>,
-    partial_result: bool,
-    force_balance: bool,
-    return_parens: bool
+    pub cursor_x: Option<Column>,
+    pub cursor_line: Option<LineNumber>,
+    pub prev_cursor_x: Option<Column>,
+    pub prev_cursor_line: Option<LineNumber>,
+    pub selection_start_line: Option<LineNumber>,
+    pub changes: Vec<Change<'a>>,
+    pub partial_result: bool,
+    pub force_balance: bool,
+    pub return_parens: bool
 }
 
 //------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ pub struct Options<'a> {
 // system.
 
 #[derive(Clone)]
-struct Paren<'a> {
+pub struct Paren<'a> {
     line_no: LineNumber,
     ch: &'a str,
     x: Column,
@@ -137,7 +137,7 @@ struct Paren<'a> {
     max_child_indent: Option<Column>,
     arg_x: Option<Column>,
     input_line_no: LineNumber,
-    input_x: Column
+    input_x: Column,
 }
 
 struct ParenTrailClamped<'a> {
@@ -151,13 +151,13 @@ struct ParenTrail<'a> {
     start_x: Option<Column>,
     end_x: Option<Column>,
     openers: Vec<Paren<'a>>,
-    clamped: Option<ParenTrailClamped<'a>>
+    clamped: ParenTrailClamped<'a>
 }
 
-struct ReturnedParenTrail {
-    line_no: LineNumber,
-    start_x: Column,
-    end_x: Column
+pub struct ReturnedParenTrail {
+    pub line_no: LineNumber,
+    pub start_x: Column,
+    pub end_x: Column
 }
 
 #[derive(PartialEq, Eq)]
@@ -174,13 +174,13 @@ enum TrackingArgTabStop {
 }
 
 pub struct TabStop<'a> {
-    ch: &'a str,
-    x: Column,
-    line_no: LineNumber,
-    arg_x: Option<Column>
+    pub ch: &'a str,
+    pub x: Column,
+    pub line_no: LineNumber,
+    pub arg_x: Option<Column>
 }
 
-pub struct State<'a> {
+struct State<'a> {
     mode: Mode,
     smart: bool,
 
@@ -239,13 +239,28 @@ pub struct State<'a> {
     error_pos_cache: HashMap<ErrorName, Error>
 }
 
+pub struct Answer<'a> {
+    pub text: Cow<'a, str>,
+    pub cursor_x: Option<Column>,
+    pub cursor_line: Option<LineNumber>,
+    pub success: bool,
+    pub tab_stops: Vec<TabStop<'a>>,
+    pub paren_trails: Vec<ReturnedParenTrail>,
+    pub parens: Vec<Paren<'a>>,
+    pub error: Option<Error>
+}
+
 fn initial_paren_trail<'a>() -> ParenTrail<'a> {
     ParenTrail {
         line_no: None,
         start_x: None,
         end_x: None,
         openers: vec![], 
-        clamped: None
+        clamped: ParenTrailClamped {
+            start_x: None,
+            end_x: None,
+            openers: vec![]
+        }
     }
 }
 
@@ -327,12 +342,12 @@ pub enum ErrorName {
 }
 
 pub struct Error {
-    name: ErrorName,
-    message: &'static str,
-    x: Column,
-    line_no: LineNumber,
-    input_x: Column,
-    input_line_no: LineNumber,
+    pub name: ErrorName,
+    pub message: &'static str,
+    pub x: Column,
+    pub line_no: LineNumber,
+    pub input_x: Column,
+    pub input_line_no: LineNumber,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -384,7 +399,7 @@ fn error(result: &mut State, name: ErrorName) -> Result<()> {
         // extra error info for locating the open-paren that it should've matched
         if let Some(cache) = result.error_pos_cache.get(&ErrorName::UnmatchedOpenParen) {
             if let Some(opener) = peek(&result.paren_stack, 0) {
-            /*
+            /* FIXME
               e.extra = {
                   name: ErrorName::UnmatchedOpenParen,
                   lineNo: cache ? cache[key_line_no] : opener[key_line_no],
@@ -676,7 +691,7 @@ fn on_open_paren<'a>(result: &mut State<'a>) {
             indent_delta: result.indent_delta,
             max_child_indent: None,
 
-            arg_x: None
+            arg_x: None,
         };
 
         result.paren_stack.push(opener);
@@ -700,11 +715,11 @@ fn on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
         let x = result.x;
         let line_no = result.line_no;
         reset_paren_trail(result, line_no, x+1);
-        result.paren_trail.clamped = Some(ParenTrailClamped {
+        result.paren_trail.clamped = ParenTrailClamped {
             start_x:  orig_start_x,
             end_x: orig_end_x,
             openers: orig_openers
-        });
+        };
     }
     result.paren_stack.pop();
     result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
@@ -1130,7 +1145,7 @@ fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
     let mut parens = String::new();
 
     let index = get_parent_opener_index(result, indent_x);
-    for i in 0..index {
+    for _ in 0..index {
         let opener = result.paren_stack.pop().unwrap();
         let close_ch = match_paren(opener.ch).unwrap();
         result.paren_trail.openers.push(opener);
@@ -1227,7 +1242,21 @@ fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
 }
 
 fn remember_paren_trail<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    if result.paren_trail.clamped.openers.len() > 0 ||
+      result.paren_trail.openers.len() > 0 {
+        let is_clamped = result.paren_trail.clamped.start_x != None;
+        let short_trail = ReturnedParenTrail {
+            line_no: result.paren_trail.line_no.unwrap(),
+            start_x: if is_clamped { result.paren_trail.clamped.start_x } else { result.paren_trail.start_x }.unwrap(),
+            end_x: if is_clamped { result.paren_trail.clamped.end_x } else { result.paren_trail.end_x }.unwrap()
+        };
+
+        result.paren_trails.push(short_trail);
+
+        if result.return_parens {
+            //FIXME:
+        }
+    }
 }
 
 fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
@@ -1562,19 +1591,43 @@ fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: boo
 // Public API
 //------------------------------------------------------------------------------
 
-fn public_result<'a>(result: State<'a>) -> State<'a> {
-    result
+fn public_result<'a>(result: State<'a>) -> Answer<'a> {
+    let line_ending = get_line_ending(result.orig_text);
+    if result.success {
+        Answer {
+            text: Cow::from(result.lines.join(line_ending)),
+            cursor_x: result.cursor_x,
+            cursor_line: result.cursor_line,
+            success: true,
+            tab_stops: result.tab_stops,
+            paren_trails: result.paren_trails,
+            parens: vec![], //FIXME:
+            error: None
+        }
+    }
+    else {
+        Answer {
+            text: if result.partial_result { Cow::from(result.lines.join(line_ending)) } else { Cow::from(result.orig_text) },
+            cursor_x: if result.partial_result { result.cursor_x } else { result.orig_cursor_x },
+            cursor_line: if result.partial_result { result.cursor_line } else { result.orig_cursor_line },
+            paren_trails: result.paren_trails,
+            success: false,
+            tab_stops: result.tab_stops,
+            error: result.error,
+            parens: vec![] //FIXME:
+        }
+    }
 }
 
-pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) -> Result<State<'a>> {
+pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) -> Result<Answer<'a>> {
     process_text(text, &options, Mode::Indent, false).map(public_result)
 }
 
-pub fn paren_mode<'a>(text: &'a str, options: Options<'a>) -> Result<State<'a>> {
+pub fn paren_mode<'a>(text: &'a str, options: Options<'a>) -> Result<Answer<'a>> {
     process_text(text, &options, Mode::Paren, false).map(public_result)
 }
 
-pub fn smart_mode<'a>(text: &'a str, options: Options<'a>) -> Result<State<'a>> {
+pub fn smart_mode<'a>(text: &'a str, options: Options<'a>) -> Result<Answer<'a>> {
     let smart = options.selection_start_line == None;
     process_text(text, &options, Mode::Indent, smart).map(public_result)
 }
