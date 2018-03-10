@@ -838,6 +838,11 @@ fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column)
     //result.paren_trail.clamped.openers = vec![];
 }
 
+fn is_cursor_clamping_paren_trail<'a>(result: &State<'a>, cursor_x: Option<Column>, cursor_line: Option<LineNumber>) {
+    is_cursor_right_of(cursor_x, cursor_line, result.paren_trail.start_x, result.line_no) &&
+        !is_cursor_in_comment(result, cursor_x, cursor_line);
+}
+
 fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
     unimplemented!();
 }
