@@ -17,6 +17,53 @@ struct Case {
     options: Options
 }
 
+impl Case {
+    fn run(&self) {
+        let options = self.options.to_parinfer();
+        let answer = parinfer::indent_mode(&self.text, &options);
+
+        assert_eq!(self.result.success, answer.success,
+                   "case {}: success", self.source.line_no);
+        assert_eq!(self.result.text, answer.text,
+                   "case {}: text", self.source.line_no);
+
+        if let Some(x) = self.result.cursor_x {
+            assert_eq!(Some(x), answer.cursor_x,
+                       "case {}: cursor_x", self.source.line_no);
+        }
+        if let Some(line_no) = self.result.cursor_line {
+            assert_eq!(Some(line_no), answer.cursor_line,
+                       "case {}: cursor_line", self.source.line_no);
+        }
+
+        if let Some(ref expected) = self.result.error {
+            assert!(answer.error.is_some(), "case {}: no error returned");
+            let actual = answer.error.unwrap();
+            assert_eq!(expected.x, actual.x,
+                       "case {}: error.x", self.source.line_no);
+            assert_eq!(expected.line_no, actual.line_no,
+                       "case {}: error.line_no", self.source.line_no);
+            assert_eq!(expected.name, error_str(actual.name),
+                       "case {}: error.name", self.source.line_no);
+        }
+
+        if let Some(ref tab_stops) = self.result.tab_stops {
+            assert_eq!(tab_stops.len(), answer.tab_stops.len(),
+                       "case {}: tab stop count", self.source.line_no);
+            for (expected, actual) in tab_stops.iter().zip(answer.tab_stops.iter()) {
+                assert_eq!(expected.ch, actual.ch,
+                           "case {}: tab stop ch", self.source.line_no);
+                assert_eq!(expected.x, actual.x,
+                           "case {}: tab stop x", self.source.line_no);
+                assert_eq!(expected.line_no, actual.line_no,
+                           "case {}: tab stop line", self.source.line_no);
+                assert_eq!(expected.arg_x, actual.arg_x,
+                           "case {}: tab stop arg_x", self.source.line_no);
+            }
+        }
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Options {
@@ -90,48 +137,7 @@ fn error_str(name: parinfer::ErrorName) -> &'static str {
 fn run_cases(json: &str) {
     let cases : Vec<Case> = serde_json::from_str(json).unwrap();
     for case in cases {
-        let options = case.options.to_parinfer();
-        let answer = parinfer::indent_mode(&case.text, &options);
-
-        assert_eq!(case.result.success, answer.success,
-                   "case {}: success", case.source.line_no);
-        assert_eq!(case.result.text, answer.text,
-                   "case {}: text", case.source.line_no);
-
-        if let Some(x) = case.result.cursor_x {
-            assert_eq!(Some(x), answer.cursor_x,
-                       "case {}: cursor_x", case.source.line_no);
-        }
-        if let Some(line_no) = case.result.cursor_line {
-            assert_eq!(Some(line_no), answer.cursor_line,
-                       "case {}: cursor_line", case.source.line_no);
-        }
-
-        if let Some(expected) = case.result.error {
-            assert!(answer.error.is_some(), "case {}: no error returned");
-            let actual = answer.error.unwrap();
-            assert_eq!(expected.x, actual.x,
-                       "case {}: error.x", case.source.line_no);
-            assert_eq!(expected.line_no, actual.line_no,
-                       "case {}: error.line_no", case.source.line_no);
-            assert_eq!(expected.name, error_str(actual.name),
-                       "case {}: error.name", case.source.line_no);
-        }
-
-        if let Some(tab_stops) = case.result.tab_stops {
-            assert_eq!(tab_stops.len(), answer.tab_stops.len(),
-                       "case {}: tab stop count", case.source.line_no);
-            for (expected, actual) in tab_stops.iter().zip(answer.tab_stops.iter()) {
-                assert_eq!(expected.ch, actual.ch,
-                           "case {}: tab stop ch", case.source.line_no);
-                assert_eq!(expected.x, actual.x,
-                           "case {}: tab stop x", case.source.line_no);
-                assert_eq!(expected.line_no, actual.line_no,
-                           "case {}: tab stop line", case.source.line_no);
-                assert_eq!(expected.arg_x, actual.arg_x,
-                           "case {}: tab stop arg_x", case.source.line_no);
-            }
-        }
+        case.run();
     }
 }
 
