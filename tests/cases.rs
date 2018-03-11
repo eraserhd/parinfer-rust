@@ -87,9 +87,8 @@ fn error_str(name: parinfer::ErrorName) -> &'static str {
     }
 }
 
-#[test]
-pub fn indent_mode() {
-    let cases : Vec<Case> = serde_json::from_str(INDENT_MODE_CASES).unwrap();
+fn run_cases(json: &str) {
+    let cases : Vec<Case> = serde_json::from_str(json).unwrap();
     for case in cases {
         let options = case.options.to_parinfer();
         let answer = parinfer::indent_mode(&case.text, &options);
@@ -134,4 +133,9 @@ pub fn indent_mode() {
             }
         }
     }
+}
+
+#[test]
+pub fn indent_mode() {
+    run_cases(INDENT_MODE_CASES);
 }
