@@ -139,3 +139,8 @@ fn run_cases(json: &str) {
 pub fn indent_mode() {
     run_cases(INDENT_MODE_CASES);
 }
+
+#[test]
+pub fn paren_mode() {
+    run_cases(PAREN_MODE_CASES);
+}
