@@ -65,21 +65,46 @@ impl Case {
 #[serde(rename_all = "camelCase")]
 struct Options {
     cursor_x: Option<parinfer::Column>,
-    cursor_line: Option<parinfer::LineNumber>
+    cursor_line: Option<parinfer::LineNumber>,
+    changes: Option<Vec<Change>>
 }
 
 impl Options {
     fn to_parinfer(&self) -> parinfer::Options {
+        let changes = match self.changes {
+            None => vec![],
+            Some(ref changes) => changes.iter().map(Change::to_parinfer).collect()
+        };
         parinfer::Options {
             cursor_x: self.cursor_x,
             cursor_line: self.cursor_line,
             prev_cursor_x: None,
             prev_cursor_line: None,
             selection_start_line: None,
-            changes: vec![],
+            changes,
             partial_result: false,
             force_balance: false,
             return_parens: false
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Change {
+    line_no: parinfer::LineNumber,
+    x: parinfer::Column,
+    old_text: String,
+    new_text: String,
+}
+
+impl Change {
+    fn to_parinfer(&self) -> parinfer::Change {
+        parinfer::Change {
+            line_no: self.line_no,
+            x: self.x,
+            new_text: &self.new_text,
+            old_text: &self.old_text
         }
     }
 }
