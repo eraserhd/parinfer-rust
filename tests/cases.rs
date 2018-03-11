@@ -45,7 +45,9 @@ impl Options {
 struct CaseResult {
     text: String,
     success: bool,
-    error: Option<Error>
+    error: Option<Error>,
+    cursor_x: Option<parinfer::Column>,
+    cursor_line: Option<parinfer::LineNumber>
 }
 
 #[derive(Deserialize)]
@@ -86,6 +88,15 @@ pub fn indent_mode() {
                    "case {}: success", case.source.line_no);
         assert_eq!(case.result.text, answer.text,
                    "case {}: text", case.source.line_no);
+
+        if let Some(x) = case.result.cursor_x {
+            assert_eq!(Some(x), answer.cursor_x,
+                       "case {}: cursor_x", case.source.line_no);
+        }
+        if let Some(line_no) = case.result.cursor_line {
+            assert_eq!(Some(line_no), answer.cursor_line,
+                       "case {}: cursor_line", case.source.line_no);
+        }
 
         if let Some(expected) = case.result.error {
             assert!(answer.error.is_some(), "case {}: no error returned");
