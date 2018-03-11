@@ -44,13 +44,35 @@ impl Options {
 #[serde(rename_all = "camelCase")]
 struct CaseResult {
     text: String,
-    success: bool
+    success: bool,
+    error: Option<Error>
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Error {
+    name: String,
+    line_no: parinfer::LineNumber,
+    x: parinfer::Column
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Source {
     line_no: parinfer::LineNumber
+}
+
+fn error_str(name: parinfer::ErrorName) -> &'static str {
+    match name {
+        parinfer::ErrorName::QuoteDanger => "quote-danger",
+        parinfer::ErrorName::EolBackslash => "eol-backslash",
+        parinfer::ErrorName::UnclosedQuote => "unclosed-quote",
+        parinfer::ErrorName::UnmatchedCloseParen => "unmatched-close-paren",
+        parinfer::ErrorName::UnmatchedOpenParen => "unmatched-open-paren",
+        parinfer::ErrorName::LeadingCloseParen => "leading-close-paren",
+
+        _ => "??"
+    }
 }
 
 #[test]
@@ -61,8 +83,19 @@ pub fn indent_mode() {
         let answer = parinfer::indent_mode(&case.text, &options);
 
         assert_eq!(case.result.success, answer.success,
-                   "case {}: wrong value for answer.success", case.source.line_no);
+                   "case {}: success", case.source.line_no);
         assert_eq!(case.result.text, answer.text,
-                   "case {}: wrong value for answer.text", case.source.line_no);
+                   "case {}: text", case.source.line_no);
+
+        if let Some(expected) = case.result.error {
+            assert!(answer.error.is_some(), "case {}: no error returned");
+            let actual = answer.error.unwrap();
+            assert_eq!(expected.x, actual.x,
+                       "case {}: error.x", case.source.line_no);
+            assert_eq!(expected.line_no, actual.line_no,
+                       "case {}: error.line_no", case.source.line_no);
+            assert_eq!(expected.name, error_str(actual.name),
+                       "case {}: error.name", case.source.line_no);
+        }
     }
 }
