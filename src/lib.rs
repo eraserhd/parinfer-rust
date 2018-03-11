@@ -278,7 +278,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
         input_x: 0,
 
         lines: vec![],
-        line_no: 0,
+        line_no: usize::max_value(),
         ch: &text[0..0],
         x: 0,
         indent_x: None,
@@ -501,7 +501,7 @@ fn insert_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, idx: Colu
 
 fn init_line<'a>(result: &mut State<'a>) {
     result.x = 0;
-    result.line_no += 1;
+    result.line_no = usize::wrapping_add(result.line_no, 1);
 
     // reset line-specific state
     result.indent_x = None;
@@ -1137,7 +1137,7 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
         }
     }
 
-    panic!("no i returned here?");
+    result.paren_stack.len()
 }
 
 // INDENT MODE: correct paren trail from indentation
@@ -1455,15 +1455,12 @@ fn make_tab_stop<'a>(result: &State<'a>, opener: &Paren<'a>) -> TabStop<'a> {
     }
 }
 
-fn get_tab_stop_line<'a>(result: &State<'a>) -> LineNumber {
-    match result.selection_start_line {
-        Some(line) => line,
-        None => result.cursor_line.unwrap()
-    }
+fn get_tab_stop_line<'a>(result: &State<'a>) -> Option<LineNumber> {
+    result.selection_start_line.or(result.cursor_line)
 }
 
 fn set_tab_stops<'a>(result: &mut State<'a>) {
-    if get_tab_stop_line(result) != result.line_no {
+    if get_tab_stop_line(result) != Some(result.line_no) {
         return;
     }
 
@@ -1619,15 +1616,15 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
     }
 }
 
-pub fn indent_mode<'a>(text: &'a str, options: Options<'a>) -> Result<Answer<'a>> {
-    process_text(text, &options, Mode::Indent, false).map(public_result)
+pub fn indent_mode<'a>(text: &'a str, options: &Options<'a>) -> Result<Answer<'a>> {
+    process_text(text, options, Mode::Indent, false).map(public_result)
 }
 
-pub fn paren_mode<'a>(text: &'a str, options: Options<'a>) -> Result<Answer<'a>> {
-    process_text(text, &options, Mode::Paren, false).map(public_result)
+pub fn paren_mode<'a>(text: &'a str, options: &Options<'a>) -> Result<Answer<'a>> {
+    process_text(text, options, Mode::Paren, false).map(public_result)
 }
 
-pub fn smart_mode<'a>(text: &'a str, options: Options<'a>) -> Result<Answer<'a>> {
+pub fn smart_mode<'a>(text: &'a str, options: &Options<'a>) -> Result<Answer<'a>> {
     let smart = options.selection_start_line == None;
-    process_text(text, &options, Mode::Indent, smart).map(public_result)
+    process_text(text, options, Mode::Indent, smart).map(public_result)
 }
