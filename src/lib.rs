@@ -423,6 +423,7 @@ fn error(result: &mut State, name: ErrorName) -> Result<()> {
 //------------------------------------------------------------------------------
 
 fn replace_within_string(orig: &str, start: usize, end: usize, replace: &str) -> String {
+    let end = std::cmp::min(end, orig.len());
     String::from(&orig[0..start]) + replace + &orig[end..]
 }
 
