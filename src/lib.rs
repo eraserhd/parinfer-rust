@@ -922,7 +922,7 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
         let line = &result.lines[result.line_no];
         let mut remove_count = 0;
         for i in start_x..new_start_x {
-            if is_close_paren(&line[i..i]) {
+            if is_close_paren(&line[i..i+1]) {
                 remove_count += 1;
             }
         }
@@ -1158,7 +1158,6 @@ fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
             //set_closer(opener, result.paren_trail.line_no, result.paren_trail.start_x+i, close_ch);
         }
     }
-
 
     if let Some(line_no) = result.paren_trail.line_no {
         let start_x = result.paren_trail.start_x.unwrap();
