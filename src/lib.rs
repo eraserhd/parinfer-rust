@@ -60,9 +60,17 @@ struct TransformedChange<'a> {
     lookup_x: Column
 }
 
+fn chomp_cr<'a>(text: &'a str) -> &'a str {
+    if text.chars().last() == Some('\r') {
+        &text[0..text.len()-1]
+    } else {
+        text
+    }
+}
+
 fn transform_change<'a>(change: &Change<'a>) -> TransformedChange<'a> {
-    let new_lines : Vec<&'a str> = change.new_text.lines().collect();
-    let old_lines : Vec<&'a str> = change.old_text.lines().collect();
+    let new_lines : Vec<&'a str> = change.new_text.split('\n').map(chomp_cr).collect();
+    let old_lines : Vec<&'a str> = change.old_text.split('\n').map(chomp_cr).collect();
 
     // single line case:
     //     (defn foo| [])
@@ -275,7 +283,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
         orig_cursor_x: options.cursor_x,
         orig_cursor_line: options.cursor_line,
 
-        input_lines: text.lines().collect(), 
+        input_lines: text.split('\n').map(chomp_cr).collect(), 
         input_line_no: 0,
         input_x: 0,
 
