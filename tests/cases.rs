@@ -18,10 +18,7 @@ struct Case {
 }
 
 impl Case {
-    fn run(&self) {
-        let options = self.options.to_parinfer();
-        let answer = parinfer::indent_mode(&self.text, &options);
-
+    fn check<'a>(&self, answer: parinfer::Answer<'a>) {
         assert_eq!(self.result.success, answer.success,
                    "case {}: success", self.source.line_no);
         assert_eq!(self.result.text, answer.text,
@@ -134,19 +131,22 @@ fn error_str(name: parinfer::ErrorName) -> &'static str {
     }
 }
 
-fn run_cases(json: &str) {
-    let cases : Vec<Case> = serde_json::from_str(json).unwrap();
+#[test]
+pub fn indent_mode() {
+    let cases : Vec<Case> = serde_json::from_str(INDENT_MODE_CASES).unwrap();
     for case in cases {
-        case.run();
+        let options = case.options.to_parinfer();
+        let answer = parinfer::indent_mode(&case.text, &options);
+        case.check(answer);
     }
 }
 
 #[test]
-pub fn indent_mode() {
-    run_cases(INDENT_MODE_CASES);
-}
-
-#[test]
 pub fn paren_mode() {
-    run_cases(PAREN_MODE_CASES);
+    let cases : Vec<Case> = serde_json::from_str(PAREN_MODE_CASES).unwrap();
+    for case in cases {
+        let options = case.options.to_parinfer();
+        let answer = parinfer::paren_mode(&case.text, &options);
+        case.check(answer);
+    }
 }
