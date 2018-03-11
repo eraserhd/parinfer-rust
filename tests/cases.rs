@@ -58,6 +58,19 @@ impl Case {
                            "case {}: tab stop arg_x", self.source.line_no);
             }
         }
+
+        if let Some(ref trails) = self.result.paren_trails {
+            assert_eq!(trails.len(), answer.paren_trails.len(),
+                       "case {}: wrong number of paren trails", self.source.line_no);
+            for (expected, actual) in trails.iter().zip(answer.paren_trails.iter()) {
+                assert_eq!(expected.line_no, actual.line_no,
+                           "case {}: paren trail line number", self.source.line_no);
+                assert_eq!(expected.start_x, actual.start_x,
+                           "case {}: paren trail start x", self.source.line_no);
+                assert_eq!(expected.end_x, actual.end_x,
+                           "case {}: paren trail end x", self.source.line_no);
+            }
+        }
     }
 }
 
@@ -127,6 +140,15 @@ struct CaseResult {
     cursor_x: Option<parinfer::Column>,
     cursor_line: Option<parinfer::LineNumber>,
     tab_stops: Option<Vec<TabStop>>,
+    paren_trails: Option<Vec<ParenTrail>>
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ParenTrail {
+    line_no: parinfer::LineNumber,
+    start_x: parinfer::Column,
+    end_x: parinfer::Column
 }
 
 #[derive(Deserialize)]
