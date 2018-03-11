@@ -1520,7 +1520,7 @@ fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
 
     for x in 0..result.input_lines[line_no].len() {
         result.input_x = x;
-        let ch = &result.input_lines[line_no][x..x];
+        let ch = &result.input_lines[line_no][x..x+1];
         process_char(result, ch)?;
     }
     process_char(result, NEWLINE)?;
@@ -1560,7 +1560,7 @@ fn process_error<'a>(result: &mut State<'a>, e: Error) {
     result.error = Some(e);
 }
 
-fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: bool) -> Result<State<'a>> {
+fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: bool) -> State<'a> {
     let mut result = get_initial_result(text, &options, mode, smart);
 
     let mut process_result : Result<()> = Ok(());
@@ -1579,9 +1579,9 @@ fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: boo
         Err(Error { name: ErrorName::Restart, .. }) => process_text(text, &options, Mode::Paren, smart),
         Err(e) => {
             process_error(&mut result, e);
-            Ok(result)
+            result
         }
-        _ => Ok(result)
+        _ => result
     }
 }
 
@@ -1617,15 +1617,15 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
     }
 }
 
-pub fn indent_mode<'a>(text: &'a str, options: &Options<'a>) -> Result<Answer<'a>> {
-    process_text(text, options, Mode::Indent, false).map(public_result)
+pub fn indent_mode<'a>(text: &'a str, options: &Options<'a>) -> Answer<'a> {
+    public_result(process_text(text, options, Mode::Indent, false))
 }
 
-pub fn paren_mode<'a>(text: &'a str, options: &Options<'a>) -> Result<Answer<'a>> {
-    process_text(text, options, Mode::Paren, false).map(public_result)
+pub fn paren_mode<'a>(text: &'a str, options: &Options<'a>) -> Answer<'a> {
+    public_result(process_text(text, options, Mode::Paren, false))
 }
 
-pub fn smart_mode<'a>(text: &'a str, options: &Options<'a>) -> Result<Answer<'a>> {
+pub fn smart_mode<'a>(text: &'a str, options: &Options<'a>) -> Answer<'a> {
     let smart = options.selection_start_line == None;
-    process_text(text, options, Mode::Indent, smart).map(public_result)
+    public_result(process_text(text, options, Mode::Indent, smart))
 }
