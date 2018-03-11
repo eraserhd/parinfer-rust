@@ -344,7 +344,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
 // Possible Errors
 //------------------------------------------------------------------------------
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum ErrorName {
     QuoteDanger,
     EolBackslash,
@@ -357,6 +357,7 @@ pub enum ErrorName {
     Restart
 }
 
+#[derive(Debug)]
 pub struct Error {
     pub name: ErrorName,
     pub message: &'static str,
@@ -1196,7 +1197,7 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
     let mut new_trail = String::new();
     let mut space_count = 0;
     for i in start_x..end_x {
-        let ch = &result.lines[result.line_no][i..i];
+        let ch = &result.lines[result.line_no][i..i+1];
         if is_close_paren(ch) {
             new_trail.push_str(ch);
         }
@@ -1276,7 +1277,21 @@ fn remember_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
-    unimplemented!();
+    if result.paren_trails.is_empty() ||
+      Some(result.paren_trails[result.paren_trails.len()-1].line_no) != result.paren_trail.line_no {
+        remember_paren_trail(result);
+    }
+    else {
+        let n = result.paren_trails.len() - 1;
+        let trail = result.paren_trails.get_mut(n).unwrap();
+        trail.end_x = result.paren_trail.end_x.unwrap();
+        if result.return_parens {
+          /* FIXME:
+            let opener = result.paren_trail.openers.get_mut(result.paren_trail.openers.len()-1);
+            opener.closer.trail = trail;
+            */
+        }
+    }
 }
 
 fn finish_new_paren_trail<'a>(result: &mut State<'a>) {

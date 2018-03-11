@@ -123,6 +123,7 @@ fn error_str(name: parinfer::ErrorName) -> &'static str {
         parinfer::ErrorName::QuoteDanger => "quote-danger",
         parinfer::ErrorName::EolBackslash => "eol-backslash",
         parinfer::ErrorName::UnclosedQuote => "unclosed-quote",
+        parinfer::ErrorName::UnclosedParen => "unclosed-paren",
         parinfer::ErrorName::UnmatchedCloseParen => "unmatched-close-paren",
         parinfer::ErrorName::UnmatchedOpenParen => "unmatched-open-paren",
         parinfer::ErrorName::LeadingCloseParen => "leading-close-paren",
