@@ -128,7 +128,7 @@ pub struct Options<'a> {
 // of a given text, we mutate this structure to update the state of our
 // system.
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Paren<'a> {
     line_no: LineNumber,
     ch: &'a str,
@@ -140,12 +140,14 @@ pub struct Paren<'a> {
     input_x: Column,
 }
 
+#[derive(Debug)]
 struct ParenTrailClamped<'a> {
     start_x: Option<Column>,
     end_x: Option<Column>,
     openers: Vec<Paren<'a>>
 }
 
+#[derive(Debug)]
 struct ParenTrail<'a> {
     line_no: Option<LineNumber>,
     start_x: Option<Column>,
@@ -897,10 +899,9 @@ fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column)
     result.paren_trail.start_x = Some(x);
     result.paren_trail.end_x = Some(x);
     result.paren_trail.openers = vec![];
-    //FIXME:
-    //result.paren_trail.clamped.start_x = None;
-    //result.paren_trail.clamped.end_x = None;
-    //result.paren_trail.clamped.openers = vec![];
+    result.paren_trail.clamped.start_x = None;
+    result.paren_trail.clamped.end_x = None;
+    result.paren_trail.clamped.openers = vec![];
 }
 
 fn is_cursor_clamping_paren_trail<'a>(result: &State<'a>, cursor_x: Option<Column>, cursor_line: Option<LineNumber>) -> bool {
@@ -926,15 +927,15 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
             }
         }
 
-        result.paren_trail.openers = (&result.paren_trail.openers[..remove_count]).to_vec();
+        let openers = result.paren_trail.openers.clone();
+
+        result.paren_trail.openers = (&openers[remove_count..]).to_vec();
         result.paren_trail.start_x = Some(new_start_x);
         result.paren_trail.end_x = Some(new_end_x);
 
-        /* FIXME:
-        result.paren_trail.clamped.openers = openers.slice(0, remove_count);
-        result.paren_trail.clamped.startX = start_x;
-        result.paren_trail.clamped.endX = end_x;
-        */
+        result.paren_trail.clamped.openers = (&openers[..remove_count]).to_vec();
+        result.paren_trail.clamped.start_x = Some(start_x);
+        result.paren_trail.clamped.end_x = Some(end_x);
     }
 }
 
@@ -1157,6 +1158,7 @@ fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
             //set_closer(opener, result.paren_trail.line_no, result.paren_trail.start_x+i, close_ch);
         }
     }
+
 
     if let Some(line_no) = result.paren_trail.line_no {
         let start_x = result.paren_trail.start_x.unwrap();
@@ -1571,6 +1573,7 @@ fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: boo
             break;
         }
     }
+
     if let Ok(_) = process_result {
         process_result = finalize_result(&mut result);
     }
