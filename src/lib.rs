@@ -1,3 +1,8 @@
+extern crate serde;
+
+#[macro_use]
+extern crate serde_derive;
+
 use std::collections::HashMap;
 use std::borrow::Cow;
 
@@ -183,6 +188,7 @@ enum TrackingArgTabStop {
     Arg
 }
 
+#[derive(Deserialize)]
 pub struct TabStop<'a> {
     pub ch: &'a str,
     pub x: Column,

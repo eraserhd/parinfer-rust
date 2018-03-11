@@ -42,12 +42,22 @@ impl Options {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct TabStop {
+    ch: String,
+    x: parinfer::Column,
+    line_no: parinfer::LineNumber,
+    arg_x: Option<parinfer::Column>
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct CaseResult {
     text: String,
     success: bool,
     error: Option<Error>,
     cursor_x: Option<parinfer::Column>,
-    cursor_line: Option<parinfer::LineNumber>
+    cursor_line: Option<parinfer::LineNumber>,
+    tab_stops: Option<Vec<TabStop>>,
 }
 
 #[derive(Deserialize)]
@@ -107,6 +117,21 @@ pub fn indent_mode() {
                        "case {}: error.line_no", case.source.line_no);
             assert_eq!(expected.name, error_str(actual.name),
                        "case {}: error.name", case.source.line_no);
+        }
+
+        if let Some(tab_stops) = case.result.tab_stops {
+            assert_eq!(tab_stops.len(), answer.tab_stops.len(),
+                       "case {}: tab stop count", case.source.line_no);
+            for (expected, actual) in tab_stops.iter().zip(answer.tab_stops.iter()) {
+                assert_eq!(expected.ch, actual.ch,
+                           "case {}: tab stop ch", case.source.line_no);
+                assert_eq!(expected.x, actual.x,
+                           "case {}: tab stop x", case.source.line_no);
+                assert_eq!(expected.line_no, actual.line_no,
+                           "case {}: tab stop line", case.source.line_no);
+                assert_eq!(expected.arg_x, actual.arg_x,
+                           "case {}: tab stop arg_x", case.source.line_no);
+            }
         }
     }
 }
