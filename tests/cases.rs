@@ -79,7 +79,9 @@ impl Case {
 struct Options {
     cursor_x: Option<parinfer::Column>,
     cursor_line: Option<parinfer::LineNumber>,
-    changes: Option<Vec<Change>>
+    changes: Option<Vec<Change>>,
+    prev_cursor_x: Option<parinfer::Column>,
+    prev_cursor_line: Option<parinfer::LineNumber>
 }
 
 impl Options {
@@ -91,8 +93,8 @@ impl Options {
         parinfer::Options {
             cursor_x: self.cursor_x,
             cursor_line: self.cursor_line,
-            prev_cursor_x: None,
-            prev_cursor_line: None,
+            prev_cursor_x: self.prev_cursor_x,
+            prev_cursor_line: self.prev_cursor_line,
             selection_start_line: None,
             changes,
             partial_result: false,
