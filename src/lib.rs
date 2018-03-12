@@ -1386,7 +1386,7 @@ fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
         Mode::Indent => {
             if !result.force_balance {
                 if result.smart {
-                    error(result, ErrorName::LeadingCloseParen)?;
+                    error(result, ErrorName::Restart)?;
                 }
                 if !result.error_pos_cache.contains_key(&ErrorName::LeadingCloseParen) {
                     cache_error_pos(result, ErrorName::LeadingCloseParen);
