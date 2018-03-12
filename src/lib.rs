@@ -53,14 +53,9 @@ pub struct Change<'a> {
     pub new_text: &'a str,
 }
 
-struct TransformedChange<'a> {
-    x: Column,
-    line_no: LineNumber,
-    old_text: &'a str,
-    new_text: &'a str,
+struct TransformedChange {
     old_end_x: Column,
     new_end_x: Column,
-    new_end_line_no: LineNumber,
     lookup_line_no: LineNumber,
     lookup_x: Column
 }
@@ -73,7 +68,7 @@ fn chomp_cr<'a>(text: &'a str) -> &'a str {
     }
 }
 
-fn transform_change<'a>(change: &Change<'a>) -> TransformedChange<'a> {
+fn transform_change<'a>(change: &Change<'a>) -> TransformedChange {
     let new_lines : Vec<&'a str> = change.new_text.split('\n').map(chomp_cr).collect();
     let old_lines : Vec<&'a str> = change.old_text.split('\n').map(chomp_cr).collect();
 
@@ -98,22 +93,16 @@ fn transform_change<'a>(change: &Change<'a>) -> TransformedChange<'a> {
     let new_end_line_no = change.line_no + (new_lines.len()-1);
 
     TransformedChange {
-        x: change.x,
-        line_no: change.line_no,
-        old_text: change.old_text,
-        new_text: change.new_text,
-
-        old_end_x: old_end_x,
-        new_end_x: new_end_x,
-        new_end_line_no: new_end_line_no,
+        old_end_x,
+        new_end_x,
 
         lookup_line_no: new_end_line_no,
         lookup_x: new_end_x
     }
 }
 
-fn transform_changes<'a>(changes: &Vec<Change<'a>>) -> HashMap<(LineNumber, Column), TransformedChange<'a>> {
-    let mut lines : HashMap<(LineNumber, Column), TransformedChange<'a>> = HashMap::new();
+fn transform_changes<'a>(changes: &Vec<Change<'a>>) -> HashMap<(LineNumber, Column), TransformedChange> {
+    let mut lines : HashMap<(LineNumber, Column), TransformedChange> = HashMap::new();
     for change in changes {
         let transformed_change = transform_change(change);
         lines.insert((transformed_change.lookup_line_no, transformed_change.lookup_x), transformed_change);
@@ -230,7 +219,7 @@ struct State<'a> {
 
     selection_start_line: Option<LineNumber>,
 
-    changes: HashMap<(LineNumber, Column), TransformedChange<'a>>,
+    changes: HashMap<(LineNumber, Column), TransformedChange>,
 
     is_in_code: bool,
     is_escaping: bool,
@@ -1477,7 +1466,7 @@ fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn make_tab_stop<'a>(result: &State<'a>, opener: &Paren<'a>) -> TabStop<'a> {
+fn make_tab_stop<'a>(opener: &Paren<'a>) -> TabStop<'a> {
     TabStop {
         ch: opener.ch,
         x: opener.x,
@@ -1495,11 +1484,11 @@ fn set_tab_stops<'a>(result: &mut State<'a>) {
         return;
     }
 
-    result.tab_stops = result.paren_stack.iter().map(|paren| make_tab_stop(result, paren)).collect();
+    result.tab_stops = result.paren_stack.iter().map(make_tab_stop).collect();
 
     if result.mode == Mode::Paren {
         let paren_trail_tabs : Vec<_> = result.paren_trail.openers.iter().rev()
-            .map(|paren| make_tab_stop(result, paren))
+            .map(make_tab_stop)
             .collect();
         result.tab_stops.extend(paren_trail_tabs);
     }

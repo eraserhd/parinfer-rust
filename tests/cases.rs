@@ -198,3 +198,13 @@ pub fn paren_mode() {
         case.check(answer);
     }
 }
+
+#[test]
+pub fn smart_mode() {
+    let cases : Vec<Case> = serde_json::from_str(SMART_MODE_CASES).unwrap();
+    for case in cases {
+        let options = case.options.to_parinfer();
+        let answer = parinfer::smart_mode(&case.text, &options);
+        case.check(answer);
+    }
+}
