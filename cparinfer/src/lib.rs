@@ -7,6 +7,8 @@ extern crate serde_json;
 extern crate serde_derive;
 
 extern crate libc;
+
+use std::ffi::{CString,CStr};
 use libc::c_char;
 
 #[derive(Deserialize)]
@@ -37,6 +39,7 @@ struct Options {
     prev_cursor_x: Option<parinfer::Column>,
     prev_cursor_line: Option<parinfer::LineNumber>,
     selection_start_line: Option<parinfer::LineNumber>,
+    #[serde(default = "Options::default_changes")]
     changes: Vec<Change>,
     #[serde(default = "Options::default_false")]
     partial_result: bool,
@@ -47,6 +50,10 @@ struct Options {
 }
 
 impl Options {
+    fn default_changes() -> Vec<Change> {
+        vec![]
+    }
+
     fn default_false() -> bool {
         false
     }
@@ -74,15 +81,131 @@ struct Request {
     options: Options
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Answer {
+    success: bool,
+    error: Option<Error>
+}
+
+impl Answer {
+    fn from_parinfer<'a>(answer: &parinfer::Answer<'a>) -> Answer {
+        Answer {
+            success: answer.success,
+            error: answer.error.as_ref().map(|e| Error::from_parinfer(e))
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Error {
+    message: String
+}
+
+impl Error {
+    fn from_parinfer(error: &parinfer::Error) -> Error {
+        Error {
+            message: String::from(error.message)
+        }
+    }
+}
+
+impl From<std::str::Utf8Error> for Error {
+    fn from(error: std::str::Utf8Error) -> Error {
+        Error {
+            message: format!("Error decoding UTF8: {}", error)
+        }
+    }
+}
+
+impl From<std::ffi::NulError> for Error {
+    fn from(error: std::ffi::NulError) -> Error {
+        Error {
+            message: format!("{}", error)
+        }
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(error: serde_json::Error) -> Error {
+        Error {
+            message: format!("Error parsing JSON: {}", error)
+        }
+    }
+}
+
+static mut BUFFER : *mut c_char = std::ptr::null_mut();
+
+unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
+    let json_str = CStr::from_ptr(json).to_str()?;
+    println!("json_str = {:?}", json_str);
+    let request : Request = serde_json::from_str(json_str)?;
+    println!("hi!!");
+    let options = request.options.to_parinfer();
+
+    let answer : parinfer::Answer;
+    if request.mode == "paren" {
+        answer = parinfer::paren_mode(&request.text, &options);
+    } else if request.mode == "indent" {
+        answer = parinfer::indent_mode(&request.text, &options);
+    } else if request.mode == "smart" {
+        answer = parinfer::smart_mode(&request.text, &options);
+    } else {
+        //FIXME: Bad mode
+        return Err(Error {
+            message: String::from("Bad value specified for `mode`")
+        });
+    }
+
+    let response = serde_json::to_string(&Answer::from_parinfer(&answer))?;
+
+    Ok(CString::new(response)?)
+}
+
+
 #[no_mangle]
-pub extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
-    unimplemented!();
+pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
+
+    let output = match internal_run(json) {
+        Ok(cs) => cs,
+        Err(e) => {
+            let answer = Answer {
+                success: false,
+                error: Some(e)
+            };
+
+            let out = serde_json::to_string(&answer).unwrap();
+
+            CString::new(out).unwrap()
+        }
+    };
+
+    if BUFFER != std::ptr::null_mut() {
+        CString::from_raw(BUFFER);
+        BUFFER = std::ptr::null_mut();
+    }
+
+    BUFFER = output.into_raw();
+
+    BUFFER
 }
 
 #[cfg(test)]
 mod tests {
+
+    use super::run_parinfer;
+    use std::ffi::{CStr,CString};
+    use serde_json;
+    use serde_json::Value;
+
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
+        unsafe {
+            let json = CString::new("{\"mode\":\"indent\",\"text\":\"(def x\",\"options\":{}}").unwrap();
+            let out = CStr::from_ptr(run_parinfer(json.as_ptr())).to_str().unwrap();
+            let answer : Value = serde_json::from_str(out).unwrap();
+            assert_eq!(Value::Bool(true), answer["success"], "successfully runs parinfer");
+        }
     }
 }
