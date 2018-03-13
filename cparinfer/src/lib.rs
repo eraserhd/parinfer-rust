@@ -87,7 +87,9 @@ struct Request {
 struct Answer<'a> {
     text: Cow<'a, str>,
     success: bool,
-    error: Option<Error>
+    error: Option<Error>,
+    cursor_x: Option<parinfer::Column>,
+    cursor_line: Option<parinfer::LineNumber>
 }
 
 impl<'a> Answer<'a> {
@@ -95,7 +97,9 @@ impl<'a> Answer<'a> {
         Answer {
             text: answer.text.clone(),
             success: answer.success,
-            error: answer.error.as_ref().map(|e| Error::from_parinfer(e))
+            error: answer.error.as_ref().map(|e| Error::from_parinfer(e)),
+            cursor_x: answer.cursor_x,
+            cursor_line: answer.cursor_line
         }
     }
 }
@@ -142,9 +146,7 @@ static mut BUFFER : *mut c_char = std::ptr::null_mut();
 
 unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
     let json_str = CStr::from_ptr(json).to_str()?;
-    println!("json_str = {:?}", json_str);
     let request : Request = serde_json::from_str(json_str)?;
-    println!("hi!!");
     let options = request.options.to_parinfer();
 
     let answer : parinfer::Answer;
@@ -176,7 +178,9 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
             let answer = Answer {
                 text: Cow::from(""),
                 success: false,
-                error: Some(e)
+                error: Some(e),
+                cursor_x: None,
+                cursor_line: None
             };
 
             let out = serde_json::to_string(&answer).unwrap();
@@ -201,16 +205,32 @@ mod tests {
     use super::run_parinfer;
     use std::ffi::{CStr,CString};
     use serde_json;
-    use serde_json::Value;
+    use serde_json::{Number,Value};
 
     #[test]
     fn it_works() {
         unsafe {
-            let json = CString::new("{\"mode\":\"indent\",\"text\":\"(def x\",\"options\":{}}").unwrap();
+            let json = CString::new(r#"{
+                "mode": "indent",
+                "text": "(def x",
+                "options": {
+                    "cursorX": 3,
+                    "cursorLine": 0
+                }
+            }"#).unwrap();
             let out = CStr::from_ptr(run_parinfer(json.as_ptr())).to_str().unwrap();
             let answer : Value = serde_json::from_str(out).unwrap();
-            assert_eq!(Value::Bool(true), answer["success"], "successfully runs parinfer");
-            assert_eq!(Value::String(String::from("(def x)")), answer["text"], "returns correct text");
+            assert_eq!(Value::Bool(true), answer["success"],
+                       "successfully runs parinfer");
+            assert_eq!(Value::String(String::from("(def x)")),
+                       answer["text"],
+                       "returns correct text");
+            assert_eq!(Value::Number(Number::from(3)),
+                       answer["cursorX"],
+                       "returns the correct cursorX");
+            assert_eq!(Value::Number(Number::from(0)),
+                       answer["cursorLine"],
+                       "returns the correct cursorLine");
         }
     }
 }
