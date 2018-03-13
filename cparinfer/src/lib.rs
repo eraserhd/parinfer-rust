@@ -8,6 +8,7 @@ extern crate serde_derive;
 
 extern crate libc;
 
+use std::borrow::Cow;
 use std::ffi::{CString,CStr};
 use libc::c_char;
 
@@ -83,14 +84,16 @@ struct Request {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Answer {
+struct Answer<'a> {
+    text: Cow<'a, str>,
     success: bool,
     error: Option<Error>
 }
 
-impl Answer {
-    fn from_parinfer<'a>(answer: &parinfer::Answer<'a>) -> Answer {
+impl<'a> Answer<'a> {
+    fn from_parinfer(answer: &parinfer::Answer<'a>) -> Answer<'a> {
         Answer {
+            text: answer.text.clone(),
             success: answer.success,
             error: answer.error.as_ref().map(|e| Error::from_parinfer(e))
         }
@@ -171,6 +174,7 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
         Ok(cs) => cs,
         Err(e) => {
             let answer = Answer {
+                text: Cow::from(""),
                 success: false,
                 error: Some(e)
             };
@@ -206,6 +210,7 @@ mod tests {
             let out = CStr::from_ptr(run_parinfer(json.as_ptr())).to_str().unwrap();
             let answer : Value = serde_json::from_str(out).unwrap();
             assert_eq!(Value::Bool(true), answer["success"], "successfully runs parinfer");
+            assert_eq!(Value::String(String::from("(def x)")), answer["text"], "returns correct text");
         }
     }
 }
