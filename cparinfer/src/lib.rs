@@ -92,12 +92,12 @@ struct Answer<'a> {
     cursor_line: Option<parinfer::LineNumber>
 }
 
-impl<'a> Answer<'a> {
-    fn from_parinfer(answer: &parinfer::Answer<'a>) -> Answer<'a> {
+impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
+    fn from(answer: parinfer::Answer<'a>) -> Answer<'a> {
         Answer {
             text: answer.text.clone(),
             success: answer.success,
-            error: answer.error.as_ref().map(|e| Error::from_parinfer(e)),
+            error: answer.error.map(|e| Error::from(e)),
             cursor_x: answer.cursor_x,
             cursor_line: answer.cursor_line
         }
@@ -110,8 +110,8 @@ struct Error {
     message: String
 }
 
-impl Error {
-    fn from_parinfer(error: &parinfer::Error) -> Error {
+impl From<parinfer::Error> for Error {
+    fn from(error: parinfer::Error) -> Error {
         Error {
             message: String::from(error.message)
         }
@@ -163,7 +163,7 @@ unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
         });
     }
 
-    let response = serde_json::to_string(&Answer::from_parinfer(&answer))?;
+    let response = serde_json::to_string(&Answer::from(answer))?;
 
     Ok(CString::new(response)?)
 }
