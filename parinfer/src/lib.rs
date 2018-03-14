@@ -134,6 +134,13 @@ pub struct Options<'a> {
 // system.
 
 #[derive(Clone, Debug)]
+pub struct Closer<'a> {
+    line_no: LineNumber,
+    x: Column,
+    ch: &'a str
+}
+
+#[derive(Clone, Debug)]
 pub struct Paren<'a> {
     pub line_no: LineNumber,
     pub ch: &'a str,
@@ -143,6 +150,7 @@ pub struct Paren<'a> {
     pub arg_x: Option<Column>,
     pub input_line_no: LineNumber,
     pub input_x: Column,
+    pub closer: Option<Closer<'a>>
 }
 
 #[derive(Debug)]
@@ -752,6 +760,8 @@ fn on_open_paren<'a>(result: &mut State<'a>) {
             max_child_indent: None,
 
             arg_x: None,
+
+            closer: None
         };
 
         result.paren_stack.push(opener);
@@ -1238,16 +1248,19 @@ fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
     let mut parens = String::new();
 
     let index = get_parent_opener_index(result, indent_x);
-    for _ in 0..index {
-        let opener = result.paren_stack.pop().unwrap();
+    for i in 0..index {
+        let mut opener = result.paren_stack.pop().unwrap();
         let close_ch = match_paren(opener.ch).unwrap();
+        if result.return_parens {
+            opener.closer = Some(Closer {
+                line_no: result.paren_trail.line_no.unwrap(),
+                x: result.paren_trail.start_x.unwrap() + i,
+                ch: close_ch
+            });
+        }
         result.paren_trail.openers.push(opener);
         parens.push_str(close_ch);
 
-        if result.return_parens {
-            //FIXME:
-            //set_closer(opener, result.paren_trail.line_no, result.paren_trail.start_x+i, close_ch);
-        }
     }
 
     if let Some(line_no) = result.paren_trail.line_no {
@@ -1537,7 +1550,7 @@ fn on_comment_line<'a>(result: &mut State<'a>) {
     if let Mode::Paren = result.mode {
         for j in 0..paren_trail_length {
             if let Some(opener) = peek(&result.paren_trail.openers, j) {
-                result.paren_stack.push(Paren { ..*opener });
+                result.paren_stack.push(opener.clone());
             }
         }
     };
