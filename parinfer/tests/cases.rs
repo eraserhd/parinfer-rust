@@ -40,7 +40,7 @@ impl Case {
                        "case {}: error.x", self.source.line_no);
             assert_eq!(expected.line_no, actual.line_no,
                        "case {}: error.line_no", self.source.line_no);
-            assert_eq!(expected.name, error_str(actual.name),
+            assert_eq!(expected.name, actual.name.to_string(),
                        "case {}: error.name", self.source.line_no);
         }
 
@@ -165,20 +165,6 @@ struct Error {
 #[serde(rename_all = "camelCase")]
 struct Source {
     line_no: parinfer::LineNumber
-}
-
-fn error_str(name: parinfer::ErrorName) -> &'static str {
-    match name {
-        parinfer::ErrorName::QuoteDanger => "quote-danger",
-        parinfer::ErrorName::EolBackslash => "eol-backslash",
-        parinfer::ErrorName::UnclosedQuote => "unclosed-quote",
-        parinfer::ErrorName::UnclosedParen => "unclosed-paren",
-        parinfer::ErrorName::UnmatchedCloseParen => "unmatched-close-paren",
-        parinfer::ErrorName::UnmatchedOpenParen => "unmatched-open-paren",
-        parinfer::ErrorName::LeadingCloseParen => "leading-close-paren",
-
-        _ => "??"
-    }
 }
 
 #[test]
