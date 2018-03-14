@@ -154,7 +154,7 @@ struct InternalParenTrail<'a> {
 }
 
 #[derive(Clone)]
-pub struct ReturnedParenTrail {
+pub struct ParenTrail {
     pub line_no: LineNumber,
     pub start_x: Column,
     pub end_x: Column
@@ -204,7 +204,7 @@ struct State<'a> {
     tab_stops: Vec<TabStop<'a>>,
 
     paren_trail: InternalParenTrail<'a>,
-    paren_trails: Vec<ReturnedParenTrail>,
+    paren_trails: Vec<ParenTrail>,
 
     return_parens: bool,
 
@@ -246,7 +246,7 @@ pub struct Answer<'a> {
     pub cursor_line: Option<LineNumber>,
     pub success: bool,
     pub tab_stops: Vec<TabStop<'a>>,
-    pub paren_trails: Vec<ReturnedParenTrail>,
+    pub paren_trails: Vec<ParenTrail>,
     pub parens: Vec<Paren<'a>>,
     pub error: Option<Error>
 }
@@ -1263,7 +1263,7 @@ fn remember_paren_trail<'a>(result: &mut State<'a>) {
     if result.paren_trail.clamped.openers.len() > 0 ||
       result.paren_trail.openers.len() > 0 {
         let is_clamped = result.paren_trail.clamped.start_x != None;
-        let short_trail = ReturnedParenTrail {
+        let short_trail = ParenTrail {
             line_no: result.paren_trail.line_no.unwrap(),
             start_x: if is_clamped { result.paren_trail.clamped.start_x } else { result.paren_trail.start_x }.unwrap(),
             end_x: if is_clamped { result.paren_trail.clamped.end_x } else { result.paren_trail.end_x }.unwrap()

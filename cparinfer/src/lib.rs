@@ -110,8 +110,8 @@ struct ParenTrail {
     end_x: parinfer::Column
 }
 
-impl From<parinfer::ReturnedParenTrail> for ParenTrail {
-    fn from(trail: parinfer::ReturnedParenTrail) -> ParenTrail {
+impl From<parinfer::ParenTrail> for ParenTrail {
+    fn from(trail: parinfer::ParenTrail) -> ParenTrail {
         ParenTrail {
             line_no: trail.line_no,
             start_x: trail.start_x,
