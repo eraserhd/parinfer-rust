@@ -122,6 +122,34 @@ impl From<parinfer::ReturnedParenTrail> for ParenTrail {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+struct Paren<'a> {
+    line_no: parinfer::LineNumber,
+    ch: &'a str,
+    x: parinfer::Column,
+    indent_delta: parinfer::Delta,
+    max_child_indent: Option<parinfer::Column>,
+    arg_x: Option<parinfer::Column>,
+    input_line_no: parinfer::LineNumber,
+    input_x: parinfer::Column
+}
+
+impl<'a> From<parinfer::Paren<'a>> for Paren<'a> {
+    fn from(p: parinfer::Paren<'a>) -> Paren<'a> {
+        Paren {
+            line_no: p.line_no,
+            ch: p.ch,
+            x: p.x,
+            indent_delta: p.indent_delta,
+            max_child_indent: p.max_child_indent,
+            arg_x: p.arg_x,
+            input_line_no: p.input_line_no,
+            input_x: p.input_x
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct Answer<'a> {
     text: Cow<'a, str>,
     success: bool,
@@ -129,7 +157,8 @@ struct Answer<'a> {
     cursor_x: Option<parinfer::Column>,
     cursor_line: Option<parinfer::LineNumber>,
     tab_stops: Vec<TabStop<'a>>,
-    paren_trails: Vec<ParenTrail>
+    paren_trails: Vec<ParenTrail>,
+    parens: Vec<Paren<'a>>
 }
 
 impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
@@ -141,7 +170,8 @@ impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
             cursor_x: answer.cursor_x,
             cursor_line: answer.cursor_line,
             tab_stops: answer.tab_stops.iter().map(|t| TabStop::from(t.clone())).collect(),
-            paren_trails: answer.paren_trails.iter().map(|t| ParenTrail::from(t.clone())).collect()
+            paren_trails: answer.paren_trails.iter().map(|t| ParenTrail::from(t.clone())).collect(),
+            parens: answer.parens.iter().map(|t| Paren::from(t.clone())).collect()
         }
     }
 }
@@ -224,7 +254,8 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
                 cursor_x: None,
                 cursor_line: None,
                 tab_stops: vec![],
-                paren_trails: vec![]
+                paren_trails: vec![],
+                parens: vec![]
             };
 
             let out = serde_json::to_string(&answer).unwrap();
@@ -285,6 +316,9 @@ mod tests {
             assert_eq!(Value::Array(vec![ Value::Object(obj) ]),
                        answer["parenTrails"],
                        "returns the paren trails");
+            assert_eq!(Value::Array(vec![]),
+                       answer["parens"],
+                       "returns the parens");
         }
     }
 }

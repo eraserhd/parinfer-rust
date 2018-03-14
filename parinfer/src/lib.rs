@@ -3,7 +3,7 @@ use std::borrow::Cow;
 
 pub type LineNumber = usize;
 pub type Column = usize;
-type Delta = i64;
+pub type Delta = i64;
 
 //------------------------------------------------------------------------------
 // Constants / Predicates
@@ -127,14 +127,14 @@ pub struct Options<'a> {
 
 #[derive(Clone, Debug)]
 pub struct Paren<'a> {
-    line_no: LineNumber,
-    ch: &'a str,
-    x: Column,
-    indent_delta: Delta,
-    max_child_indent: Option<Column>,
-    arg_x: Option<Column>,
-    input_line_no: LineNumber,
-    input_x: Column,
+    pub line_no: LineNumber,
+    pub ch: &'a str,
+    pub x: Column,
+    pub indent_delta: Delta,
+    pub max_child_indent: Option<Column>,
+    pub arg_x: Option<Column>,
+    pub input_line_no: LineNumber,
+    pub input_x: Column,
 }
 
 #[derive(Debug)]
