@@ -104,13 +104,32 @@ impl<'a> From<parinfer::TabStop<'a>> for TabStop<'a> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+struct ParenTrail {
+    line_no: parinfer::LineNumber,
+    start_x: parinfer::Column,
+    end_x: parinfer::Column
+}
+
+impl From<parinfer::ReturnedParenTrail> for ParenTrail {
+    fn from(trail: parinfer::ReturnedParenTrail) -> ParenTrail {
+        ParenTrail {
+            line_no: trail.line_no,
+            start_x: trail.start_x,
+            end_x: trail.end_x
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct Answer<'a> {
     text: Cow<'a, str>,
     success: bool,
     error: Option<Error>,
     cursor_x: Option<parinfer::Column>,
     cursor_line: Option<parinfer::LineNumber>,
-    tab_stops: Vec<TabStop<'a>>
+    tab_stops: Vec<TabStop<'a>>,
+    paren_trails: Vec<ParenTrail>
 }
 
 impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
@@ -121,7 +140,8 @@ impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
             error: answer.error.map(Error::from),
             cursor_x: answer.cursor_x,
             cursor_line: answer.cursor_line,
-            tab_stops: answer.tab_stops.iter().map(|t| TabStop::from(t.clone())).collect()
+            tab_stops: answer.tab_stops.iter().map(|t| TabStop::from(t.clone())).collect(),
+            paren_trails: answer.paren_trails.iter().map(|t| ParenTrail::from(t.clone())).collect()
         }
     }
 }
@@ -203,7 +223,8 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
                 error: Some(e),
                 cursor_x: None,
                 cursor_line: None,
-                tab_stops: vec![]
+                tab_stops: vec![],
+                paren_trails: vec![]
             };
 
             let out = serde_json::to_string(&answer).unwrap();
@@ -257,6 +278,13 @@ mod tests {
             assert_eq!(Value::Array(vec![]),
                        answer["tabStops"],
                        "returns the correct tab stops");
+            let mut obj : serde_json::map::Map<String, Value> = serde_json::map::Map::new();
+            obj.insert(String::from("endX"), Value::Number(Number::from(7)));
+            obj.insert(String::from("lineNo"), Value::Number(Number::from(0)));
+            obj.insert(String::from("startX"), Value::Number(Number::from(6)));
+            assert_eq!(Value::Array(vec![ Value::Object(obj) ]),
+                       answer["parenTrails"],
+                       "returns the paren trails");
         }
     }
 }

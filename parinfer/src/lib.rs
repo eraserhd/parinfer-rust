@@ -153,6 +153,7 @@ struct ParenTrail<'a> {
     clamped: ParenTrailClamped<'a>
 }
 
+#[derive(Clone)]
 pub struct ReturnedParenTrail {
     pub line_no: LineNumber,
     pub start_x: Column,
