@@ -176,16 +176,24 @@ impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Error {
-    message: String
+    message: String,
+    x: Option<parinfer::Column>,
+    line_no: Option<parinfer::LineNumber>,
+    input_x: Option<parinfer::Column>,
+    input_line_no: Option<parinfer::LineNumber>
 }
 
 impl From<parinfer::Error> for Error {
     fn from(error: parinfer::Error) -> Error {
         Error {
-            message: String::from(error.message)
+            message: String::from(error.message),
+            x: Some(error.x),
+            line_no: Some(error.line_no),
+            input_x: Some(error.input_x),
+            input_line_no: Some(error.input_line_no)
         }
     }
 }
@@ -193,7 +201,8 @@ impl From<parinfer::Error> for Error {
 impl From<std::str::Utf8Error> for Error {
     fn from(error: std::str::Utf8Error) -> Error {
         Error {
-            message: format!("Error decoding UTF8: {}", error)
+            message: format!("Error decoding UTF8: {}", error),
+            ..Error::default()
         }
     }
 }
@@ -201,7 +210,8 @@ impl From<std::str::Utf8Error> for Error {
 impl From<std::ffi::NulError> for Error {
     fn from(error: std::ffi::NulError) -> Error {
         Error {
-            message: format!("{}", error)
+            message: format!("{}", error),
+            ..Error::default()
         }
     }
 }
@@ -209,7 +219,8 @@ impl From<std::ffi::NulError> for Error {
 impl From<serde_json::Error> for Error {
     fn from(error: serde_json::Error) -> Error {
         Error {
-            message: format!("Error parsing JSON: {}", error)
+            message: format!("Error parsing JSON: {}", error),
+            ..Error::default()
         }
     }
 }
@@ -229,9 +240,9 @@ unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
     } else if request.mode == "smart" {
         answer = parinfer::smart_mode(&request.text, &options);
     } else {
-        //FIXME: Bad mode
         return Err(Error {
-            message: String::from("Bad value specified for `mode`")
+            message: String::from("Bad value specified for `mode`"),
+            ..Error::default()
         });
     }
 
