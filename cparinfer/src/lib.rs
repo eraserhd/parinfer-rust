@@ -179,6 +179,7 @@ impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
 #[derive(Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Error {
+    name: String,
     message: String,
     x: Option<parinfer::Column>,
     line_no: Option<parinfer::LineNumber>,
@@ -189,6 +190,7 @@ struct Error {
 impl From<parinfer::Error> for Error {
     fn from(error: parinfer::Error) -> Error {
         Error {
+            name: error.name.to_string(),
             message: String::from(error.message),
             x: Some(error.x),
             line_no: Some(error.line_no),
@@ -201,6 +203,7 @@ impl From<parinfer::Error> for Error {
 impl From<std::str::Utf8Error> for Error {
     fn from(error: std::str::Utf8Error) -> Error {
         Error {
+            name: String::from("utf8-error"),
             message: format!("Error decoding UTF8: {}", error),
             ..Error::default()
         }
@@ -210,6 +213,7 @@ impl From<std::str::Utf8Error> for Error {
 impl From<std::ffi::NulError> for Error {
     fn from(error: std::ffi::NulError) -> Error {
         Error {
+            name: String::from("nul-error"),
             message: format!("{}", error),
             ..Error::default()
         }
@@ -219,6 +223,7 @@ impl From<std::ffi::NulError> for Error {
 impl From<serde_json::Error> for Error {
     fn from(error: serde_json::Error) -> Error {
         Error {
+            name: String::from("json-error"),
             message: format!("Error parsing JSON: {}", error),
             ..Error::default()
         }
