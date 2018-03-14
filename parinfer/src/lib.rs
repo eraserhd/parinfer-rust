@@ -938,7 +938,7 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
         let line = &result.lines[result.line_no];
         let mut remove_count = 0;
         for i in start_x..new_start_x {
-            if is_close_paren(&line[i..i+1]) {
+            if is_close_paren(&line[i..i+1]) { //FIXME:U
                 remove_count += 1;
             }
         }
@@ -1198,7 +1198,7 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
     let mut new_trail = String::new();
     let mut space_count = 0;
     for i in start_x..end_x {
-        let ch = &result.lines[result.line_no][i..i+1];
+        let ch = &result.lines[result.line_no][i..i+1]; //FIXME:U
         if is_close_paren(ch) {
             new_trail.push_str(ch);
         }
@@ -1549,9 +1549,9 @@ fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
 
     set_tab_stops(result);
 
-    for x in 0..result.input_lines[line_no].len() {
+    for (x, (i, c)) in result.input_lines[line_no].char_indices().enumerate() {
         result.input_x = x;
-        let ch = &result.input_lines[line_no][x..x+1];
+        let ch = &result.input_lines[line_no][i..i+c.len_utf8()];
         process_char(result, ch)?;
     }
     process_char(result, NEWLINE)?;
