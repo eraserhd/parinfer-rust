@@ -84,12 +84,33 @@ struct Request {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+struct TabStop<'a> {
+    ch: &'a str,
+    x: parinfer::Column,
+    line_no: parinfer::LineNumber,
+    arg_x: Option<parinfer::Column>
+}
+
+impl<'a> From<parinfer::TabStop<'a>> for TabStop<'a> {
+    fn from(tab_stop: parinfer::TabStop<'a>) -> TabStop<'a> {
+        TabStop {
+            ch: tab_stop.ch,
+            x: tab_stop.x,
+            line_no: tab_stop.line_no,
+            arg_x: tab_stop.arg_x
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct Answer<'a> {
     text: Cow<'a, str>,
     success: bool,
     error: Option<Error>,
     cursor_x: Option<parinfer::Column>,
-    cursor_line: Option<parinfer::LineNumber>
+    cursor_line: Option<parinfer::LineNumber>,
+    tab_stops: Vec<TabStop<'a>>
 }
 
 impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
@@ -97,9 +118,10 @@ impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
         Answer {
             text: answer.text.clone(),
             success: answer.success,
-            error: answer.error.map(|e| Error::from(e)),
+            error: answer.error.map(Error::from),
             cursor_x: answer.cursor_x,
-            cursor_line: answer.cursor_line
+            cursor_line: answer.cursor_line,
+            tab_stops: answer.tab_stops.iter().map(|t| TabStop::from(t.clone())).collect()
         }
     }
 }
@@ -180,7 +202,8 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
                 success: false,
                 error: Some(e),
                 cursor_x: None,
-                cursor_line: None
+                cursor_line: None,
+                tab_stops: vec![]
             };
 
             let out = serde_json::to_string(&answer).unwrap();
@@ -231,6 +254,9 @@ mod tests {
             assert_eq!(Value::Number(Number::from(0)),
                        answer["cursorLine"],
                        "returns the correct cursorLine");
+            assert_eq!(Value::Array(vec![]),
+                       answer["tabStops"],
+                       "returns the correct tab stops");
         }
     }
 }

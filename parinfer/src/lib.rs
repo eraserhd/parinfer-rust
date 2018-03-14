@@ -172,6 +172,7 @@ enum TrackingArgTabStop {
     Arg
 }
 
+#[derive(Clone)]
 pub struct TabStop<'a> {
     pub ch: &'a str,
     pub x: Column,
