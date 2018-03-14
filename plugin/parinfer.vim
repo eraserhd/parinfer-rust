@@ -32,19 +32,22 @@ command! ParinferOff call <SID>turnOff()
 function! s:process(mode)
   if g:parinfer_mode != "off"
     let l:pos = getpos(".")
-    let l:orig_text = join(getline(1,line('$')), "\n")
+    let l:orig_lines = getline(1,line('$'))
+    let l:orig_text = join(l:orig_lines, "\n")
     let l:request = { "mode": a:mode,
                     \ "text": l:orig_text,
                     \ "options": { "cursorX": l:pos[2] - 1,
                                  \ "cursorLine": l:pos[1] - 1 } }
     let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
     if l:response["text"] !=# l:orig_text
+        let l:lines = split(l:response["text"], "\n", 1)
+        let l:changed = filter(range(len(l:lines)), 'l:lines[v:val] !=# l:orig_lines[v:val]')
+        
         try
           silent undojoin
         catch
         endtry
-        let l:lines = split(l:response["text"], "\n", 1)
-        call setline(1, l:lines)
+        call setline(l:changed[0]+1, l:lines[l:changed[0]:l:changed[-1]])
     endif
     let l:pos[1] = l:response["cursorLine"] + 1
     let l:pos[2] = l:response["cursorX"] + 1
