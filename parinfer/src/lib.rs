@@ -145,7 +145,7 @@ struct ParenTrailClamped<'a> {
 }
 
 #[derive(Debug)]
-struct ParenTrail<'a> {
+struct InternalParenTrail<'a> {
     line_no: Option<LineNumber>,
     start_x: Option<Column>,
     end_x: Option<Column>,
@@ -203,7 +203,7 @@ struct State<'a> {
 
     tab_stops: Vec<TabStop<'a>>,
 
-    paren_trail: ParenTrail<'a>,
+    paren_trail: InternalParenTrail<'a>,
     paren_trails: Vec<ReturnedParenTrail>,
 
     return_parens: bool,
@@ -251,8 +251,8 @@ pub struct Answer<'a> {
     pub error: Option<Error>
 }
 
-fn initial_paren_trail<'a>() -> ParenTrail<'a> {
-    ParenTrail {
+fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
+    InternalParenTrail {
         line_no: None,
         start_x: None,
         end_x: None,
