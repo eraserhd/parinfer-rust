@@ -3,7 +3,13 @@ if !exists('g:parinfer_mode')
 endif
 
 if !exists('g:parinfer_dylib_path')
-  let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libcparinfer.dylib'
+	if has('macunix')
+		let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libcparinfer.dylib'
+	elseif has('unix')
+		let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libcparinfer.so'
+	else
+		" I hope we don't come here!
+	endif
 endif
 
 function! s:toggleMode()
