@@ -15,6 +15,20 @@ If you are using Tim Pope's `pathogen`:
     $ cd ~/.vim/bundle/parinfer-rust/cparinfer
     $ cargo build --release
 
+If you are using `vim-plug`:
+
+	Plug 'eraserhd/parinfer-rust'
+
+Then, build project using cargo:
+
+	$ cd /path/to/parinfer-rust/cparinfer
+	$ cargo build --release
+
+Or, with optional automatic recompilation on update:
+
+	Plug 'eraserhd/parinfer-rust', {'do':
+		\  'cargo build --manifest-path=cparinfer/Cargo.toml --release'}
+
 ## Contributors
 
 This wouldn't be possible without the work of others:
