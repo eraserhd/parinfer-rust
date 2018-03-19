@@ -9,13 +9,13 @@ pub type Delta = i64;
 // Constants / Predicates
 //------------------------------------------------------------------------------
 
-const BACKSLASH : &'static str = "\\";
-const BLANK_SPACE : &'static str = " ";
-const DOUBLE_SPACE : &'static str = "  ";
-const DOUBLE_QUOTE : &'static str = "\"";
-const NEWLINE : &'static str = "\n";
-const SEMICOLON : &'static str = ";";
-const TAB : &'static str = "\t";
+const BACKSLASH: &'static str = "\\";
+const BLANK_SPACE: &'static str = " ";
+const DOUBLE_SPACE: &'static str = "  ";
+const DOUBLE_QUOTE: &'static str = "\"";
+const NEWLINE: &'static str = "\n";
+const SEMICOLON: &'static str = ";";
+const TAB: &'static str = "\t";
 
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
@@ -25,7 +25,7 @@ fn match_paren(paren: &str) -> Option<&'static str> {
         "]" => Some("["),
         "(" => Some(")"),
         ")" => Some("("),
-        _ => None
+        _ => None,
     }
 }
 
@@ -52,20 +52,20 @@ struct TransformedChange {
     old_end_x: Column,
     new_end_x: Column,
     lookup_line_no: LineNumber,
-    lookup_x: Column
+    lookup_x: Column,
 }
 
 fn chomp_cr<'a>(text: &'a str) -> &'a str {
     if text.chars().last() == Some('\r') {
-        &text[0..text.len()-1]
+        &text[0..text.len() - 1]
     } else {
         text
     }
 }
 
 fn transform_change<'a>(change: &Change<'a>) -> TransformedChange {
-    let new_lines : Vec<&'a str> = change.new_text.split('\n').map(chomp_cr).collect();
-    let old_lines : Vec<&'a str> = change.old_text.split('\n').map(chomp_cr).collect();
+    let new_lines: Vec<&'a str> = change.new_text.split('\n').map(chomp_cr).collect();
+    let old_lines: Vec<&'a str> = change.old_text.split('\n').map(chomp_cr).collect();
 
     // single line case:
     //     (defn foo| [])
@@ -80,27 +80,35 @@ fn transform_change<'a>(change: &Change<'a>) -> TransformedChange {
     //       |[])
     //     ++^ newEndX, newEndLineNo
 
-    let last_old_line_len = old_lines[old_lines.len()-1].len();
-    let last_new_line_len = new_lines[new_lines.len()-1].len();
+    let last_old_line_len = old_lines[old_lines.len() - 1].len();
+    let last_new_line_len = new_lines[new_lines.len() - 1].len();
 
     let old_end_x = (if old_lines.len() == 1 { change.x } else { 0 }) + last_old_line_len;
     let new_end_x = (if new_lines.len() == 1 { change.x } else { 0 }) + last_new_line_len;
-    let new_end_line_no = change.line_no + (new_lines.len()-1);
+    let new_end_line_no = change.line_no + (new_lines.len() - 1);
 
     TransformedChange {
         old_end_x,
         new_end_x,
 
         lookup_line_no: new_end_line_no,
-        lookup_x: new_end_x
+        lookup_x: new_end_x,
     }
 }
 
-fn transform_changes<'a>(changes: &Vec<Change<'a>>) -> HashMap<(LineNumber, Column), TransformedChange> {
-    let mut lines : HashMap<(LineNumber, Column), TransformedChange> = HashMap::new();
+fn transform_changes<'a>(
+    changes: &Vec<Change<'a>>,
+) -> HashMap<(LineNumber, Column), TransformedChange> {
+    let mut lines: HashMap<(LineNumber, Column), TransformedChange> = HashMap::new();
     for change in changes {
         let transformed_change = transform_change(change);
-        lines.insert((transformed_change.lookup_line_no, transformed_change.lookup_x), transformed_change);
+        lines.insert(
+            (
+                transformed_change.lookup_line_no,
+                transformed_change.lookup_x,
+            ),
+            transformed_change,
+        );
     }
     lines
 }
@@ -114,7 +122,7 @@ pub struct Options<'a> {
     pub changes: Vec<Change<'a>>,
     pub partial_result: bool,
     pub force_balance: bool,
-    pub return_parens: bool
+    pub return_parens: bool,
 }
 
 //------------------------------------------------------------------------------
@@ -141,7 +149,7 @@ pub struct Paren<'a> {
 struct ParenTrailClamped<'a> {
     start_x: Option<Column>,
     end_x: Option<Column>,
-    openers: Vec<Paren<'a>>
+    openers: Vec<Paren<'a>>,
 }
 
 #[derive(Debug)]
@@ -150,27 +158,27 @@ struct InternalParenTrail<'a> {
     start_x: Option<Column>,
     end_x: Option<Column>,
     openers: Vec<Paren<'a>>,
-    clamped: ParenTrailClamped<'a>
+    clamped: ParenTrailClamped<'a>,
 }
 
 #[derive(Clone)]
 pub struct ParenTrail {
     pub line_no: LineNumber,
     pub start_x: Column,
-    pub end_x: Column
+    pub end_x: Column,
 }
 
 #[derive(PartialEq, Eq)]
 pub enum Mode {
     Indent,
-    Paren
+    Paren,
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 enum TrackingArgTabStop {
     NotSearching,
     Space,
-    Arg
+    Arg,
 }
 
 #[derive(Clone)]
@@ -178,7 +186,7 @@ pub struct TabStop<'a> {
     pub ch: &'a str,
     pub x: Column,
     pub line_no: LineNumber,
-    pub arg_x: Option<Column>
+    pub arg_x: Option<Column>,
 }
 
 struct State<'a> {
@@ -237,7 +245,7 @@ struct State<'a> {
     tracking_arg_tab_stop: TrackingArgTabStop,
 
     error: Option<Error>,
-    error_pos_cache: HashMap<ErrorName, Error>
+    error_pos_cache: HashMap<ErrorName, Error>,
 }
 
 pub struct Answer<'a> {
@@ -248,7 +256,7 @@ pub struct Answer<'a> {
     pub tab_stops: Vec<TabStop<'a>>,
     pub paren_trails: Vec<ParenTrail>,
     pub parens: Vec<Paren<'a>>,
-    pub error: Option<Error>
+    pub error: Option<Error>,
 }
 
 fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
@@ -256,16 +264,21 @@ fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
         line_no: None,
         start_x: None,
         end_x: None,
-        openers: vec![], 
+        openers: vec![],
         clamped: ParenTrailClamped {
             start_x: None,
             end_x: None,
-            openers: vec![]
-        }
+            openers: vec![],
+        },
     }
 }
 
-fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: bool) -> State<'a> {
+fn get_initial_result<'a>(
+    text: &'a str,
+    options: &Options<'a>,
+    mode: Mode,
+    smart: bool,
+) -> State<'a> {
     State {
         mode: mode,
         smart: smart,
@@ -274,7 +287,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
         orig_cursor_x: options.cursor_x,
         orig_cursor_line: options.cursor_line,
 
-        input_lines: text.split('\n').map(chomp_cr).collect(), 
+        input_lines: text.split('\n').map(chomp_cr).collect(),
         input_line_no: 0,
         input_x: 0,
 
@@ -321,7 +334,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smar
         tracking_arg_tab_stop: TrackingArgTabStop::NotSearching,
 
         error: None,
-        error_pos_cache: HashMap::new()
+        error_pos_cache: HashMap::new(),
     }
 }
 
@@ -339,7 +352,7 @@ pub enum ErrorName {
     UnmatchedOpenParen,
     LeadingCloseParen,
 
-    Restart
+    Restart,
 }
 
 impl ToString for ErrorName {
@@ -353,7 +366,7 @@ impl ToString for ErrorName {
             &ErrorName::UnmatchedOpenParen => "unmatched-open-paren",
             &ErrorName::LeadingCloseParen => "leading-close-paren",
 
-            _ => "??"
+            _ => "??",
         })
     }
 }
@@ -379,8 +392,8 @@ fn error_message(error: ErrorName) -> &'static str {
         ErrorName::UnmatchedCloseParen => "Unmatched close-paren.",
         ErrorName::UnmatchedOpenParen => "Unmatched open-paren.",
         ErrorName::LeadingCloseParen => "Line cannot lead with a close-paren.",
-        
-        ErrorName::Restart => "Restart requested (you shouldn't see this)."
+
+        ErrorName::Restart => "Restart requested (you shouldn't see this).",
     }
 }
 
@@ -391,17 +404,17 @@ fn cache_error_pos(result: &mut State, name: ErrorName) {
         line_no: result.line_no,
         x: result.x,
         input_line_no: result.input_line_no,
-        input_x: result.input_x
+        input_x: result.input_x,
     };
     result.error_pos_cache.insert(name, error);
 }
 
 fn error(result: &mut State, name: ErrorName) -> Result<()> {
     let (line_no, x) = match (result.partial_result, result.error_pos_cache.get(&name)) {
-        (true,  Some(cache)) => (cache.line_no, cache.x),
+        (true, Some(cache)) => (cache.line_no, cache.x),
         (false, Some(cache)) => (cache.input_line_no, cache.input_x),
-        (true,  None)        => (result.line_no, result.x),
-        (false, None)        => (result.input_line_no, result.input_x)
+        (true, None) => (result.line_no, result.x),
+        (false, None) => (result.input_line_no, result.input_x),
     };
 
     let mut e = Error {
@@ -410,14 +423,14 @@ fn error(result: &mut State, name: ErrorName) -> Result<()> {
         x,
         message: error_message(name),
         input_line_no: result.input_line_no,
-        input_x: result.input_x
+        input_x: result.input_x,
     };
 
     if name == ErrorName::UnmatchedCloseParen {
         // extra error info for locating the open-paren that it should've matched
         if let Some(cache) = result.error_pos_cache.get(&ErrorName::UnmatchedOpenParen) {
             if let Some(opener) = peek(&result.paren_stack, 0) {
-            /* FIXME
+                /* FIXME
               e.extra = {
                   name: ErrorName::UnmatchedOpenParen,
                   lineNo: cache ? cache[key_line_no] : opener[key_line_no],
@@ -428,8 +441,16 @@ fn error(result: &mut State, name: ErrorName) -> Result<()> {
         }
     } else if name == ErrorName::UnclosedParen {
         if let Some(opener) = peek(&result.paren_stack, 0) {
-            e.line_no = if result.partial_result { opener.line_no } else { opener.input_line_no };
-            e.x = if result.partial_result { opener.x } else { opener.input_x };
+            e.line_no = if result.partial_result {
+                opener.line_no
+            } else {
+                opener.input_line_no
+            };
+            e.x = if result.partial_result {
+                opener.x
+            } else {
+                opener.input_x
+            };
         }
     }
 
@@ -490,11 +511,17 @@ fn is_cursor_affected<'a>(result: &State<'a>, start: Column, end: Column) -> boo
     match result.cursor_x {
         Some(x) if x == start && x == end => x == 0,
         Some(x) => x >= end,
-        None => false
+        None => false,
     }
 }
 
-fn shift_cursor_on_edit<'a>(result: &mut State<'a>, line_no: LineNumber, start: Column, end: Column, replace: &str) {
+fn shift_cursor_on_edit<'a>(
+    result: &mut State<'a>,
+    line_no: LineNumber,
+    start: Column,
+    end: Column,
+    replace: &str,
+) {
     let old_length = end - start;
     let new_length = replace.len();
     let dx = new_length as Delta - old_length as Delta;
@@ -506,7 +533,13 @@ fn shift_cursor_on_edit<'a>(result: &mut State<'a>, line_no: LineNumber, start: 
     }
 }
 
-fn replace_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, start: Column, end: Column, replace: &str) {
+fn replace_within_line<'a>(
+    result: &mut State<'a>,
+    line_no: LineNumber,
+    start: Column,
+    end: Column,
+    replace: &str,
+) {
     let line = result.lines[line_no].clone();
     let new_line = replace_within_string(&line, start, end, replace);
     result.lines[line_no] = Cow::from(new_line);
@@ -527,8 +560,12 @@ fn init_line<'a>(result: &mut State<'a>) {
     result.comment_x = None;
     result.indent_delta = 0;
 
-    result.error_pos_cache.remove(&ErrorName::UnmatchedCloseParen);
-    result.error_pos_cache.remove(&ErrorName::UnmatchedOpenParen);
+    result
+        .error_pos_cache
+        .remove(&ErrorName::UnmatchedCloseParen);
+    result
+        .error_pos_cache
+        .remove(&ErrorName::UnmatchedOpenParen);
     result.error_pos_cache.remove(&ErrorName::LeadingCloseParen);
 
     result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
@@ -550,7 +587,7 @@ fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
 // Misc Utils
 //------------------------------------------------------------------------------
 
-fn clamp<T : Clone + Ord>(val: T, min_n: Option<T>, max_n: Option<T>) -> T {
+fn clamp<T: Clone + Ord>(val: T, min_n: Option<T>, max_n: Option<T>) -> T {
     if let Some(low) = min_n {
         if low >= val {
             return low;
@@ -592,7 +629,7 @@ fn peek_works() {
     assert_eq!(peek(&vec!['a', 'b', 'c'], 0), Some(&'c'));
     assert_eq!(peek(&vec!['a', 'b', 'c'], 1), Some(&'b'));
     assert_eq!(peek(&vec!['a', 'b', 'c'], 5), None);
-    let empty : Vec<char> = vec![];
+    let empty: Vec<char> = vec![];
     assert_eq!(peek(&empty, 0), None);
     assert_eq!(peek(&empty, 1), None);
 }
@@ -604,7 +641,7 @@ fn peek_works() {
 fn is_open_paren(paren: &str) -> bool {
     match paren {
         "{" | "[" | "(" => true,
-        _ => false
+        _ => false,
     }
 }
 
@@ -618,7 +655,7 @@ fn is_open_paren_works() {
 fn is_close_paren(paren: &str) -> bool {
     match paren {
         "}" | "]" | ")" => true,
-        _ => false
+        _ => false,
     }
 }
 
@@ -652,19 +689,23 @@ fn is_closable<'a>(result: &State<'a>) -> bool {
 
 fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
     let opener = peek(&result.paren_stack, 0).unwrap();
-    let hold_min_x = peek(&result.paren_stack, 1).map(|p| p.x+1).unwrap_or(0);
+    let hold_min_x = peek(&result.paren_stack, 1).map(|p| p.x + 1).unwrap_or(0);
     let hold_max_x = opener.x;
 
-    let holding = result.cursor_line == Some(opener.line_no) &&
-      result.cursor_x.map(|x| hold_min_x <= x).unwrap_or(false) &&
-      result.cursor_x.map(|x| x <= hold_max_x).unwrap_or(false)
-      ;
+    let holding = result.cursor_line == Some(opener.line_no)
+        && result.cursor_x.map(|x| hold_min_x <= x).unwrap_or(false)
+        && result.cursor_x.map(|x| x <= hold_max_x).unwrap_or(false);
     let should_check_prev = result.changes.is_empty() && result.prev_cursor_line != None;
     if should_check_prev {
-      let prev_holding = result.prev_cursor_line == Some(opener.line_no) &&
-        result.prev_cursor_x.map(|x| hold_min_x <= x).unwrap_or(false) &&
-        result.prev_cursor_x.map(|x| x <= hold_max_x).unwrap_or(false)
-        ;
+        let prev_holding = result.prev_cursor_line == Some(opener.line_no)
+            && result
+                .prev_cursor_x
+                .map(|x| hold_min_x <= x)
+                .unwrap_or(false)
+            && result
+                .prev_cursor_x
+                .map(|x| x <= hold_max_x)
+                .unwrap_or(false);
         if prev_holding && !holding {
             return Err(Error {
                 name: ErrorName::Restart,
@@ -672,7 +713,7 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
                 input_line_no: 0,
                 input_x: 0,
                 line_no: 0,
-                message: ""
+                message: "",
             });
         }
     }
@@ -733,11 +774,11 @@ fn on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
         let orig_openers = result.paren_trail.openers.clone();
         let x = result.x;
         let line_no = result.line_no;
-        reset_paren_trail(result, line_no, x+1);
+        reset_paren_trail(result, line_no, x + 1);
         result.paren_trail.clamped = ParenTrailClamped {
-            start_x:  orig_start_x,
+            start_x: orig_start_x,
             end_x: orig_end_x,
-            openers: orig_openers
+            openers: orig_openers,
         };
     }
     result.paren_stack.pop();
@@ -749,26 +790,32 @@ fn on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
 fn on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     match result.mode {
         Mode::Paren => {
-            let in_leading_paren_trail = result.paren_trail.line_no == Some(result.line_no) && result.paren_trail.start_x == result.indent_x;
+            let in_leading_paren_trail = result.paren_trail.line_no == Some(result.line_no)
+                && result.paren_trail.start_x == result.indent_x;
             let can_remove = result.smart && in_leading_paren_trail;
             if !can_remove {
                 error(result, ErrorName::UnmatchedCloseParen)?;
             }
-        },
+        }
         Mode::Indent => {
-            if !result.error_pos_cache.contains_key(&ErrorName::UnmatchedCloseParen)  {
+            if !result
+                .error_pos_cache
+                .contains_key(&ErrorName::UnmatchedCloseParen)
+            {
                 cache_error_pos(result, ErrorName::UnmatchedCloseParen);
                 if peek(&result.paren_stack, 0).is_some() {
                     cache_error_pos(result, ErrorName::UnmatchedOpenParen);
                     let opener = peek(&result.paren_stack, 0).unwrap();
-                    if let Some(err) = result.error_pos_cache.get_mut(&ErrorName::UnmatchedOpenParen) {
+                    if let Some(err) = result
+                        .error_pos_cache
+                        .get_mut(&ErrorName::UnmatchedOpenParen)
+                    {
                         err.input_line_no = opener.input_line_no;
                         err.input_x = opener.input_x;
                     }
                 }
             }
         }
-
     }
     result.ch = "";
 
@@ -845,14 +892,23 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     let mut ch = result.ch;
     result.is_escaped = false;
 
-    if result.is_escaping      { after_backslash(result)?; }
-    else if is_open_paren(ch)  { on_open_paren(result); }
-    else if is_close_paren(ch) { on_close_paren(result)?; }
-    else if ch == DOUBLE_QUOTE { on_quote(result); }
-    else if ch == SEMICOLON    { on_semicolon(result); }
-    else if ch == BACKSLASH    { on_backslash(result); }
-    else if ch == TAB          { on_tab(result); }
-    else if ch == NEWLINE      { on_newline(result); }
+    if result.is_escaping {
+        after_backslash(result)?;
+    } else if is_open_paren(ch) {
+        on_open_paren(result);
+    } else if is_close_paren(ch) {
+        on_close_paren(result)?;
+    } else if ch == DOUBLE_QUOTE {
+        on_quote(result);
+    } else if ch == SEMICOLON {
+        on_semicolon(result);
+    } else if ch == BACKSLASH {
+        on_backslash(result);
+    } else if ch == TAB {
+        on_tab(result);
+    } else if ch == NEWLINE {
+        on_newline(result);
+    }
 
     ch = result.ch;
 
@@ -876,25 +932,37 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
 // Cursor functions
 //------------------------------------------------------------------------------
 
-fn is_cursor_left_of<'a>(cursor_x: Option<Column>, cursor_line: Option<LineNumber>,
-                         x: Option<Column>, line_no: LineNumber) -> bool {
-  if let (Some(x), Some(cursor_x)) = (x, cursor_x) {
-    cursor_line == Some(line_no) && cursor_x <= x // inclusive since (cursorX = x) implies (x-1 < cursor < x)
-  } else {
-    false
-  }
+fn is_cursor_left_of<'a>(
+    cursor_x: Option<Column>,
+    cursor_line: Option<LineNumber>,
+    x: Option<Column>,
+    line_no: LineNumber,
+) -> bool {
+    if let (Some(x), Some(cursor_x)) = (x, cursor_x) {
+        cursor_line == Some(line_no) && cursor_x <= x // inclusive since (cursorX = x) implies (x-1 < cursor < x)
+    } else {
+        false
+    }
 }
 
-fn is_cursor_right_of<'a>(cursor_x: Option<Column>, cursor_line: Option<LineNumber>,
-                          x: Option<Column>, line_no: LineNumber) -> bool {
-  if let (Some(x), Some(cursor_x)) = (x, cursor_x) {
-    cursor_line == Some(line_no) && cursor_x > x
-  } else {
-    false
-  }
+fn is_cursor_right_of<'a>(
+    cursor_x: Option<Column>,
+    cursor_line: Option<LineNumber>,
+    x: Option<Column>,
+    line_no: LineNumber,
+) -> bool {
+    if let (Some(x), Some(cursor_x)) = (x, cursor_x) {
+        cursor_line == Some(line_no) && cursor_x > x
+    } else {
+        false
+    }
 }
 
-fn is_cursor_in_comment<'a>(result: &State<'a>, cursor_x: Option<Column>, cursor_line: Option<LineNumber>) -> bool {
+fn is_cursor_in_comment<'a>(
+    result: &State<'a>,
+    cursor_x: Option<Column>,
+    cursor_line: Option<LineNumber>,
+) -> bool {
     is_cursor_right_of(cursor_x, cursor_line, result.comment_x, result.line_no)
 }
 
@@ -920,9 +988,17 @@ fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column)
     result.paren_trail.clamped.openers = vec![];
 }
 
-fn is_cursor_clamping_paren_trail<'a>(result: &State<'a>, cursor_x: Option<Column>, cursor_line: Option<LineNumber>) -> bool {
-    is_cursor_right_of(cursor_x, cursor_line, result.paren_trail.start_x, result.line_no) &&
-        !is_cursor_in_comment(result, cursor_x, cursor_line)
+fn is_cursor_clamping_paren_trail<'a>(
+    result: &State<'a>,
+    cursor_x: Option<Column>,
+    cursor_line: Option<LineNumber>,
+) -> bool {
+    is_cursor_right_of(
+        cursor_x,
+        cursor_line,
+        result.paren_trail.start_x,
+        result.line_no,
+    ) && !is_cursor_in_comment(result, cursor_x, cursor_line)
 }
 
 // INDENT MODE: allow the cursor to clamp the paren trail
@@ -941,7 +1017,7 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
             if x < start_x || x >= new_start_x {
                 continue;
             }
-            if is_close_paren(&line[i..i+c.len_utf8()]) {
+            if is_close_paren(&line[i..i + c.len_utf8()]) {
                 remove_count += 1;
             }
         }
@@ -985,11 +1061,9 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
 
         if prev_outside && curr_outside {
             is_parent = true;
-        }
-        else if !prev_outside && !curr_outside {
+        } else if !prev_outside && !curr_outside {
             is_parent = false;
-        }
-        else if prev_outside && !curr_outside {
+        } else if prev_outside && !curr_outside {
             // POSSIBLE FRAGMENTATION
             // (foo    --\
             //            +--- FRAGMENT `(foo bar)` => `(foo) bar`
@@ -1008,7 +1082,6 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
             if result.indent_delta == 0 {
                 is_parent = true;
             }
-
             // 2. ALLOW FRAGMENTATION
             // ```in
             // (foo
@@ -1021,9 +1094,7 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
             // ```
             else if opener.indent_delta == 0 {
                 is_parent = false;
-            }
-
-            else {
+            } else {
                 // TODO: identify legitimate cases where both are nonzero
 
                 // allow the fragmentation by default
@@ -1033,16 +1104,14 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
                 // 1. give up, just `throw error(...)`
                 // 2. fallback to paren mode to preserve structure
             }
-        }
-        else if !prev_outside && curr_outside {
+        } else if !prev_outside && curr_outside {
             // POSSIBLE ADOPTION
             // (foo)   --\
             //            +--- ADOPT `(foo) bar` => `(foo bar)`
             //   bar   --/
 
             {
-
-                let next_opener = peek(&result.paren_stack, i+1);
+                let next_opener = peek(&result.paren_stack, i + 1);
 
                 // 1. DISALLOW ADOPTION
                 // ```in
@@ -1070,17 +1139,18 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
                 //  (bar)
                 //  baz)
                 // ```
-                if next_opener.map(|no| no.indent_delta <= opener.indent_delta).unwrap_or(false) {
+                if next_opener
+                    .map(|no| no.indent_delta <= opener.indent_delta)
+                    .unwrap_or(false)
+                {
                     // we can only disallow adoption if nextOpener.indentDelta will actually
                     // prevent the indentX from being in the opener's threshold.
                     if indent_x as Delta + next_opener.unwrap().indent_delta > opener.x as Delta {
                         is_parent = true;
-                    }
-                    else {
+                    } else {
                         is_parent = false;
                     }
                 }
-
                 // 2. ALLOW ADOPTION
                 // ```in
                 // (foo
@@ -1106,10 +1176,12 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
                 //   (bar)
                 //    baz)
                 // ```
-                else if next_opener.map(|no| no.indent_delta > opener.indent_delta).unwrap_or(false) {
+                else if next_opener
+                    .map(|no| no.indent_delta > opener.indent_delta)
+                    .unwrap_or(false)
+                {
                     is_parent = true;
                 }
-
                 // 3. ALLOW ADOPTION
                 // ```in
                 //   (foo)
@@ -1144,10 +1216,10 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
                 else if result.indent_delta > opener.indent_delta {
                     is_parent = true;
                 }
-
             }
 
-            if is_parent { // if new parent
+            if is_parent {
+                // if new parent
                 // Clear `indentDelta` since it is reserved for previous child lines only.
                 result.paren_stack[opener_index].indent_delta = 0;
             }
@@ -1205,11 +1277,10 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
             continue;
         }
 
-        let ch = &result.lines[result.line_no][i..i+c.len_utf8()];
+        let ch = &result.lines[result.line_no][i..i + c.len_utf8()];
         if is_close_paren(ch) {
             new_trail.push_str(ch);
-        }
-        else {
+        } else {
             space_count += 1;
         }
     }
@@ -1246,7 +1317,12 @@ fn invalidate_paren_trail<'a>(result: &mut State<'a>) {
 fn check_unmatched_outside_paren_trail<'a>(result: &mut State<'a>) -> Result<()> {
     let mut do_error = false;
     if let Some(cache) = result.error_pos_cache.get(&ErrorName::UnmatchedCloseParen) {
-        if result.paren_trail.start_x.map(|x| cache.x < x).unwrap_or(false) {
+        if result
+            .paren_trail
+            .start_x
+            .map(|x| cache.x < x)
+            .unwrap_or(false)
+        {
             do_error = true;
         }
     }
@@ -1267,13 +1343,20 @@ fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
 }
 
 fn remember_paren_trail<'a>(result: &mut State<'a>) {
-    if result.paren_trail.clamped.openers.len() > 0 ||
-      result.paren_trail.openers.len() > 0 {
+    if result.paren_trail.clamped.openers.len() > 0 || result.paren_trail.openers.len() > 0 {
         let is_clamped = result.paren_trail.clamped.start_x != None;
         let short_trail = ParenTrail {
             line_no: result.paren_trail.line_no.unwrap(),
-            start_x: if is_clamped { result.paren_trail.clamped.start_x } else { result.paren_trail.start_x }.unwrap(),
-            end_x: if is_clamped { result.paren_trail.clamped.end_x } else { result.paren_trail.end_x }.unwrap()
+            start_x: if is_clamped {
+                result.paren_trail.clamped.start_x
+            } else {
+                result.paren_trail.start_x
+            }.unwrap(),
+            end_x: if is_clamped {
+                result.paren_trail.clamped.end_x
+            } else {
+                result.paren_trail.end_x
+            }.unwrap(),
         };
 
         result.paren_trails.push(short_trail);
@@ -1285,16 +1368,17 @@ fn remember_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
-    if result.paren_trails.is_empty() ||
-      Some(result.paren_trails[result.paren_trails.len()-1].line_no) != result.paren_trail.line_no {
+    if result.paren_trails.is_empty()
+        || Some(result.paren_trails[result.paren_trails.len() - 1].line_no)
+            != result.paren_trail.line_no
+    {
         remember_paren_trail(result);
-    }
-    else {
+    } else {
         let n = result.paren_trails.len() - 1;
         let trail = result.paren_trails.get_mut(n).unwrap();
         trail.end_x = result.paren_trail.end_x.unwrap();
         if result.return_parens {
-          /* FIXME:
+            /* FIXME:
             let opener = result.paren_trail.openers.get_mut(result.paren_trail.openers.len()-1);
             opener.closer.trail = trail;
             */
@@ -1305,12 +1389,10 @@ fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
 fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
     if result.is_in_str {
         invalidate_paren_trail(result);
-    }
-    else if result.mode == Mode::Indent {
+    } else if result.mode == Mode::Indent {
         clamp_paren_trail_to_cursor(result);
         pop_paren_trail(result);
-    }
-    else if result.mode == Mode::Paren {
+    } else if result.mode == Mode::Paren {
         if let Some(paren) = peek(&result.paren_trail.openers, 0).map(Clone::clone) {
             set_max_indent(result, &paren);
         }
@@ -1377,23 +1459,28 @@ fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
             correct_paren_trail(result, x);
 
             let to_add = match peek(&result.paren_stack, 0) {
-                Some(opener) if should_add_opener_indent(result, opener) => Some(opener.indent_delta),
-                _ => None
+                Some(opener) if should_add_opener_indent(result, opener) => {
+                    Some(opener.indent_delta)
+                }
+                _ => None,
             };
 
             if let Some(adjust) = to_add {
                 add_indent(result, adjust);
             }
-        },
-        Mode::Paren => correct_indent(result)
+        }
+        Mode::Paren => correct_indent(result),
     }
 
     Ok(())
 }
 
 fn check_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
-    if result.error_pos_cache.contains_key(&ErrorName::LeadingCloseParen) &&
-      result.paren_trail.line_no == Some(result.line_no) {
+    if result
+        .error_pos_cache
+        .contains_key(&ErrorName::LeadingCloseParen)
+        && result.paren_trail.line_no == Some(result.line_no)
+    {
         error(result, ErrorName::LeadingCloseParen)?;
     }
 
@@ -1407,12 +1494,15 @@ fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
                 if result.smart {
                     error(result, ErrorName::Restart)?;
                 }
-                if !result.error_pos_cache.contains_key(&ErrorName::LeadingCloseParen) {
+                if !result
+                    .error_pos_cache
+                    .contains_key(&ErrorName::LeadingCloseParen)
+                {
                     cache_error_pos(result, ErrorName::LeadingCloseParen);
                 }
             }
             result.skip_char = true;
-        },
+        }
         Mode::Paren => {
             if !is_valid_close_paren(&result.paren_stack, result.ch) {
                 if result.smart {
@@ -1420,7 +1510,12 @@ fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
                 } else {
                     error(result, ErrorName::UnmatchedCloseParen)?;
                 }
-            } else if is_cursor_left_of(result.cursor_x, result.cursor_line, Some(result.x), result.line_no) {
+            } else if is_cursor_left_of(
+                result.cursor_x,
+                result.cursor_line,
+                Some(result.x),
+                result.line_no,
+            ) {
                 let line_no = result.line_no;
                 let x = result.x;
                 reset_paren_trail(result, line_no, x);
@@ -1449,7 +1544,7 @@ fn on_comment_line<'a>(result: &mut State<'a>) {
 
     let x = result.x;
     let i = get_parent_opener_index(result, x);
-    let mut indent_to_add : Delta = 0;
+    let mut indent_to_add: Delta = 0;
     if let Some(opener) = peek(&result.paren_stack, i) {
         // shift the comment line based on the parent open paren
         if should_add_opener_indent(result, opener) {
@@ -1476,9 +1571,7 @@ fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
         // comments don't count as indentation points
         on_comment_line(result);
         result.tracking_indent = false;
-    } else if result.ch != NEWLINE &&
-              result.ch != BLANK_SPACE &&
-              result.ch != TAB {
+    } else if result.ch != NEWLINE && result.ch != BLANK_SPACE && result.ch != TAB {
         on_indent(result)?;
     }
 
@@ -1490,7 +1583,7 @@ fn make_tab_stop<'a>(opener: &Paren<'a>) -> TabStop<'a> {
         ch: opener.ch,
         x: opener.x,
         line_no: opener.line_no,
-        arg_x: opener.arg_x
+        arg_x: opener.arg_x,
     }
 }
 
@@ -1506,7 +1599,11 @@ fn set_tab_stops<'a>(result: &mut State<'a>) {
     result.tab_stops = result.paren_stack.iter().map(make_tab_stop).collect();
 
     if result.mode == Mode::Paren {
-        let paren_trail_tabs : Vec<_> = result.paren_trail.openers.iter().rev()
+        let paren_trail_tabs: Vec<_> = result
+            .paren_trail
+            .openers
+            .iter()
+            .rev()
             .map(make_tab_stop)
             .collect();
         result.tab_stops.extend(paren_trail_tabs);
@@ -1515,9 +1612,9 @@ fn set_tab_stops<'a>(result: &mut State<'a>) {
     // remove argX if it falls to the right of the next stop
     for i in 1..result.tab_stops.len() {
         let x = result.tab_stops[i].x;
-        if let Some(prev_arg_x) = result.tab_stops[i-1].arg_x {
+        if let Some(prev_arg_x) = result.tab_stops[i - 1].arg_x {
             if prev_arg_x >= x {
-                result.tab_stops[i-1].arg_x = None;
+                result.tab_stops[i - 1].arg_x = None;
             }
         }
     }
@@ -1558,7 +1655,7 @@ fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
 
     for (x, (i, c)) in result.input_lines[line_no].char_indices().enumerate() {
         result.input_x = x;
-        let ch = &result.input_lines[line_no][i..i+c.len_utf8()];
+        let ch = &result.input_lines[line_no][i..i + c.len_utf8()];
         process_char(result, ch)?;
     }
     process_char(result, NEWLINE)?;
@@ -1576,8 +1673,12 @@ fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
 }
 
 fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
-    if result.quote_danger { error(result, ErrorName::QuoteDanger)?; }
-    if result.is_in_str    { error(result, ErrorName::UnclosedQuote)?; }
+    if result.quote_danger {
+        error(result, ErrorName::QuoteDanger)?;
+    }
+    if result.is_in_str {
+        error(result, ErrorName::UnclosedQuote)?;
+    }
 
     if result.paren_stack.len() != 0 {
         if result.mode == Mode::Paren {
@@ -1601,7 +1702,7 @@ fn process_error<'a>(result: &mut State<'a>, e: Error) {
 fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: bool) -> State<'a> {
     let mut result = get_initial_result(text, &options, mode, smart);
 
-    let mut process_result : Result<()> = Ok(());
+    let mut process_result: Result<()> = Ok(());
     for i in 0..result.input_lines.len() {
         result.input_line_no = i;
         process_result = process_line(&mut result, i);
@@ -1615,12 +1716,15 @@ fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: boo
     }
 
     match process_result {
-        Err(Error { name: ErrorName::Restart, .. }) => process_text(text, &options, Mode::Paren, smart),
+        Err(Error {
+            name: ErrorName::Restart,
+            ..
+        }) => process_text(text, &options, Mode::Paren, smart),
         Err(e) => {
             process_error(&mut result, e);
             result
         }
-        _ => result
+        _ => result,
     }
 }
 
@@ -1639,19 +1743,30 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             tab_stops: result.tab_stops,
             paren_trails: result.paren_trails,
             parens: vec![], //FIXME:
-            error: None
+            error: None,
         }
-    }
-    else {
+    } else {
         Answer {
-            text: if result.partial_result { Cow::from(result.lines.join(line_ending)) } else { Cow::from(result.orig_text) },
-            cursor_x: if result.partial_result { result.cursor_x } else { result.orig_cursor_x },
-            cursor_line: if result.partial_result { result.cursor_line } else { result.orig_cursor_line },
+            text: if result.partial_result {
+                Cow::from(result.lines.join(line_ending))
+            } else {
+                Cow::from(result.orig_text)
+            },
+            cursor_x: if result.partial_result {
+                result.cursor_x
+            } else {
+                result.orig_cursor_x
+            },
+            cursor_line: if result.partial_result {
+                result.cursor_line
+            } else {
+                result.orig_cursor_line
+            },
             paren_trails: result.paren_trails,
             success: false,
             tab_stops: result.tab_stops,
             error: result.error,
-            parens: vec![] //FIXME:
+            parens: vec![], //FIXME:
         }
     }
 }
