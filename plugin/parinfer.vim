@@ -90,9 +90,11 @@ augroup Parinfer
   autocmd FileType clojure,scheme,lisp,racket,hy
         \ :autocmd! Parinfer TextChangedI <buffer>
         \ :call <SID>process(g:parinfer_mode,1)
-  autocmd FileType clojure,scheme,lisp,racket,hy
-        \ :autocmd! Parinfer TextChangedP <buffer>
-        \ :call <SID>process(g:parinfer_mode,1)
+  if exists('##TextChangedP')
+    autocmd FileType clojure,scheme,lisp,racket,hy
+          \ :autocmd! Parinfer TextChangedP <buffer>
+          \ :call <SID>process(g:parinfer_mode,1)
+  endif
 augroup END
 
 " vim:set sts=2 sw=2 ai et:
