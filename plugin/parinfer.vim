@@ -39,7 +39,8 @@ function! s:process(mode)
                     \ "options": { "cursorX": l:pos[2] - 1,
                                  \ "cursorLine": l:pos[1] - 1 } }
     let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
-    if l:response["text"] !=# l:orig_text
+    if l:response["success"] 
+      if l:response["text"] !=# l:orig_text
         let l:lines = split(l:response["text"], "\n", 1)
         let l:changed = filter(range(len(l:lines)), 'l:lines[v:val] !=# l:orig_lines[v:val]')
         
@@ -48,10 +49,13 @@ function! s:process(mode)
         catch
         endtry
         call setline(l:changed[0]+1, l:lines[l:changed[0]:l:changed[-1]])
+      endif
+      let l:pos[1] = l:response["cursorLine"] + 1
+      let l:pos[2] = l:response["cursorX"] + 1
+      call setpos('.', l:pos)
+    else
+      let g:parinfer_last_error = l:result["error"]
     endif
-    let l:pos[1] = l:response["cursorLine"] + 1
-    let l:pos[2] = l:response["cursorX"] + 1
-    call setpos('.', l:pos)
   endif
 endfunction
 
@@ -66,3 +70,5 @@ augroup Parinfer
         \ :autocmd! Parinfer TextChangedI <buffer>
         \ :call <SID>process(g:parinfer_mode)
 augroup END
+
+" vim:set sts=2 sw=2 ai et:
