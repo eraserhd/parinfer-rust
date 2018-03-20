@@ -69,7 +69,7 @@ function! s:process(mode, is_insert)
     call setpos('.', l:pos)
     call s:saveCursorPos()
   else
-    let g:parinfer_last_error = l:result["error"]
+    let g:parinfer_last_error = l:response["error"]
   endif
 endfunction
 
