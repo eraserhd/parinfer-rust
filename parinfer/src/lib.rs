@@ -40,7 +40,7 @@ fn match_paren_works() {
 // Options Structure
 //------------------------------------------------------------------------------
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Change<'a> {
     pub x: Column,
     pub line_no: LineNumber,

@@ -1,5 +1,5 @@
 if !exists('g:parinfer_mode')
-  let g:parinfer_mode = "indent"
+  let g:parinfer_mode = "smart"
 endif
 
 if !exists('g:parinfer_dylib_path')
@@ -15,10 +15,12 @@ if !exists('g:parinfer_dylib_path')
 endif
 
 function! s:toggleMode()
-  if g:parinfer_mode == "indent"
+  if g:parinfer_mode == "smart"
+    let g:parinfer_mode = "indent"
+  elseif g:parinfer_mode == "indent"
     let g:parinfer_mode = "paren"
   else
-    let g:parinfer_mode = "indent"
+    let g:parinfer_mode = "smart"
   endif
 endfunction
 
@@ -29,7 +31,12 @@ endfunction
 command! ParinferToggleMode call <SID>toggleMode()
 command! ParinferOff call <SID>turnOff()
 
-function! s:process(mode)
+function! s:saveCursorPos()
+  let s:prevCursor = getpos(".")
+  let s:prevText = join(getline(1,line('$')),"\n")
+endfunction
+
+function! s:process(mode, is_insert)
   if g:parinfer_mode == "off"
     return
   endif
@@ -40,6 +47,11 @@ function! s:process(mode)
                   \ "text": l:orig_text,
                   \ "options": { "cursorX": l:pos[2] - 1,
                                \ "cursorLine": l:pos[1] - 1 } }
+  if a:is_insert
+    let l:request["options"]["prevCursorX"] = s:prevCursor[2] - 1
+    let l:request["options"]["prevCursorLine"] = s:prevCursor[1] - 1
+    let l:request["options"]["prevText"] = s:prevText
+  endif
   let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
   if l:response["success"] 
     if l:response["text"] !=# l:orig_text
@@ -55,6 +67,7 @@ function! s:process(mode)
     let l:pos[1] = l:response["cursorLine"] + 1
     let l:pos[2] = l:response["cursorX"] + 1
     call setpos('.', l:pos)
+    call s:saveCursorPos()
   else
     let g:parinfer_last_error = l:result["error"]
   endif
@@ -63,13 +76,23 @@ endfunction
 augroup Parinfer
   autocmd FileType clojure,scheme,lisp,racket,hy
         \ :autocmd! Parinfer BufEnter <buffer>
-        \ :call <SID>process("paren")
+        \ :call <SID>process("paren",0)
   autocmd FileType clojure,scheme,lisp,racket,hy
         \ :autocmd! Parinfer TextChanged <buffer>
-        \ :call <SID>process(g:parinfer_mode)
+        \ :call <SID>process(g:parinfer_mode,0)
+
+  autocmd FileType clojure,scheme,lisp,racket,hy
+        \ :autocmd! Parinfer InsertEnter <buffer>
+        \ :call <SID>saveCursorPos()
+  autocmd FileType clojure,scheme,lisp,racket,hy
+        \ :autocmd! Parinfer InsertCharPre <buffer>
+        \ :call <SID>saveCursorPos()
   autocmd FileType clojure,scheme,lisp,racket,hy
         \ :autocmd! Parinfer TextChangedI <buffer>
-        \ :call <SID>process(g:parinfer_mode)
+        \ :call <SID>process(g:parinfer_mode,1)
+  autocmd FileType clojure,scheme,lisp,racket,hy
+        \ :autocmd! Parinfer TextChangedP <buffer>
+        \ :call <SID>process(g:parinfer_mode,1)
 augroup END
 
 " vim:set sts=2 sw=2 ai et:
