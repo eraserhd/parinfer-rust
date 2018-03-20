@@ -244,8 +244,6 @@ impl From<serde_json::Error> for Error {
     }
 }
 
-static mut BUFFER: *mut c_char = std::ptr::null_mut();
-
 fn compute_text_change<'a>(prev_text: &'a str, text: &'a str) -> Option<parinfer::Change<'a>> {
     let mut x: parinfer::Column = 0;
     let mut line_no: parinfer::LineNumber = 0;
@@ -351,6 +349,8 @@ unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
     Ok(CString::new(response)?)
 }
 
+static mut BUFFER: Option<CString> = None;
+
 #[no_mangle]
 pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
     let output = match panic::catch_unwind(|| internal_run(json)) {
@@ -397,14 +397,9 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
         }
     };
 
-    if BUFFER != std::ptr::null_mut() {
-        CString::from_raw(BUFFER);
-        BUFFER = std::ptr::null_mut();
-    }
+    BUFFER = Some(output);
 
-    BUFFER = output.into_raw();
-
-    BUFFER
+    BUFFER.as_ref().unwrap().as_ptr()
 }
 
 #[cfg(test)]
