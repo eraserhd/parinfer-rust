@@ -10,6 +10,7 @@ extern crate libc;
 
 use std::borrow::Cow;
 use std::ffi::{CStr, CString};
+use std::panic;
 use libc::c_char;
 
 #[derive(Deserialize)]
@@ -270,9 +271,9 @@ unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
 
 #[no_mangle]
 pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
-    let output = match internal_run(json) {
-        Ok(cs) => cs,
-        Err(e) => {
+    let output = match panic::catch_unwind(|| internal_run(json)) {
+        Ok(Ok(cs)) => cs,
+        Ok(Err(e)) => {
             let answer = Answer {
                 text: Cow::from(""),
                 success: false,
@@ -282,6 +283,30 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
                 tab_stops: vec![],
                 paren_trails: vec![],
                 parens: vec![],
+            };
+
+            let out = serde_json::to_string(&answer).unwrap();
+
+            CString::new(out).unwrap()
+        },
+        Err(_) => {
+            let answer = Answer {
+                text: Cow::from(""),
+                success: false,
+                error: Some(Error {
+                    name: String::from("panic"),
+                    message: String::from("plugin panicked!"),
+                    x: None,
+                    line_no: None,
+                    input_x: None,
+                    input_line_no: None,
+
+                }),
+                cursor_x: None,
+                cursor_line: None,
+                tab_stops: vec![],
+                paren_trails: vec![],
+                parens: vec![]
             };
 
             let out = serde_json::to_string(&answer).unwrap();
