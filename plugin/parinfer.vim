@@ -73,28 +73,19 @@ function! s:process(mode, is_insert)
   endif
 endfunction
 
-augroup Parinfer
-  autocmd FileType clojure,scheme,lisp,racket,hy
-        \ :autocmd! Parinfer BufEnter <buffer>
-        \ :call <SID>process("paren",0)
-  autocmd FileType clojure,scheme,lisp,racket,hy
-        \ :autocmd! Parinfer TextChanged <buffer>
-        \ :call <SID>process(g:parinfer_mode,0)
-
-  autocmd FileType clojure,scheme,lisp,racket,hy
-        \ :autocmd! Parinfer InsertEnter <buffer>
-        \ :call <SID>saveCursorPos()
-  autocmd FileType clojure,scheme,lisp,racket,hy
-        \ :autocmd! Parinfer InsertCharPre <buffer>
-        \ :call <SID>saveCursorPos()
-  autocmd FileType clojure,scheme,lisp,racket,hy
-        \ :autocmd! Parinfer TextChangedI <buffer>
-        \ :call <SID>process(g:parinfer_mode,1)
+function s:initialize_buffer()
+  autocmd! Parinfer BufEnter <buffer> call <SID>process("paren",0)
+  autocmd! Parinfer TextChanged <buffer> call <SID>process(g:parinfer_mode,0)
+  autocmd! Parinfer InsertEnter <buffer> call <SID>saveCursorPos()
+  autocmd! Parinfer InsertCharPre <buffer> call <SID>saveCursorPos()
+  autocmd! Parinfer TextChangedI <buffer> call <SID>process(g:parinfer_mode,1)
   if exists('##TextChangedP')
-    autocmd FileType clojure,scheme,lisp,racket,hy
-          \ :autocmd! Parinfer TextChangedP <buffer>
-          \ :call <SID>process(g:parinfer_mode,1)
+    autocmd! Parinfer TextChangedP <buffer> call <SID>process(g:parinfer_mode,1)
   endif
+endfunction
+
+augroup Parinfer
+  autocmd FileType clojure,scheme,lisp,racket,hy call <SID>initialize_buffer()
 augroup END
 
 " vim:set sts=2 sw=2 ai et:
