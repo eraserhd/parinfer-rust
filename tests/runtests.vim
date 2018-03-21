@@ -50,7 +50,14 @@ endfunction
 call s:exec('Testing parinfer', 'parinfer', 'cargo test')
 call s:exec('Testing cparinfer', 'cparinfer', 'cargo test')
 call s:exec('Building release plugin', 'cparinfer', 'cargo build --release')
-source plugin/parinfer.vim
+try
+  source plugin/parinfer.vim
+catch
+  echohl ErrorMsg
+  echo "Error loading Vim plugin:" v:exception
+  echohl None
+  cquit
+endtry
 
 for testfile in glob("tests/test_*.vim", v:false, v:true)
   execute "source " . testfile
