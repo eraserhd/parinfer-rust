@@ -1,4 +1,4 @@
-set t_ti= t_te= background=dark nomore
+set t_ti= t_te= background=dark nomore cpo-=C
 
 function s:exec(step_name, working_directory, shell_command)
   echohl LineNr
@@ -26,12 +26,12 @@ function s:run_tests()
   echo "\n"
   for test in split(substitute(@t, 'function \(\w\+\)()', '\1', 'g'), "\n")
     let v:errors = []
-    echo "  " . test . "... "
     try
-      call call(test, [])
+      silent call call(test, [])
     catch
-      let v:errors += [v:exception]
+      let v:errors += [v:throwpoint . ": ". v:exception]
     endtry
+    echo "  " . test . "... "
     if len(v:errors) > 0
       let l:ok = v:false
       echohl ErrorMsg
@@ -50,6 +50,8 @@ function s:run_tests()
 
   return l:ok
 endfunction
+
+filetype on
 
 call s:exec('Testing parinfer', 'parinfer', 'cargo test')
 call s:exec('Testing cparinfer', 'cparinfer', 'cargo test')
