@@ -349,10 +349,57 @@ unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
     Ok(CString::new(response)?)
 }
 
+/// On unix, Vim loads and unloads the library for every call. On Mac, and
+/// possibly other unices, each load creates a new tlv key, and there is a
+/// maximum number allowed per process.  When we run out, dlopen() aborts
+/// our process.
+///
+/// Here we reference ourselves and throw the handle away to prevent
+/// ourselves from being unloaded (and also set RTLD_NODELETE and
+/// RTLD_GLOBAL to make extra sure).
+#[cfg(all(unix))]
+mod reference_hack {
+    use std::ptr;
+    use libc::{c_void, dladdr, dlopen};
+    use libc::Dl_info;
+    use libc::{RTLD_NOLOAD, RTLD_NODELETE, RTLD_GLOBAL};
+
+    static mut INITIALIZED: bool = false;
+
+    pub unsafe fn initialize() {
+        if INITIALIZED {
+            return;
+        }
+
+        let mut info: Dl_info = Dl_info {
+            dli_fname: ptr::null(),
+            dli_fbase: ptr::null_mut(),
+            dli_sname: ptr::null(),
+            dli_saddr: ptr::null_mut()
+        };
+        let initialize_ptr: *const c_void = &initialize as *const _ as *const c_void;
+        if dladdr(initialize_ptr, &mut info) == 0 {
+            panic!("Could not get parinfer library path.");
+        }
+        let handle = dlopen(info.dli_fname, RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE);
+        if handle == ptr::null_mut() {
+            panic!("Could not reference parinfer library.");
+        }
+        INITIALIZED = true;
+    }
+}
+
+#[cfg(not(all(unix)))]
+mod reference_hack {
+    pub fn initialize() {
+    }
+}
+
 static mut BUFFER: Option<CString> = None;
 
 #[no_mangle]
 pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
+    reference_hack::initialize();
     let output = match panic::catch_unwind(|| internal_run(json)) {
         Ok(Ok(cs)) => cs,
         Ok(Err(e)) => {
