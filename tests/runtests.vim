@@ -27,7 +27,11 @@ function s:run_tests()
   for test in split(substitute(@t, 'function \(\w\+\)()', '\1', 'g'), "\n")
     let v:errors = []
     echo "  " . test . "... "
-    call call(test, [])
+    try
+      call call(test, [])
+    catch
+      let v:errors += [v:exception]
+    endtry
     if len(v:errors) > 0
       let l:ok = v:false
       echohl ErrorMsg
