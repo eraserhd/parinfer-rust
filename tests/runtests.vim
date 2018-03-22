@@ -48,7 +48,11 @@ function s:run_tests()
   endfor
   echo "\n"
 
-  return l:ok
+  if l:ok
+    quit
+  else 
+    cquit
+  endif
 endfunction
 
 filetype on
@@ -69,8 +73,4 @@ for testfile in glob("tests/test_*.vim", v:false, v:true)
   execute "source " . testfile
 endfor
 
-if s:run_tests()
-  quit
-else
-  cquit
-endif
+call <SID>run_tests()

@@ -1,0 +1,10 @@
+setglobal nomore cpo-=C
+filetype on
+try
+  source plugin/parinfer.vim
+catch
+  echohl ErrorMsg
+  echo "Error loading Vim plugin:" v:exception
+  echohl None
+  cquit
+endtry
