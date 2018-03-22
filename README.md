@@ -29,6 +29,15 @@ Or, with optional automatic recompilation on update:
 	Plug 'eraserhd/parinfer-rust', {'do':
 		\  'cargo build --manifest-path=cparinfer/Cargo.toml --release'}
 
+## Tests
+ 
+You can run tests like so:
+
+    $ vim --clean -u tests/run.vim
+
+Tests are in a nice, readable format in `tests/test_*.vim`.  Please add tests
+for any new features (or even old ones!).
+
 ## Contributors
 
 This wouldn't be possible without the work of others:
