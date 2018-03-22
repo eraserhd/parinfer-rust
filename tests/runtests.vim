@@ -54,7 +54,10 @@ function s:run(scenario)
   endfor
 
   for l:i in range(len(a:scenario["Then"]))
-    call assert_equal(a:scenario["Then"][l:i], term_getline(l:term, l:i+1))
+    let l:actual = term_getline(l:term, l:i+1)
+    if a:scenario["Then"][l:i] !=# l:actual
+      let v:errors += [ "Line " . (l:i + 1) . " was '" . l:actual . "' not '" . a:scenario["Then"][l:i] . "'." ]
+    endif
   endfor
 
   execute "bdelete! " . l:term
