@@ -1,19 +1,5 @@
 set t_ti= t_te= background=dark nomore cpo-=C
 
-function s:exec(step_name, working_directory, shell_command)
-  echohl LineNr
-  echo a:step_name . ":\n\n"
-  echohl None
-  let l:start_directory = getcwd()
-  execute "chdir " . a:working_directory
-  silent execute "!" . a:shell_command
-  if v:shell_error
-    cquit
-  endif
-  execute "chdir " . l:start_directory
-  echo "\n"
-endfunction
-
 function s:run_tests()
   redir @t
   silent function /^Test_
@@ -57,9 +43,6 @@ endfunction
 
 filetype on
 
-call s:exec('Testing parinfer', 'parinfer', 'cargo test')
-call s:exec('Testing cparinfer', 'cparinfer', 'cargo test')
-call s:exec('Building release plugin', 'cparinfer', 'cargo build --release')
 try
   source plugin/parinfer.vim
 catch
