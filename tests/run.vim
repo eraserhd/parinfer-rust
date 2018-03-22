@@ -68,7 +68,7 @@ function s:run_all()
   let l:ok = v:true
   for l:feature_name in keys(s:features)
     echohl LineNr
-    echo "Feature" l:feature_name
+    echo l:feature_name
     echohl None
     for l:scenario_name in keys(s:features[l:feature_name])
       let v:errors = []
@@ -79,7 +79,7 @@ function s:run_all()
       else
         echohl MoreMsg
       endif
-      echo "  Scenario" l:scenario_name
+      echo "  -" l:scenario_name
       echohl None
       for l:error in v:errors
         echo "    -" l:error
