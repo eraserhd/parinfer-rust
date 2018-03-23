@@ -6,7 +6,12 @@ if !exists('g:parinfer_dylib_path')
   if has('macunix')
     let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libcparinfer.dylib'
   elseif has('unix')
-    let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libcparinfer.so'
+    let s:uname = system("uname")
+    if s:uname == "Darwin\n"
+      let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libcparinfer.dylib'
+    else
+      let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libcparinfer.so'
+    endif
   elseif has('win32')
     let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/cparinfer.dll'
   else
