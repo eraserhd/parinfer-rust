@@ -361,7 +361,7 @@ unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
 mod reference_hack {
     use std::ptr;
     use std::ffi::CStr;
-    use libc::{c_void, dladdr, dlopen};
+    use libc::{c_void, dladdr, dlerror, dlopen};
     use libc::Dl_info;
     use libc::{RTLD_NOLOAD, RTLD_NODELETE, RTLD_GLOBAL};
 
@@ -384,7 +384,9 @@ mod reference_hack {
         }
         let handle = dlopen(info.dli_fname, RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE);
         if handle == ptr::null_mut() {
-            panic!("Could not reference cparinfer library {:?}.", CStr::from_ptr(info.dli_fname));
+            panic!("Could not reference cparinfer library {:?}: {:?}.",
+                   CStr::from_ptr(info.dli_fname),
+                   CStr::from_ptr(dlerror()));
         }
         INITIALIZED = true;
     }
