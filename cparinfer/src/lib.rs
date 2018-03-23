@@ -363,7 +363,7 @@ mod reference_hack {
     use std::ffi::CStr;
     use libc::{c_void, dladdr, dlerror, dlopen};
     use libc::Dl_info;
-    use libc::{RTLD_NOLOAD, RTLD_NODELETE, RTLD_GLOBAL};
+    use libc::{RTLD_LAZY, RTLD_NOLOAD, RTLD_NODELETE, RTLD_GLOBAL};
 
     static mut INITIALIZED: bool = false;
 
@@ -382,7 +382,7 @@ mod reference_hack {
         if dladdr(initialize_ptr, &mut info) == 0 {
             panic!("Could not get parinfer library path.");
         }
-        let handle = dlopen(info.dli_fname, RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE);
+        let handle = dlopen(info.dli_fname, RTLD_LAZY|RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE);
         if handle == ptr::null_mut() {
             panic!("Could not reference cparinfer library {:?}: {:?}.",
                    CStr::from_ptr(info.dli_fname),
