@@ -41,7 +41,7 @@ function! s:saveCursorPos()
   let s:prevText = join(getline(1,line('$')),"\n")
 endfunction
 
-function! s:process(mode, is_insert)
+function! s:process(mode)
   if g:parinfer_mode == "off"
     return
   endif
@@ -52,9 +52,11 @@ function! s:process(mode, is_insert)
                   \ "text": l:orig_text,
                   \ "options": { "cursorX": l:pos[2] - 1,
                                \ "cursorLine": l:pos[1] - 1 } }
-  if a:is_insert
+  if exists('s:prevCursor')
     let l:request["options"]["prevCursorX"] = s:prevCursor[2] - 1
     let l:request["options"]["prevCursorLine"] = s:prevCursor[1] - 1
+  endif
+  if exists('s:prevText')
     let l:request["options"]["prevText"] = s:prevText
   endif
   let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
@@ -78,14 +80,14 @@ function! s:process(mode, is_insert)
   endif
 endfunction
 
-function s:initialize_buffer()
-  autocmd! Parinfer BufEnter <buffer> call <SID>process("paren",0)
-  autocmd! Parinfer TextChanged <buffer> call <SID>process(g:parinfer_mode,0)
+function! s:initialize_buffer()
+  autocmd! Parinfer BufEnter <buffer> call <SID>process("paren")
+  autocmd! Parinfer TextChanged <buffer> call <SID>process(g:parinfer_mode)
   autocmd! Parinfer InsertEnter <buffer> call <SID>saveCursorPos()
   autocmd! Parinfer InsertCharPre <buffer> call <SID>saveCursorPos()
-  autocmd! Parinfer TextChangedI <buffer> call <SID>process(g:parinfer_mode,1)
+  autocmd! Parinfer TextChangedI <buffer> call <SID>process(g:parinfer_mode)
   if exists('##TextChangedP')
-    autocmd! Parinfer TextChangedP <buffer> call <SID>process(g:parinfer_mode,1)
+    autocmd! Parinfer TextChangedP <buffer> call <SID>process(g:parinfer_mode)
   endif
 endfunction
 
