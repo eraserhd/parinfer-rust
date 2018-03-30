@@ -41,7 +41,10 @@ command! ParinferOff call <SID>turnOff()
 
 function! s:saveCursorPos()
   let w:parinfer_previous_cursor = getpos(".")
-  let s:prevText = join(getline(1,line('$')),"\n")
+  if !exists('b:parinfer_last_changedtick') || b:parinfer_last_changedtick != b:changedtick
+    let b:parinfer_last_changedtick = b:changedtick
+    let b:parinfer_previous_text = join(getline(1,line('$')),"\n")
+  endif
 endfunction
 
 function! s:bufEnter()
@@ -69,7 +72,7 @@ function! s:process(mode)
                                \ "cursorLine": l:pos[1] - 1,
                                \ "prevCursorX": w:parinfer_previous_cursor[2] - 1,
                                \ "prevCursorLine": w:parinfer_previous_cursor[1] - 1,
-                               \ "prevText": s:prevText } }
+                               \ "prevText": b:parinfer_previous_text } }
   let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
   if l:response["success"] 
     if l:response["text"] !=# l:orig_text
