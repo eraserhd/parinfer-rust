@@ -40,7 +40,7 @@ command! ParinferToggleMode call <SID>toggleMode()
 command! ParinferOff call <SID>turnOff()
 
 function! s:saveCursorPos()
-  let s:prevCursor = getpos(".")
+  let w:parinfer_previous_cursor = getpos(".")
   let s:prevText = join(getline(1,line('$')),"\n")
 endfunction
 
@@ -67,8 +67,8 @@ function! s:process(mode)
                   \ "text": l:orig_text,
                   \ "options": { "cursorX": l:pos[2] - 1,
                                \ "cursorLine": l:pos[1] - 1,
-                               \ "prevCursorX": s:prevCursor[2] - 1,
-                               \ "prevCursorLine": s:prevCursor[1] - 1,
+                               \ "prevCursorX": w:parinfer_previous_cursor[2] - 1,
+                               \ "prevCursorLine": w:parinfer_previous_cursor[1] - 1,
                                \ "prevText": s:prevText } }
   let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
   if l:response["success"] 
