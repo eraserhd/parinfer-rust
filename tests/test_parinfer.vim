@@ -11,3 +11,10 @@ Feature parinfer
     When .llib<Esc>
     Then .(fboo [
     Then .       x])
+
+  Scenario change commands fix indent
+    Give .(foo [
+    Give .      x])
+    When .lcwa<Esc>
+    Then .(a [ 
+    Then .    x])

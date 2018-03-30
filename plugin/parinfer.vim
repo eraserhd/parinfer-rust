@@ -1,6 +1,9 @@
 if !exists('g:parinfer_mode')
   let g:parinfer_mode = "smart"
 endif
+if !exists('g:parinfer_enabled')
+  let g:parinfer_enabled = 1
+endif
 
 if !exists('g:parinfer_dylib_path')
   if has('macunix')
@@ -39,6 +42,13 @@ command! ParinferOff call <SID>turnOff()
 function! s:saveCursorPos()
   let s:prevCursor = getpos(".")
   let s:prevText = join(getline(1,line('$')),"\n")
+endfunction
+
+function! s:insertEnter()
+  if v:operator ==# 'c'
+    let v:char = 'x'
+    call s:process('smart')
+  endif
 endfunction
 
 function! s:process(mode)
@@ -83,12 +93,14 @@ endfunction
 function! s:initialize_buffer()
   autocmd! Parinfer BufEnter <buffer> call <SID>process("paren")
   autocmd! Parinfer TextChanged <buffer> call <SID>process(g:parinfer_mode)
-  autocmd! Parinfer InsertEnter <buffer> call <SID>saveCursorPos()
+  autocmd! Parinfer InsertEnter <buffer> call <SID>insertEnter()
   autocmd! Parinfer InsertCharPre <buffer> call <SID>saveCursorPos()
   autocmd! Parinfer TextChangedI <buffer> call <SID>process(g:parinfer_mode)
   if exists('##TextChangedP')
     autocmd! Parinfer TextChangedP <buffer> call <SID>process(g:parinfer_mode)
   endif
+  autocmd! Parinfer CursorMoved <buffer> call <SID>saveCursorPos()
+  call <SID>saveCursorPos()
 endfunction
 
 augroup Parinfer
