@@ -104,7 +104,6 @@ function! s:initialize_buffer()
     autocmd! Parinfer TextChangedP <buffer> call <SID>process(g:parinfer_mode)
   endif
   autocmd! Parinfer CursorMoved <buffer> call <SID>saveCursorPos()
-  call <SID>saveCursorPos()
 endfunction
 
 augroup Parinfer
