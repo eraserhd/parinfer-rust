@@ -54,7 +54,7 @@ function s:run(scenario)
   endfor
 
   for l:i in range(len(a:scenario["Then"]))
-    let l:actual = term_getline(l:term, l:i+1)
+    let l:actual = substitute(term_getline(l:term, l:i+1), '\s\+$', '', '')
     if a:scenario["Then"][l:i] !=# l:actual
       let v:errors += [ "Line " . (l:i + 1) . " was '" . l:actual . "' not '" . a:scenario["Then"][l:i] . "'." ]
     endif

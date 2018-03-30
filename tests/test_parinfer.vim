@@ -16,5 +16,5 @@ Feature parinfer
     Give .(foo [
     Give .      x])
     When .lcwa<Esc>
-    Then .(a [ 
+    Then .(a [
     Then .    x])
