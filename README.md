@@ -30,7 +30,7 @@ Or, with optional automatic recompilation on update:
 		\  'cargo build --manifest-path=cparinfer/Cargo.toml --release'}
 
 ## Tests
- 
+
 You can run tests like so:
 
     $ vim --clean -u tests/run.vim
@@ -45,3 +45,7 @@ This wouldn't be possible without the work of others:
 * Shaun Lebron - Inventing parinfer and doing the math.
 * Case Nelson - Writing the nvim-parinfer, from which VimL code and some
   inspiration  was stolen.
+
+## License
+
+[ISC License](LICENSE.md)
