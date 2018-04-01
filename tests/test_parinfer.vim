@@ -18,3 +18,14 @@ Feature parinfer
     When .lcwa<Esc>
     Then .(a [
     Then .    x])
+
+  Scenario >> reindents rest of form
+    Give .(foo
+    Give .  (bar
+    Give .    baz
+    Give .    quux))
+    When .j>>
+    Then .(foo
+    Then .    (bar
+    Then .      baz
+    Then .      quux))

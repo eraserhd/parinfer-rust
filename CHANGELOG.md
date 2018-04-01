@@ -1,5 +1,6 @@
 # ChangeLog
 ## [Unreleased]
+- `>>` reindents the rest of the form
 
 ## 0.1.0
 ### Vim Plugin
