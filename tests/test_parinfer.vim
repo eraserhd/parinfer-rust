@@ -29,3 +29,10 @@ Feature parinfer
     Then .    (bar
     Then .      baz
     Then .      quux))
+
+  Scenario appending after (let [
+    Give .(let [
+    Give .      x])
+    When .Ay<Esc>
+    Then .(let [y
+    Then .      x])
