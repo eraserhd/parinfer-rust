@@ -76,11 +76,12 @@ function! s:process(mode)
       let l:pos[2] = l:response["cursorX"] + 1
       call setpos('.', l:pos)
 
-      let b:parinfer_last_changedtick = b:changedtick
-      let b:parinfer_previous_text = join(getline(1,line('$')),"\n")
+      let b:parinfer_previous_text = l:response["text"]
     else
       let g:parinfer_last_error = l:response["error"]
+      let b:parinfer_previous_text = join(getline(1,line('$')),"\n")
     endif
+    let b:parinfer_last_changedtick = b:changedtick
   endif
   let w:parinfer_previous_cursor = getpos(".")
 endfunction
