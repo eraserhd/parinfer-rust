@@ -66,10 +66,7 @@ function! s:process(mode)
       if l:response["text"] !=# l:orig_text
         let l:lines = split(l:response["text"], "\n", 1)
         let l:changed = filter(range(len(l:lines)), 'l:lines[v:val] !=# l:orig_lines[v:val]')
-        try
-          silent undojoin
-        catch
-        endtry
+        silent! undojoin
         call setline(l:changed[0]+1, l:lines[l:changed[0]:l:changed[-1]])
       endif
       let l:pos[1] = l:response["cursorLine"] + 1
