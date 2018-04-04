@@ -36,3 +36,10 @@ Feature parinfer
     When .Ay<Esc>
     Then .(let [y
     Then .      x])
+
+  Scenario E523 regression
+    Give .(foo bar
+    Give .     baz)
+    When .wwciw(hi<Esc>j.
+    Then .(foo (hi)
+    Then .     (hi))

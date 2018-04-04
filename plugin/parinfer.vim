@@ -67,7 +67,12 @@ function! s:process(mode)
         let l:lines = split(l:response["text"], "\n", 1)
         let l:changed = filter(range(len(l:lines)), 'l:lines[v:val] !=# l:orig_lines[v:val]')
         silent! undojoin
-        call setline(l:changed[0]+1, l:lines[l:changed[0]:l:changed[-1]])
+        try
+          call setline(l:changed[0]+1, l:lines[l:changed[0]:l:changed[-1]])
+        catch /E523:/ " not allowed here
+          " If an event doesn't allow us to modify the buffer, that's OK.
+          " Usually another event will happen before a redraw.
+        endtry
       endif
       let l:pos[1] = l:response["cursorLine"] + 1
       let l:pos[2] = l:response["cursorX"] + 1
