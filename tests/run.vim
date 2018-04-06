@@ -10,31 +10,40 @@ let s:features = {}
 let s:current_feature = v:false
 let s:current_scenario = v:false
 
-function! s:gherkin(command, text)
-  if a:command ==# "Feature"
-    let s:current_feature = a:text
-  elseif a:command ==# "Scenario"
-    let s:current_scenario = a:text
-  else
-    call assert_true(s:current_feature, "Not currently in a Feature section")
-    if !has_key(s:features, s:current_feature)
-      let s:features[s:current_feature] = {}
-    endif
-    if !has_key(s:features[s:current_feature], s:current_scenario)
-      let s:features[s:current_feature][s:current_scenario] = { "Give": [], "When": [], "Then": [] }
-    endif
-    let s:features[s:current_feature][s:current_scenario][a:command] += [ a:text[1:-1] ]
+function! s:add_scenario_part(command, text)
+  call assert_true(s:current_feature, "Not currently in a Feature section")
+  if !has_key(s:features, s:current_feature)
+    let s:features[s:current_feature] = {}
   endif
+  if !has_key(s:features[s:current_feature], s:current_scenario)
+    let s:features[s:current_feature][s:current_scenario] = { "Give": [], "When": [], "Then": [] }
+  endif
+  let s:features[s:current_feature][s:current_scenario][a:command] += [ a:text ]
 endfunction
 
-command! -nargs=1 Feature call <SID>gherkin("Feature", <q-args>)
-command! -nargs=1 Scenario call <SID>gherkin("Scenario", <q-args>)
-command! -nargs=1 Give call <SID>gherkin("Give", <q-args>)
-command! -nargs=1 When call <SID>gherkin("When", <q-args>)
-command! -nargs=1 Then call <SID>gherkin("Then", <q-args>)
+function! s:load_feature(filename)
+  let l:state = 'before_give'
+  for l:line in readfile(a:filename)
+    if l:line =~ '^# '
+      let s:current_feature = substitute(l:line, '^# ', '', '')
+    elseif l:line =~ '^## '
+      let s:current_scenario = substitute(l:line, '^## ', '', '')
+      let l:state = 'before_give'
+    elseif l:line =~ '^\s*$' && l:state ==# 'in_give'
+      let l:state = 'in_then'
+    elseif l:line =~ '^    ' && (l:state ==# 'before_give' || l:state ==# 'in_give')
+      call s:add_scenario_part("Give", substitute(l:line, '^    ', '', ''))
+      let l:state = 'in_give'
+    elseif l:line =~ '`.\+`' && l:state ==# 'in_then'
+      call s:add_scenario_part("When", substitute(l:line, '^.*`\(.\+\)`.*$', '\1', ''))
+    elseif l:line =~ '^    ' && l:state ==# 'in_then'
+      call s:add_scenario_part("Then", substitute(l:line, '^    ', '', ''))
+    endif
+  endfor
+endfunction
 
-for testfile in glob("tests/test_*.vim", v:false, v:true)
-  execute "source " . testfile
+for feature in glob("tests/*.md", v:false, v:true)
+  call s:load_feature(feature)
 endfor
 
 function s:run(scenario)
