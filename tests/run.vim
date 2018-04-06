@@ -34,8 +34,9 @@ function! s:load_feature(filename)
     elseif l:line =~ '^    ' && (l:state ==# 'before_give' || l:state ==# 'in_give')
       call s:add_scenario_part("Give", substitute(l:line, '^    ', '', ''))
       let l:state = 'in_give'
-    elseif l:line =~ '`.\+`' && l:state ==# 'in_then'
+    elseif l:line =~ '`.\+`' && (l:state ==# 'in_then' || l:state ==# 'in_give')
       call s:add_scenario_part("When", substitute(l:line, '^.*`\(.\+\)`.*$', '\1', ''))
+      let l:state = 'in_then'
     elseif l:line =~ '^    ' && l:state ==# 'in_then'
       call s:add_scenario_part("Then", substitute(l:line, '^    ', '', ''))
     endif
