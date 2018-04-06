@@ -51,7 +51,7 @@ function s:run(scenario)
   let l:filename = tempname() . ".clj"
   call writefile(a:scenario["Give"], l:filename)
   let l:options = { "hidden": 1 }
-  let l:term = term_start(g:vim_to_test . " --clean -n -u tests/vimrc " . l:filename, l:options)
+  let l:term = term_start(g:vim_to_test . " -n -u tests/vimrc " . l:filename, l:options)
   call term_setkill(l:term, "kill")
   sleep 1
   call term_wait(l:term, 1000)
