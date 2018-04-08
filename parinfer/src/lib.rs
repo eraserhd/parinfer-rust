@@ -137,7 +137,8 @@ pub struct Options<'a> {
 pub struct Closer<'a> {
     line_no: LineNumber,
     x: Column,
-    ch: &'a str
+    ch: &'a str,
+    trail: Option<ParenTrail>
 }
 
 #[derive(Clone, Debug)]
@@ -170,7 +171,7 @@ struct InternalParenTrail<'a> {
     clamped: ParenTrailClamped<'a>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ParenTrail {
     pub line_no: LineNumber,
     pub start_x: Column,
@@ -1280,7 +1281,8 @@ fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
             opener.closer = Some(Closer {
                 line_no: result.paren_trail.line_no.unwrap(),
                 x: result.paren_trail.start_x.unwrap() + i,
-                ch: close_ch
+                ch: close_ch,
+                trail: None
             });
         }
         result.paren_trail.openers.push(opener);
@@ -1331,7 +1333,7 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn set_closer<'a>(opener: &mut Paren<'a>, line_no: LineNumber, x: Column, ch: &'a str) {
-    opener.closer = Some(Closer { line_no, x, ch })
+    opener.closer = Some(Closer { line_no, x, ch, trail: None })
 }
 
 fn append_paren_trail<'a>(result: &mut State<'a>) {
@@ -1400,10 +1402,12 @@ fn remember_paren_trail<'a>(result: &mut State<'a>) {
             }.unwrap(),
         };
 
-        result.paren_trails.push(short_trail);
+        result.paren_trails.push(short_trail.clone());
 
         if result.return_parens {
-            //FIXME:
+            for opener in result.paren_trail.openers.iter_mut() {
+                opener.closer.as_mut().unwrap().trail = Some(short_trail.clone());
+            }
         }
     }
 }
@@ -1419,10 +1423,9 @@ fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
         let trail = result.paren_trails.get_mut(n).unwrap();
         trail.end_x = result.paren_trail.end_x.unwrap();
         if result.return_parens {
-            /* FIXME:
-            let opener = result.paren_trail.openers.get_mut(result.paren_trail.openers.len()-1);
-            opener.closer.trail = trail;
-            */
+            if let Some(opener) = result.paren_trail.openers.last_mut() {
+                opener.closer.as_mut().unwrap().trail = Some(trail.clone());
+            }
         }
     }
 }
@@ -1783,7 +1786,7 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             success: true,
             tab_stops: result.tab_stops,
             paren_trails: result.paren_trails,
-            parens: vec![], //FIXME:
+            parens: result.parens,
             error: None,
         }
     } else {
@@ -1807,7 +1810,7 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             success: false,
             tab_stops: result.tab_stops,
             error: result.error,
-            parens: vec![], //FIXME:
+            parens: result.parens,
         }
     }
 }
