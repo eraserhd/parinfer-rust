@@ -150,7 +150,8 @@ pub struct Paren<'a> {
     pub arg_x: Option<Column>,
     pub input_line_no: LineNumber,
     pub input_x: Column,
-    pub closer: Option<Closer<'a>>
+    pub closer: Option<Closer<'a>>,
+    pub children: Vec<Paren<'a>>
 }
 
 #[derive(Debug)]
@@ -223,6 +224,7 @@ struct State<'a> {
     paren_trails: Vec<ParenTrail>,
 
     return_parens: bool,
+    parens: Vec<Paren<'a>>,
 
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
@@ -312,6 +314,7 @@ fn get_initial_result<'a>(
         paren_trails: vec![],
 
         return_parens: false,
+        parens: vec![],
 
         cursor_x: options.cursor_x,
         cursor_line: options.cursor_line,
@@ -761,8 +764,17 @@ fn on_open_paren<'a>(result: &mut State<'a>) {
 
             arg_x: None,
 
-            closer: None
+            closer: None,
+            children: vec![]
         };
+
+        if result.return_parens {
+            if let Some(parent) = result.paren_stack.last_mut() {
+                parent.children.push(opener.clone());
+            } else {
+                result.parens.push(opener.clone());
+            }
+        }
 
         result.paren_stack.push(opener);
         result.tracking_arg_tab_stop = TrackingArgTabStop::Space;
@@ -770,9 +782,9 @@ fn on_open_paren<'a>(result: &mut State<'a>) {
 }
 
 fn on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
-    let opener = (*peek(&result.paren_stack, 0).unwrap()).clone();
+    let mut opener = (*peek(&result.paren_stack, 0).unwrap()).clone();
     if result.return_parens {
-        //setCloser(opener, result.lineNo, result.x, result.ch);
+        set_closer(&mut opener, result.line_no, result.x, result.ch);
     }
 
     result.paren_trail.end_x = Some(result.x + 1);
