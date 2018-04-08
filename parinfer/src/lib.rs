@@ -1305,12 +1305,15 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
+fn set_closer<'a>(opener: &mut Paren<'a>, line_no: LineNumber, x: Column, ch: &'a str) {
+    opener.closer = Some(Closer { line_no, x, ch })
+}
+
 fn append_paren_trail<'a>(result: &mut State<'a>) {
-    let opener = result.paren_stack.pop().unwrap();
+    let mut opener = result.paren_stack.pop().unwrap().clone();
     let close_ch = match_paren(opener.ch).unwrap();
     if result.return_parens {
-        //FIXME:
-        //set_closer(opener, result.paren_trail.line_no, result.paren_trail.end_x, close_ch);
+        set_closer(&mut opener, result.paren_trail.line_no.unwrap(), result.paren_trail.end_x.unwrap(), close_ch);
     }
 
     set_max_indent(result, &opener);
