@@ -1,5 +1,7 @@
-setglobal nomore cpo-=C
+setglobal nocompatible nomore cpo-=C
+
 filetype on
+syntax on
 try
   source plugin/parinfer.vim
 catch
@@ -8,3 +10,7 @@ catch
   echohl None
   cquit
 endtry
+
+" Kinda simulate vim-fireplace command-line window
+au CmdWinEnter @ setlocal filetype=clojure
+au CmdWinLeave @ setlocal filetype< omnifunc<

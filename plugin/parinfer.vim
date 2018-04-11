@@ -46,7 +46,7 @@ function! s:bufEnter()
   call s:process('paren')
 endfunction
 
-function! s:process(mode)
+function! s:process(mode) abort
   if g:parinfer_mode == "off"
     return
   endif
@@ -88,7 +88,12 @@ function! s:process(mode)
   let w:parinfer_previous_cursor = getpos(".")
 endfunction
 
-function! s:initialize_buffer()
+function! s:initialize_buffer() abort
+  " We can't get the buffer in the command-line window, so don't initialize
+  " it.  This happens with vim-fireplace's `cqq`.
+  if getcmdwintype() !=# ''
+    return
+  endif
   autocmd! Parinfer BufEnter <buffer> call <SID>bufEnter()
   autocmd! Parinfer TextChanged <buffer> call <SID>process(g:parinfer_mode)
   autocmd! Parinfer InsertEnter <buffer> call <SID>process(g:parinfer_mode)

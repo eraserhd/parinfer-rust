@@ -79,3 +79,14 @@ After `J`:
 After `3J`:
     (foo (bar [baz
                quux]))
+
+# Compatibility with vim-fireplace
+## Works in an input command-line window (#15)
+
+This test is very hackish.
+
+    (foo)
+
+After `:call setline(1,input('=>'))<CR><C-F>i(x<CR>`:
+
+    (x)
