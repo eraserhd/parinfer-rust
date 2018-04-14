@@ -47,13 +47,24 @@ After `Ay<Esc>`:
     (let [y
           x])
 
-## E523 regression
+# Regressions
+## E523
     (foo bar
          baz)
 
 After `wwciw(hi<Esc>j.`:
     (foo (hi)
          (hi))
+
+## E121
+
+Splitting a window doesn't trigger BufEnter, because we don't switch buffers,
+so we need to copy window-local state to the new window.
+
+    (foo)
+
+After `lli <Esc>:w<CR>:split<CR>lay<Esc>`
+    (f oyo)
 
 # Joining lines
 ## `J` joins two lines correctly (#10)

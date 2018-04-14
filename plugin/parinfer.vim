@@ -39,10 +39,16 @@ endfunction
 command! ParinferToggleMode call <SID>toggleMode()
 command! ParinferOff call <SID>turnOff()
 
-function! s:enter_buffer()
+function s:enter_window()
   let w:parinfer_previous_cursor = getpos(".")
-  let b:parinfer_last_changedtick = -10
-  let b:parinfer_previous_text = join(getline(1,line('$')),"\n")
+endfunction
+
+function! s:enter_buffer()
+  call s:enter_window()
+  if !exists('b:parinfer_last_changedtick')
+    let b:parinfer_last_changedtick = -10
+    let b:parinfer_previous_text = join(getline(1,line('$')),"\n")
+  endif
   let orig_mode = g:parinfer_mode
   let g:parinfer_mode = 'paren'
   call s:process_buffer()
@@ -98,6 +104,7 @@ function! s:initialize_buffer() abort
     return
   endif
   autocmd! Parinfer BufEnter <buffer> call <SID>enter_buffer()
+  autocmd! Parinfer WinEnter <buffer> call <SID>enter_window()
   autocmd! Parinfer TextChanged <buffer> call <SID>process_buffer()
   autocmd! Parinfer InsertEnter <buffer> call <SID>process_buffer()
   autocmd! Parinfer InsertCharPre <buffer> call <SID>process_buffer()

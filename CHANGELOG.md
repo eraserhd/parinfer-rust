@@ -2,8 +2,9 @@
 ## [Unreleased]
 ### Fixed
 - `>>` reindents the rest of the form
-- `E523: not allowed here`
 - Honor `g:parinfer_enabled` (instead of `g:parinfer_mode` of "off")
+- `E121: Undefined variable: w:parinfer_previous_cursor` after `:split`
+- `E523: not allowed here`
 
 ## 0.1.0
 ### Vim Plugin
