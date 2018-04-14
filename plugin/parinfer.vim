@@ -43,10 +43,13 @@ function! s:bufEnter()
   let w:parinfer_previous_cursor = getpos(".")
   let b:parinfer_last_changedtick = -10
   let b:parinfer_previous_text = join(getline(1,line('$')),"\n")
-  call s:process('paren')
+  let orig_mode = g:parinfer_mode
+  let g:parinfer_mode = 'paren'
+  call s:process()
+  let g:parinfer_mode = orig_mode
 endfunction
 
-function! s:process(mode) abort
+function! s:process() abort
   if !g:parinfer_enabled
     return
   endif
@@ -54,7 +57,7 @@ function! s:process(mode) abort
     let l:pos = getpos(".")
     let l:orig_lines = getline(1,line('$'))
     let l:orig_text = join(l:orig_lines, "\n")
-    let l:request = { "mode": a:mode,
+    let l:request = { "mode": g:parinfer_mode,
                     \ "text": l:orig_text,
                     \ "options": { "cursorX": l:pos[2] - 1,
                                  \ "cursorLine": l:pos[1] - 1,
@@ -95,14 +98,14 @@ function! s:initialize_buffer() abort
     return
   endif
   autocmd! Parinfer BufEnter <buffer> call <SID>bufEnter()
-  autocmd! Parinfer TextChanged <buffer> call <SID>process(g:parinfer_mode)
-  autocmd! Parinfer InsertEnter <buffer> call <SID>process(g:parinfer_mode)
-  autocmd! Parinfer InsertCharPre <buffer> call <SID>process(g:parinfer_mode)
-  autocmd! Parinfer TextChangedI <buffer> call <SID>process(g:parinfer_mode)
+  autocmd! Parinfer TextChanged <buffer> call <SID>process()
+  autocmd! Parinfer InsertEnter <buffer> call <SID>process()
+  autocmd! Parinfer InsertCharPre <buffer> call <SID>process()
+  autocmd! Parinfer TextChangedI <buffer> call <SID>process()
   if exists('##TextChangedP')
-    autocmd! Parinfer TextChangedP <buffer> call <SID>process(g:parinfer_mode)
+    autocmd! Parinfer TextChangedP <buffer> call <SID>process()
   endif
-  autocmd! Parinfer CursorMoved <buffer> call <SID>process(g:parinfer_mode)
+  autocmd! Parinfer CursorMoved <buffer> call <SID>process()
 endfunction
 
 augroup Parinfer
