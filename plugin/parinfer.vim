@@ -33,7 +33,7 @@ function! s:toggleMode()
 endfunction
 
 function! s:turnOff()
-  let g:parinfer_mode = "off"
+  let g:parinfer_enabled = 0
 endfunction
 
 command! ParinferToggleMode call <SID>toggleMode()
@@ -47,7 +47,7 @@ function! s:bufEnter()
 endfunction
 
 function! s:process(mode) abort
-  if g:parinfer_mode == "off"
+  if !g:parinfer_enabled
     return
   endif
   if b:parinfer_last_changedtick != b:changedtick

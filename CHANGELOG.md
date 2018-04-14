@@ -2,7 +2,8 @@
 ## [Unreleased]
 ### Fixed
 - `>>` reindents the rest of the form
-- Handle `E523: not allowed here` error
+- `E523: not allowed here`
+- Honor `g:parinfer_enabled` (instead of `g:parinfer_mode` of "off")
 
 ## 0.1.0
 ### Vim Plugin
