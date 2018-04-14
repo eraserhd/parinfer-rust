@@ -6,7 +6,7 @@ Vim 8 and not just Neovim.
 
 ## Installing
 
-You need to have the rust compiler and `cargo` installed.
+You need to have [rust installed](https://www.rust-lang.org/en-US/install.html).
 
 If you are using Tim Pope's `pathogen`:
 
@@ -36,7 +36,8 @@ You can run tests like so:
     $ vim --clean -u tests/run.vim
 
 Tests are in a nice, readable format in `tests/test_*.vim`.  Please add tests
-for any new features (or even old ones!).
+for any new features (or even old ones!).  You can set the `VIM_TO_TEST`
+environment variable to Vim's path to test weird or different builds.
 
 ## Contributors
 
