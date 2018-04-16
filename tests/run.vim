@@ -50,10 +50,13 @@ endfor
 function s:run(scenario)
   let l:filename = tempname() . ".clj"
   call writefile(a:scenario["Give"], l:filename)
-  let l:options = { "hidden": 1 }
+  let l:options = {
+    \ 'hidden': 1,
+    \ 'term_rows': 15,
+    \ 'term_cols': 30,
+    \ 'term_kill': 'kill' }
   let l:term = term_start(g:vim_to_test . " -n -u tests/vimrc " . l:filename, l:options)
-  call term_setkill(l:term, "kill")
-  sleep 1
+  sleep 2
   call term_wait(l:term, 1000)
   for l:key in split(join(a:scenario["When"], "<Enter>"), '\([^<]\|<[^>]*>\)\zs')
     if len(l:key) > 0 && l:key[0] ==# '<'
@@ -64,6 +67,7 @@ function s:run(scenario)
   endfor
   call term_sendkeys(l:term, ":w\<CR>")
   call term_wait(l:term, 200)
+  call job_stop(term_getjob(l:term))
 
   let l:actual = readfile(l:filename)
   if a:scenario["Then"] !=# l:actual
