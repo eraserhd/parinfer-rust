@@ -4,6 +4,10 @@ filetype on
 syntax on
 try
   source plugin/parinfer.vim
+
+  " :PlugUpdate and other things might want to reload the plugin.  Ensure we
+  " can do that.
+  source plugin/parinfer.vim
 catch
   echohl ErrorMsg
   echo "Error loading Vim plugin:" v:exception

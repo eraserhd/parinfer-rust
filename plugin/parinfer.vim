@@ -39,7 +39,7 @@ endfunction
 command! ParinferToggleMode call <SID>toggleMode()
 command! ParinferOff call <SID>turnOff()
 
-function s:enter_window()
+function! s:enter_window()
   let w:parinfer_previous_cursor = getpos(".")
 endfunction
 
