@@ -32,12 +32,9 @@ function! s:toggleMode()
   endif
 endfunction
 
-function! s:turnOff()
-  let g:parinfer_enabled = 0
-endfunction
-
 command! ParinferToggleMode call <SID>toggleMode()
-command! ParinferOff call <SID>turnOff()
+command! ParinferOn let g:parinfer_enabled = 1
+command! ParinferOff let g:parinfer_enabled = 0
 
 function! s:enter_window()
   let w:parinfer_previous_cursor = getpos(".")
