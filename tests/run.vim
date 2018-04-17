@@ -38,12 +38,15 @@ function! s:load_feature(filename)
       continue
     endif
 
-    " Scenario
-    let mend = matchlist(text, '^##\s\+\([^\n]*\)\n', offset)
+    " Scenario (possibly tagged as disabled)
+    let mend = matchlist(text, '^##\s\+\(\[[^\]]*\]\s*\|\)\([^\n]*\)\n', offset)
     if mend != []
-      let s:current_scenario = mend[1]
+      let s:current_scenario = mend[1] . mend[2]
       if !has_key(s:features[s:current_feature], s:current_scenario)
         let s:features[s:current_feature][s:current_scenario] = { "Give": [], "When": [], "Then": [] }
+      endif
+      if len(mend[1]) > 0
+        let s:features[s:current_feature][s:current_scenario]['disabled'] = 1
       endif
       let offset += len(mend[0])
       let state = 'Give'
@@ -82,7 +85,10 @@ for feature in glob("tests/*.md", v:false, v:true)
   call s:load_feature(feature)
 endfor
 
-function s:run(scenario)
+function s:run(scenario) abort
+  if has_key(a:scenario, 'disabled')
+    return
+  endif
   let l:filename = tempname() . ".clj"
   call writefile(a:scenario["Give"], l:filename)
   let l:options = {
@@ -125,6 +131,8 @@ function s:run_all()
       if len(v:errors) > 0
         let l:ok = v:false
         echohl ErrorMsg
+      elseif has_key(s:features[l:feature_name][l:scenario_name], 'disabled')
+        echohl PmenuSel
       else
         echohl MoreMsg
       endif

@@ -1,5 +1,5 @@
-# parinfer
-## fixes parens on initial load
+# Parinfer
+## Fixes parens on initial load
 
 ```
 (foo [
@@ -11,7 +11,7 @@
       x])
 ```
 
-## smart mode pushes brackets
+## Smart mode pushes brackets
 
 ```
 (foo [
@@ -96,6 +96,29 @@ so we need to copy window-local state to the new window.
 After `lli <Esc>:w<CR>:split<CR>lay<Esc>`
 ```
 (f oyo)
+```
+
+## [Not Working] Undo (#14)
+
+```
+(defn f
+  [x]
+  x)
+
+(defn g
+  [y]
+  y)
+```
+
+After `4GO<Enter>(defn h<Enter>  [z]<Enter>z)<Esc>u`:
+```
+(defn f
+  [x]
+  x)
+
+(defn g
+  [y]
+  y)
 ```
 
 # Joining lines
