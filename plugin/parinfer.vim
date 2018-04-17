@@ -94,22 +94,29 @@ function! s:process_buffer() abort
   let w:parinfer_previous_cursor = getpos(".")
 endfunction
 
+let s:EVENTS = {
+  \ 'BufEnter': function('<SID>enter_buffer'),
+  \ 'CursorMoved': function('<SID>process_buffer'),
+  \ 'InsertCharPre': function('<SID>process_buffer'),
+  \ 'InsertEnter': function('<SID>process_buffer'),
+  \ 'TextChanged': function('<SID>process_buffer'),
+  \ 'TextChangedI': function('<SID>process_buffer'),
+  \ 'TextChangedP': function('<SID>process_buffer'),
+  \ 'WinEnter': function('<SID>enter_window') }
+
+function! s:event(name)
+  call call(s:EVENTS[a:name], [])
+endfunction
+
 function! s:initialize_buffer() abort
   " We can't get the buffer in the command-line window, so don't initialize
   " it.  This happens with vim-fireplace's `cqq`.
   if getcmdwintype() !=# ''
     return
   endif
-  autocmd! Parinfer BufEnter <buffer> call <SID>enter_buffer()
-  autocmd! Parinfer WinEnter <buffer> call <SID>enter_window()
-  autocmd! Parinfer TextChanged <buffer> call <SID>process_buffer()
-  autocmd! Parinfer InsertEnter <buffer> call <SID>process_buffer()
-  autocmd! Parinfer InsertCharPre <buffer> call <SID>process_buffer()
-  autocmd! Parinfer TextChangedI <buffer> call <SID>process_buffer()
-  if exists('##TextChangedP')
-    autocmd! Parinfer TextChangedP <buffer> call <SID>process_buffer()
-  endif
-  autocmd! Parinfer CursorMoved <buffer> call <SID>process_buffer()
+  for event_name in filter(keys(s:EVENTS),'exists("##".v:val)')
+    execute "autocmd! Parinfer ".event_name." <buffer> call <SID>event('".event_name."')"
+  endfor
 endfunction
 
 augroup Parinfer
