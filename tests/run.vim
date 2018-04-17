@@ -22,25 +22,60 @@ function! s:add_scenario_part(command, text)
 endfunction
 
 function! s:load_feature(filename)
-  let l:state = 'before_give'
-  for l:line in readfile(a:filename)
-    if l:line =~ '^# '
-      let s:current_feature = substitute(l:line, '^# ', '', '')
-    elseif l:line =~ '^## '
-      let s:current_scenario = substitute(l:line, '^## ', '', '')
-      let l:state = 'before_give'
-    elseif l:line =~ '^\s*$' && l:state ==# 'in_give'
-      let l:state = 'in_then'
-    elseif l:line =~ '^    ' && (l:state ==# 'before_give' || l:state ==# 'in_give')
-      call s:add_scenario_part("Give", substitute(l:line, '^    ', '', ''))
-      let l:state = 'in_give'
-    elseif l:line =~ '`.\+`' && (l:state ==# 'in_then' || l:state ==# 'in_give')
-      call s:add_scenario_part("When", substitute(l:line, '^.*`\(.\+\)`.*$', '\1', ''))
-      let l:state = 'in_then'
-    elseif l:line =~ '^    ' && l:state ==# 'in_then'
-      call s:add_scenario_part("Then", substitute(l:line, '^    ', '', ''))
+  let offset = 0
+  let text = join(readfile(a:filename),"\n")."\n"
+  let state = 0
+  while offset < len(text)
+    " Feature
+    let mend = matchlist(text, '^#\s\+\([^\n]*\)\n', offset)
+    if mend != []
+      let s:current_feature = mend[1]
+      let s:current_scenario = v:null
+      if !has_key(s:features, s:current_feature)
+        let s:features[s:current_feature] = {}
+      endif
+      let offset += len(mend[0])
+      continue
     endif
-  endfor
+
+    " Scenario
+    let mend = matchlist(text, '^##\s\+\([^\n]*\)\n', offset)
+    if mend != []
+      let s:current_scenario = mend[1]
+      if !has_key(s:features[s:current_feature], s:current_scenario)
+        let s:features[s:current_feature][s:current_scenario] = { "Give": [], "When": [], "Then": [] }
+      endif
+      let offset += len(mend[0])
+      let state = 'Give'
+      continue
+    endif
+
+    " Code block
+    let mend = matchlist(text, '^```\s*\n\(.\{-}\n\)```\s*\n', offset)
+    if mend != []
+      let s:features[s:current_feature][s:current_scenario][state] = split(mend[1], '\n')
+      let state = 'Then'
+      let offset += len(mend[0])
+      continue
+    endif
+
+    " Commentary with Vim keys
+    let mend = matchlist(text, '^[^\n`]*`\([^\n`]*\)`[^\n]*\n', offset)
+    if mend != []
+      if state ==# 'Then'
+        let s:features[s:current_feature][s:current_scenario]['When'] += [mend[1]]
+      endif
+      let offset += len(mend[0])
+      continue
+    endif
+
+    " Commentary with no keys
+    let mend = matchlist(text, '^[^\n]*\n', offset)
+    if mend != []
+      let offset += len(mend[0])
+      continue
+    endif
+  endwhile
 endfunction
 
 for feature in glob("tests/*.md", v:false, v:true)
