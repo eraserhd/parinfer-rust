@@ -24,6 +24,21 @@ After `llib<Esc>`:
        x])
 ```
 
+## [Not Working] "force balance" mode can be enabled
+
+This is currently not working due to an issue where the Rust port does not
+match the JavaScript implementation when "forceBalance" is set.
+
+```
+(foo [:baz])
+```
+
+After `:set lisp<CR>:let g:parinfer_force_balance=1<CR>f]i<Enter><Esc>`:
+```
+(foo [:baz])
+
+```
+
 ## Is disabled when `&paste` is set
 
 Vim's `&paste` option is for pasting into the terminal.  Vim receives the
