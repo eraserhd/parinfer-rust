@@ -4,6 +4,9 @@ endif
 if !exists('g:parinfer_enabled')
   let g:parinfer_enabled = 1
 endif
+if !exists('g:parinfer_force_balance')
+  let g:parinfer_force_balance = 0
+endif
 
 if !exists('g:parinfer_dylib_path')
   if has('macunix')
@@ -86,6 +89,7 @@ function! s:process_buffer() abort
                     \ "text": l:orig_text,
                     \ "options": { "cursorX": l:pos[2] - 1,
                                  \ "cursorLine": l:pos[1] - 1,
+                                 \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2] - 1,
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1] - 1,
                                  \ "prevText": b:parinfer_previous_text } }

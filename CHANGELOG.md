@@ -14,6 +14,7 @@
 ### Added
 - `:ParinferOn` command
 - A logging facility and the `:ParinferLog` command
+- `g:parinfer_force_balance` option (defaults to off)
 
 ## 0.1.0
 ### Vim Plugin
