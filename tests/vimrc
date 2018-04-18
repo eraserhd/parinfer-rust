@@ -1,5 +1,7 @@
 setglobal nocompatible nomore cpo-=C
 
+let g:parinfer_logfile = bufname('%').'.log'
+
 filetype on
 syntax on
 try

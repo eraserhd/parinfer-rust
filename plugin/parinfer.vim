@@ -130,9 +130,8 @@ let s:EVENTS = {
   \ 'WinEnter': function('<SID>enter_window') }
 
 function! s:event(name)
-  call s:log('start-event', a:name)
+  call s:log('event', {'name': a:name, 'bufnr': bufnr('%'), 'changedtick': b:changedtick })
   call call(s:EVENTS[a:name], [])
-  call s:log('end-event', a:name)
 endfunction
 
 function! s:initialize_buffer() abort

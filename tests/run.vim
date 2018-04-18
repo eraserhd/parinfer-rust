@@ -112,11 +112,18 @@ function s:run(scenario) abort
 
   let l:actual = readfile(l:filename)
   if a:scenario["Then"] !=# l:actual
-    let v:errors += [ "Expected:\n" . join(a:scenario["Then"],"\n") . "\nActual:\n" . join(l:actual,"\n") ]
+    let v:errors += [
+      \ "Expected:\n" .
+      \ join(a:scenario["Then"],"\n") . "\n" .
+      \ "Actual:\n" .
+      \ join(l:actual,"\n") . "\n" .
+      \ "Log:\n" .
+      \ join(readfile(l:filename . '.log'),"\n") . "\n" ]
   endif
 
   execute "bdelete! " . l:term
   call delete(l:filename)
+  call delete(l:filename . '.log')
 endfunction
 
 function s:run_all()
