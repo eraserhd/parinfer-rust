@@ -13,6 +13,7 @@
 
 ### Added
 - `:ParinferOn` command
+- A logging facility and the `:ParinferLog` command
 
 ## 0.1.0
 ### Vim Plugin

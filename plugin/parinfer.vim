@@ -36,6 +36,28 @@ command! ParinferToggleMode call <SID>toggleMode()
 command! ParinferOn let g:parinfer_enabled = 1
 command! ParinferOff let g:parinfer_enabled = 0
 
+" Logging {{{1
+
+function! s:parinfer_log(...)
+  if a:0 > 0
+    let g:parinfer_logfile = a:1
+    echomsg 'Parinfer is now logging to '.a:1
+  else
+    unlet g:parinfer_logfile
+    echomsg 'Parinfer is no longer logging'
+  endif
+endfunction
+
+function! s:log(tag, data) abort
+  if exists('g:parinfer_logfile')
+    call writefile([printf('%20s: %s', a:tag, json_encode(a:data))], g:parinfer_logfile, 'a')
+  endif
+endfunction
+
+command! -nargs=? ParinferLog call <SID>parinfer_log(<f-args>)
+
+" }}}
+
 function! s:enter_window()
   let w:parinfer_previous_cursor = getpos(".")
 endfunction
@@ -67,7 +89,9 @@ function! s:process_buffer() abort
                                  \ "prevCursorX": w:parinfer_previous_cursor[2] - 1,
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1] - 1,
                                  \ "prevText": b:parinfer_previous_text } }
+    call s:log('process-request', l:request)
     let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
+    call s:log('process-response', l:response)
     if l:response["success"]
       if l:response["text"] !=# l:orig_text
         let l:lines = split(l:response["text"], "\n", 1)
@@ -78,6 +102,7 @@ function! s:process_buffer() abort
         catch /E523:/ " not allowed here
           " If an event doesn't allow us to modify the buffer, that's OK.
           " Usually another event will happen before a redraw.
+          call s:log('not-allowed-here', {})
         endtry
       endif
       let l:pos[1] = l:response["cursorLine"] + 1
@@ -105,7 +130,9 @@ let s:EVENTS = {
   \ 'WinEnter': function('<SID>enter_window') }
 
 function! s:event(name)
+  call s:log('start-event', a:name)
   call call(s:EVENTS[a:name], [])
+  call s:log('end-event', a:name)
 endfunction
 
 function! s:initialize_buffer() abort
@@ -123,4 +150,4 @@ augroup Parinfer
   autocmd FileType clojure,scheme,lisp,racket,hy call <SID>initialize_buffer()
 augroup END
 
-" vim:set sts=2 sw=2 ai et:
+" vim:set sts=2 sw=2 ai et foldmethod=marker:
