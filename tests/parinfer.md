@@ -24,6 +24,21 @@ After `llib<Esc>`:
        x])
 ```
 
+## Is disabled when `&paste` is set
+
+Vim's `&paste` option is for pasting into the terminal.  Vim receives the
+text as many keystrokes, essentially, so we should not be reformatting the
+code as it is being added.
+
+```
+(foo)
+```
+
+After `:set paste<CR>i))<Esc>`:
+```
+))(foo)
+```
+
 ## change commands fix indent
 
 ```

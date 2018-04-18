@@ -10,6 +10,7 @@
 
 ### Changed
 - Honors `g:parinfer_enabled` (instead of `g:parinfer_mode` of "off")
+- Is disabled during `:set paste`
 
 ### Added
 - `:ParinferOn` command

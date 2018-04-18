@@ -78,7 +78,7 @@ function! s:enter_buffer()
 endfunction
 
 function! s:process_buffer() abort
-  if !g:parinfer_enabled
+  if !g:parinfer_enabled || &paste
     return
   endif
   if b:parinfer_last_changedtick != b:changedtick
