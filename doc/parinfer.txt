@@ -1,0 +1,37 @@
+*parinfer.txt*	Automagic Lisp Bracket Balancing
+
+==============================================================================
+I. INTRODUCTION				    *parinfer* *parinfer-introduction*
+
+This plugin does smart things to maintain balanced parentheses as you type in
+lisp code.
+
+It is based on a Rust port of Shaun Lebron's "parinfer" library.  This manual
+covers the Vim plugin part only - you should visit the parinfer website for
+information on what parinfer itself does for you.
+
+            Parinfer info https://shaunlebron.github.io/parinfer/
+	   parinfer-rust  https://github.com/eraserhd/parinfer-rust
+
+==============================================================================
+II. OPTIONS				       		    *parinfer-options*
+
+							     *g:parinfer_mode*
+The mode used to process buffer changes: 'smart', 'indent', or 'paren'.
+>
+        " Default
+        let g:parinfer_mode = 'smart'
+<
+						    *g:parinfer_force_balance*
+In smart mode and indent mode, parinfer will sometimes leave unbalanced
+brackets around the cursor and fix them when the cursor moves away.  When this
+option is set to 1 or |v:true|, the brackets will be fixed immediately (and
+fixed again when text is inserted).
+>
+        " Default
+	let g:parinfer_force_balance = 0
+<
+						       *g:parinfer_dylib_path*
+This is the path to the dynamically loaded library which contains the Rust
+port of parinfer.  This should be detected automatically for most normal
+installation methods.  If it doesn't, please report a bug.
