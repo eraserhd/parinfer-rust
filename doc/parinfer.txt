@@ -6,12 +6,21 @@ I. INTRODUCTION				    *parinfer* *parinfer-introduction*
 This plugin does smart things to maintain balanced parentheses as you type in
 lisp code.
 
+Unlike most lisp-editing plugins, this plugin does not add new mappings for
+structural editing.  Instead, it has modes to infer brackets from indentation,
+to infer indentation from brackets, and a smart mode that looks at the change
+you are making to determine which method to use.
+
 It is based on a Rust port of Shaun Lebron's "parinfer" library.  This manual
 covers the Vim plugin part only - you should visit the parinfer website for
 information on what parinfer itself does for you.
 
             Parinfer info https://shaunlebron.github.io/parinfer/
 	   parinfer-rust  https://github.com/eraserhd/parinfer-rust
+
+This plugin can be used with |vim-sexp|, although you will probably want to
+set |g:sexp_enable_insert_mode_mappings| to 0.  Otherwise, you will not be
+able to type brackets.
 
 ==============================================================================
 II. OPTIONS				       		    *parinfer-options*
