@@ -6,11 +6,14 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+#[cfg(not(target_arch = "wasm32"))]
 extern crate libc;
 
 use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::panic;
+
+#[cfg(not(target_arch = "wasm32"))]
 use libc::c_char;
 
 #[derive(Deserialize)]
@@ -318,6 +321,7 @@ fn compute_text_change_works() {
     }), compute_text_change("helllo", "hello"));
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
     let json_str = CStr::from_ptr(json).to_str()?;
     let request: Request = serde_json::from_str(json_str)?;
@@ -400,6 +404,7 @@ mod reference_hack {
 
 static mut BUFFER: Option<CString> = None;
 
+#[cfg(not(target_arch = "wasm32"))]
 #[no_mangle]
 pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
     reference_hack::initialize();

@@ -43,6 +43,12 @@ Plug 'eraserhd/parinfer-rust', {'do':
         \  'cargo build --manifest-path=cparinfer/Cargo.toml --release'}
 ```
 
+## Building WebAssembly
+
+    $ rustup update nightly
+    $ cargo install cargo-web
+    $ cargo web build
+
 ## Tests
 
 You can run tests like so:
