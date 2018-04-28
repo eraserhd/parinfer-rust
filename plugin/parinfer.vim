@@ -25,17 +25,6 @@ if !exists('g:parinfer_dylib_path')
   endif
 endif
 
-function! s:toggle_mode()
-  if g:parinfer_mode == "smart"
-    let g:parinfer_mode = "indent"
-  elseif g:parinfer_mode == "indent"
-    let g:parinfer_mode = "paren"
-  else
-    let g:parinfer_mode = "smart"
-  endif
-endfunction
-
-command! ParinferToggleMode call <SID>toggle_mode()
 command! ParinferOn let g:parinfer_enabled = 1
 command! ParinferOff let g:parinfer_enabled = 0
 
