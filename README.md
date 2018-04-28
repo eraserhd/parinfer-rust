@@ -1,5 +1,7 @@
 # parinfer-rust
 
+https://github.com/eraserhd/parinfer-rust
+
 A port of Shaun Lebron's parinfer to Rust.  Why?  To make a snappy plugin that
 can be called with Vim's libcall(), saving wire transfer time, and working on
 Vim 8 and not just Neovim.
