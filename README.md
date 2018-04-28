@@ -2,13 +2,15 @@
 
 https://github.com/eraserhd/parinfer-rust
 
-A port of Shaun Lebron's parinfer to Rust.  Why?  To make a snappy plugin that
-can be called with Vim's libcall(), saving wire transfer time, and working on
-Vim 8 and not just Neovim.
+A full-featured, super snappy port of [Shaun Lebron's parinfer] to Rust.  This
+repo comes with Vim plugin files that work with Vim8 and Neovim.  The Rust
+library can be called from other editors that can load dynamic libraries.
 
 This plugin, unlike others available for Vim, implements "smart" mode.  Rather
 than switching between "paren" mode and "indent" mode, parinfer uses
 information about how the user is changing the file to decide what to do.
+
+[Shaun Lebron's parinfer]: https://shaunlebron.github.io/parinfer/
 
 ## Installing
 
