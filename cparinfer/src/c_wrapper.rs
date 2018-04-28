@@ -1,4 +1,5 @@
 use super::*;
+use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::panic;
 use libc::c_char;
