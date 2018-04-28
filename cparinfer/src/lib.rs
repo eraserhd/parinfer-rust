@@ -11,25 +11,8 @@ extern crate libc;
 
 use std::borrow::Cow;
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Change {
-    x: parinfer::Column,
-    line_no: parinfer::LineNumber,
-    old_text: String,
-    new_text: String,
-}
-
-impl Change {
-    fn to_parinfer(&self) -> parinfer::Change {
-        parinfer::Change {
-            x: self.x,
-            line_no: self.line_no,
-            old_text: &self.old_text,
-            new_text: &self.new_text,
-        }
-    }
-}
+mod json;
+use json::*;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
