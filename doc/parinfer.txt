@@ -1,7 +1,7 @@
 *parinfer.txt*	Automagic Lisp Bracket Balancing
 
 ==============================================================================
-I. INTRODUCTION				    *parinfer* *parinfer-introduction*
+I. INTRODUCTION		    *parinfer* *parinfer-rust* *parinfer-introduction*
 
 This plugin does smart things to maintain balanced parentheses as you type in
 lisp code.
@@ -26,6 +26,10 @@ able to type brackets.
 II. COMMANDS 						   *parinfer-commands*
 
                                                                 *:ParinferLog*
+With an argument, starts logging each handled event to the named file.
+Without an argument, stops logging. This is useful for debugging Vim event
+handling and submitting bug reports.
+
 								*:ParinferOff*
 Disables parinfer processing. This is useful when a file is too large to be
 processed quickly or when a file contains badly balanced parentheses that you
