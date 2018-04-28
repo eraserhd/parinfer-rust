@@ -16,6 +16,8 @@ information about how the user is changing the file to decide what to do.
 
 You need to have [rust installed](https://www.rust-lang.org/en-US/install.html).
 
+### `pathogen`
+
 If you are using Tim Pope's `pathogen`:
 
     $ cd ~/.vim/bundle
@@ -23,19 +25,23 @@ If you are using Tim Pope's `pathogen`:
     $ cd ~/.vim/bundle/parinfer-rust/cparinfer
     $ cargo build --release
 
-If you are using `vim-plug`:
+### `vim-plug`
 
-	Plug 'eraserhd/parinfer-rust'
+```viml
+Plug 'eraserhd/parinfer-rust'
+```
 
 Then, build project using cargo:
 
-	$ cd /path/to/parinfer-rust/cparinfer
-	$ cargo build --release
+    $ cd /path/to/parinfer-rust/cparinfer
+    $ cargo build --release
 
 Or, with optional automatic recompilation on update:
 
-	Plug 'eraserhd/parinfer-rust', {'do':
-		\  'cargo build --manifest-path=cparinfer/Cargo.toml --release'}
+```viml
+Plug 'eraserhd/parinfer-rust', {'do':
+        \  'cargo build --manifest-path=cparinfer/Cargo.toml --release'}
+```
 
 ## Tests
 
