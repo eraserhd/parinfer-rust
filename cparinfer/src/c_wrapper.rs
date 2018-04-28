@@ -139,3 +139,65 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
     BUFFER.as_ref().unwrap().as_ptr()
 }
 
+#[cfg(test)]
+mod tests {
+    use super::run_parinfer;
+    use std::ffi::{CStr, CString};
+    use serde_json;
+    use serde_json::{Number, Value};
+
+    #[test]
+    fn it_works() {
+        unsafe {
+            let json = CString::new(
+                r#"{
+                "mode": "indent",
+                "text": "(def x",
+                "options": {
+                    "cursorX": 3,
+                    "cursorLine": 0
+                }
+            }"#,
+            ).unwrap();
+            let out = CStr::from_ptr(run_parinfer(json.as_ptr()))
+                .to_str()
+                .unwrap();
+            let answer: Value = serde_json::from_str(out).unwrap();
+            assert_eq!(
+                Value::Bool(true),
+                answer["success"],
+                "successfully runs parinfer"
+            );
+            assert_eq!(
+                Value::String(String::from("(def x)")),
+                answer["text"],
+                "returns correct text"
+            );
+            assert_eq!(
+                Value::Number(Number::from(3)),
+                answer["cursorX"],
+                "returns the correct cursorX"
+            );
+            assert_eq!(
+                Value::Number(Number::from(0)),
+                answer["cursorLine"],
+                "returns the correct cursorLine"
+            );
+            assert_eq!(
+                Value::Array(vec![]),
+                answer["tabStops"],
+                "returns the correct tab stops"
+            );
+            let mut obj: serde_json::map::Map<String, Value> = serde_json::map::Map::new();
+            obj.insert(String::from("endX"), Value::Number(Number::from(7)));
+            obj.insert(String::from("lineNo"), Value::Number(Number::from(0)));
+            obj.insert(String::from("startX"), Value::Number(Number::from(6)));
+            assert_eq!(
+                Value::Array(vec![Value::Object(obj)]),
+                answer["parenTrails"],
+                "returns the paren trails"
+            );
+            assert_eq!(Value::Array(vec![]), answer["parens"], "returns the parens");
+        }
+    }
+}
