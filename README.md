@@ -4,6 +4,10 @@ A port of Shaun Lebron's parinfer to Rust.  Why?  To make a snappy plugin that
 can be called with Vim's libcall(), saving wire transfer time, and working on
 Vim 8 and not just Neovim.
 
+This plugin, unlike others available for Vim, implements "smart" mode.  Rather
+than switching between "paren" mode and "indent" mode, parinfer uses
+information about how the user is changing the file to decide what to do.
+
 ## Installing
 
 You need to have [rust installed](https://www.rust-lang.org/en-US/install.html).
