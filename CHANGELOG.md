@@ -1,5 +1,7 @@
 # ChangeLog
 ## [Unreleased]
+
+## [v0.2.0]
 ### Fixed
 - `>>` reindents the rest of the form
 - `E121: Undefined variable: w:parinfer_previous_cursor` after `:split`
@@ -25,4 +27,5 @@
 #### Fixed
 - `c` commands do not smart-dedent trailing lines
 
-[Unreleased]: https://github.com/eraserhd/parinfer-rust/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/eraserhd/parinfer-rust/compare/v0.2.0...HEAD
+[v0.2.0]: https://github.com/eraserhd/parinfer-rust/compare/v0.1.0...v0.2.0
