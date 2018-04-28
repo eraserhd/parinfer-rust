@@ -23,7 +23,19 @@ set |g:sexp_enable_insert_mode_mappings| to 0.  Otherwise, you will not be
 able to type brackets.
 
 ==============================================================================
-II. OPTIONS				       		    *parinfer-options*
+II. COMMANDS 						   *parinfer-commands*
+
+                                                                *:ParinferLog*
+								*:ParinferOff*
+Disables parinfer processing. This is useful when a file is too large to be
+processed quickly or when a file contains badly balanced parentheses that you
+want to preserve.
+
+								 *:ParinferOn*
+Enables parinfer processing. Parinfer starts enabled.
+
+==============================================================================
+III. OPTIONS				       		    *parinfer-options*
 
 							     *g:parinfer_mode*
 The mode used to process buffer changes: 'smart', 'indent', or 'paren'.
