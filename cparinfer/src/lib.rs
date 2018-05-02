@@ -1,3 +1,5 @@
+#![cfg_attr(target_arch = "wasm32", feature(proc_macro))]
+
 extern crate parinfer;
 
 extern crate serde;
@@ -6,11 +8,17 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+#[cfg(target_arch = "wasm32")]
+#[macro_use]
+extern crate stdweb;
+
+#[cfg(target_arch = "wasm32")]
+use stdweb::js_export;
+
 #[cfg(not(target_arch = "wasm32"))]
 extern crate libc;
 
 mod json;
-use json::*;
 
 fn compute_text_change<'a>(prev_text: &'a str, text: &'a str) -> Option<parinfer::Change<'a>> {
     let mut x: parinfer::Column = 0;
@@ -91,3 +99,13 @@ mod c_wrapper;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use c_wrapper::run_parinfer;
+
+#[cfg(target_arch = "wasm32")]
+mod wasm_wrapper;
+
+#[cfg(target_arch = "wasm32")]
+#[js_export]
+pub fn run_parinfer(input: String) -> String {
+    js! { console.log("hello//again"); }
+    wasm_wrapper::run_parinfer(input)
+}

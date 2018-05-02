@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <script src="cparinfer.js"></script>
+    <script>
+      Rust.cparinfer.then((cparinfer) => {
+        let request = JSON.stringify({
+          mode: "indent",
+          text: "(def x",
+          options: {
+            "cursorX": 3,
+            "cursorLine": 0
+          }
+        });
+        let response = cparinfer.run_parinfer(request);
+        console.log(response);
+      });
+    </script>
+  </body>
+</html>

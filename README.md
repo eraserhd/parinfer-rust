@@ -45,15 +45,24 @@ Plug 'eraserhd/parinfer-rust', {'do':
 
 ## Building WebAssembly
 
-    $ rustup update nightly
-    $ cargo install cargo-web
-    $ cargo web build
+WebAssembly currently needs the "nigthly" toolchain:
+
+    $ rustup update
+    $ rustup install nightly
+    $ rustup target add wasm32-unknown-unknown --toolchain nightly
+    $ cargo +nightly install cargo-web
+
+It can then be built with:
+
+    $ cargo +nightly web build --release
 
 ## Tests
 
 You can run tests like so:
 
-    $ vim --clean -u tests/run.vim
+    $ cargo test                   # Run the native tests
+    $ cargo +nightly web test      # Test the WebAssembly version
+    $ vim --clean -u tests/run.vim # Integration tests
 
 Tests are in a nice, readable format in `tests/test_*.vim`.  Please add tests
 for any new features (or even old ones!).  You can set the `VIM_TO_TEST`

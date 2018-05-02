@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::panic;
 use libc::c_char;
+use json::*;
 
 unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
     let json_str = CStr::from_ptr(json).to_str()?;

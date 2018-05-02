@@ -1,5 +1,6 @@
 # ChangeLog
 ## [Unreleased]
+- Support building for WebAssembly targets
 
 ## [v0.2.0]
 ### Fixed
