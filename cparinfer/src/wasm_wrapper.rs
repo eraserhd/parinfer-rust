@@ -1,4 +1,4 @@
-use super::compute_text_change;
+use changes;
 use parinfer;
 use std;
 use serde_json;
@@ -10,7 +10,7 @@ fn internal_run(input: String) -> Result<String, Error> {
 
     if let Some(ref prev_text) = request.options.prev_text {
         options.changes.clear();
-        if let Some(change) = compute_text_change(prev_text, &request.text) {
+        if let Some(change) = changes::compute_text_change(prev_text, &request.text) {
             options.changes.push(change);
         }
     }

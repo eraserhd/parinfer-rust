@@ -12,7 +12,7 @@ unsafe fn internal_run(json: *const c_char) -> Result<CString, Error> {
 
     if let Some(ref prev_text) = request.options.prev_text {
         options.changes.clear();
-        if let Some(change) = compute_text_change(prev_text, &request.text) {
+        if let Some(change) = changes::compute_text_change(prev_text, &request.text) {
             options.changes.push(change);
         }
     }
