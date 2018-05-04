@@ -151,6 +151,21 @@ After `4GO<Enter>(defn h<Enter>  [z]<Enter>z)<Esc>u`:
   y)
 ```
 
+## [Not Working] Deleting to end-of-line (#21)
+
+Normal-mode commands which delete to the end of the line move the cursor back
+one space to keep it within the line.  This confuses parinfer when we don't
+accomodate this.
+
+```
+(let [a "foo"])
+```
+
+After `f"D`:
+```
+(let [a ])
+```
+
 # Joining lines
 ## `J` joins two lines correctly (#10)
 
