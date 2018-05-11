@@ -5,12 +5,6 @@ use std::ffi::{CStr, CString};
 use std::panic;
 use super::*;
 
-unsafe fn unwrap_c_pointers(json: *const c_char) -> Result<CString, Error> {
-    let json_str = CStr::from_ptr(json).to_str()?;
-    let response = common_wrapper::internal_run(json_str)?;
-    Ok(CString::new(response)?)
-}
-
 /// On unix, Vim loads and unloads the library for every call. On Mac, and
 /// possibly other unices, each load creates a new tlv key, and there is a
 /// maximum number allowed per process.  When we run out, dlopen() aborts
@@ -60,6 +54,12 @@ mod reference_hack {
     }
 }
 
+unsafe fn unwrap_c_pointers(json: *const c_char) -> Result<CString, Error> {
+    let json_str = CStr::from_ptr(json).to_str()?;
+    let response = common_wrapper::internal_run(json_str)?;
+    Ok(CString::new(response)?)
+}
+
 static mut BUFFER: Option<CString> = None;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -85,27 +85,7 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
             CString::new(out).unwrap()
         },
         Err(_) => {
-            let answer = Answer {
-                text: Cow::from(""),
-                success: false,
-                error: Some(Error {
-                    name: String::from("panic"),
-                    message: String::from("plugin panicked!"),
-                    x: None,
-                    line_no: None,
-                    input_x: None,
-                    input_line_no: None,
-
-                }),
-                cursor_x: None,
-                cursor_line: None,
-                tab_stops: vec![],
-                paren_trails: vec![],
-                parens: vec![]
-            };
-
-            let out = serde_json::to_string(&answer).unwrap();
-
+            let out = common_wrapper::panic_result();
             CString::new(out).unwrap()
         }
     };

@@ -1,4 +1,5 @@
 use super::*;
+use std::borrow::Cow;
 use json::*;
 use changes;
 
@@ -30,3 +31,25 @@ pub fn internal_run(json_str: &str) -> Result<String, Error> {
     Ok(serde_json::to_string(&Answer::from(answer))?)
 }
 
+pub fn panic_result() -> String {
+    let answer = Answer {
+        text: Cow::from(""),
+        success: false,
+        error: Some(Error {
+            name: String::from("panic"),
+            message: String::from("plugin panicked!"),
+            x: None,
+            line_no: None,
+            input_x: None,
+            input_line_no: None,
+
+        }),
+        cursor_x: None,
+        cursor_line: None,
+        tab_stops: vec![],
+        paren_trails: vec![],
+        parens: vec![]
+    };
+
+    serde_json::to_string(&answer).unwrap()
+}

@@ -1,8 +1,7 @@
 use json::*;
 use serde_json;
-use std::borrow::Cow;
-use std::panic;
 use std;
+use std::panic;
 use super::common_wrapper;
 
 pub fn run_parinfer(input: String) -> String {
@@ -18,27 +17,7 @@ pub fn run_parinfer(input: String) -> String {
             paren_trails: vec![],
             parens: vec![]
         }).unwrap(),
-        Err(_) => {
-            let answer = Answer {
-                text: Cow::from(""),
-                success: false,
-                error: Some(Error {
-                    name: String::from("panic"),
-                    message: String::from("plugin panicked!"),
-                    x: None,
-                    line_no: None,
-                    input_x: None,
-                    input_line_no: None,
-
-                }),
-                cursor_x: None,
-                cursor_line: None,
-                tab_stops: vec![],
-                paren_trails: vec![],
-                parens: vec![]
-            };
-            serde_json::to_string(&answer).unwrap()
-        }
+        Err(_) => common_wrapper::panic_result()
     }
 }
 
