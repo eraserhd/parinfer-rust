@@ -31,6 +31,8 @@ extern crate stdweb;
 #[cfg(target_arch = "wasm32")]
 use stdweb::js_export;
 
+mod common_wrapper;
+
 #[cfg(target_arch = "wasm32")]
 mod wasm_wrapper;
 
