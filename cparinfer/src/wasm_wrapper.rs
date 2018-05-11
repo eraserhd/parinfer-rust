@@ -1,22 +1,12 @@
 use json::*;
 use serde_json;
-use std;
 use std::panic;
 use super::common_wrapper;
 
 pub fn run_parinfer(input: String) -> String {
     match panic::catch_unwind(|| common_wrapper::internal_run(&input)) {
         Ok(Ok(result)) => result,
-        Ok(Err(e)) => serde_json::to_string(&Answer {
-            text: std::borrow::Cow::from(""),
-            success: false,
-            error: Some(e),
-            cursor_x: None,
-            cursor_line: None,
-            tab_stops: vec![],
-            paren_trails: vec![],
-            parens: vec![]
-        }).unwrap(),
+        Ok(Err(e)) => serde_json::to_string(&Answer::from(e)).unwrap(),
         Err(_) => common_wrapper::panic_result()
     }
 }

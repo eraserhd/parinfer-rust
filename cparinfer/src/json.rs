@@ -179,6 +179,21 @@ impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
     }
 }
 
+impl<'a> From<Error> for Answer<'a> {
+    fn from(error: Error) -> Answer<'a> {
+        Answer {
+            text: std::borrow::Cow::from(""),
+            success: false,
+            error: Some(error),
+            cursor_x: None,
+            cursor_line: None,
+            tab_stops: vec![],
+            paren_trails: vec![],
+            parens: vec![],
+        }
+    }
+}
+
 #[derive(Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Error {

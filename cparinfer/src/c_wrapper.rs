@@ -1,6 +1,5 @@
 use json::*;
 use libc::c_char;
-use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::panic;
 use super::*;
@@ -67,21 +66,9 @@ static mut BUFFER: Option<CString> = None;
 pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
     reference_hack::initialize();
     let output = match panic::catch_unwind(|| unwrap_c_pointers(json)) {
-        Ok(Ok(cs)) => cs,
+        Ok(Ok(result)) => result,
         Ok(Err(e)) => {
-            let answer = Answer {
-                text: Cow::from(""),
-                success: false,
-                error: Some(e),
-                cursor_x: None,
-                cursor_line: None,
-                tab_stops: vec![],
-                paren_trails: vec![],
-                parens: vec![],
-            };
-
-            let out = serde_json::to_string(&answer).unwrap();
-
+            let out = serde_json::to_string(&Answer::from(e)).unwrap();
             CString::new(out).unwrap()
         },
         Err(_) => {
