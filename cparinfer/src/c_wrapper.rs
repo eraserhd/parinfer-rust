@@ -1,5 +1,6 @@
 use json::*;
 use libc::c_char;
+use std::cell::RefCell;
 use std::ffi::{CStr, CString};
 use std::panic;
 use super::*;
@@ -59,7 +60,7 @@ unsafe fn unwrap_c_pointers(json: *const c_char) -> Result<CString, Error> {
     Ok(CString::new(response)?)
 }
 
-static mut BUFFER: Option<CString> = None;
+thread_local!(static BUFFER: RefCell<Option<CString>> = RefCell::new(None));
 
 #[cfg(not(target_arch = "wasm32"))]
 #[no_mangle]
@@ -77,9 +78,10 @@ pub unsafe extern "C" fn run_parinfer(json: *const c_char) -> *const c_char {
         }
     };
 
-    BUFFER = Some(output);
-
-    BUFFER.as_ref().unwrap().as_ptr()
+    BUFFER.with(|buffer| {
+        buffer.replace(Some(output));
+        buffer.borrow().as_ref().unwrap().as_ptr()
+    })
 }
 
 #[cfg(test)]

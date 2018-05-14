@@ -1,6 +1,8 @@
 # ChangeLog
 ## [Unreleased]
 - Support building for WebAssembly targets
+- Result from C wrapper is now in thread-local storage, allowing concurrent
+  use from different threads.
 
 ## [v0.2.0]
 ### Fixed
