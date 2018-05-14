@@ -3,6 +3,7 @@
 
 extern crate test;
 extern crate parinfer;
+extern crate cparinfer;
 
 use test::Bencher;
 

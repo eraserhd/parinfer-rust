@@ -1,4 +1,5 @@
 extern crate parinfer;
+extern crate cparinfer;
 extern crate serde;
 extern crate serde_json;
 
