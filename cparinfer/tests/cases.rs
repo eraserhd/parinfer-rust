@@ -6,6 +6,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::ffi::{CStr, CString};
 
 const INDENT_MODE_CASES: &'static str = include_str!("cases/indent-mode.json");
@@ -25,7 +26,6 @@ struct Case {
 
 impl Case {
     fn check2(&self, answer: serde_json::Value) {
-        println!("answer = {}", answer);
         assert_eq!(
             json!(self.result.success), answer["success"],
             "case {}: success",
@@ -198,55 +198,56 @@ struct Source {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+fn run(input: &str) -> String {
+    unsafe {
+        let c_input = CString::new(input).unwrap();
+        String::from(CStr::from_ptr(cparinfer::run_parinfer(c_input.as_ptr())).to_str().unwrap())
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn run(input: &str) -> String {
+    cparinfer::run_parinfer(String::from(input))
+}
+
 #[test]
 pub fn indent_mode() {
     let cases: Vec<Case> = serde_json::from_str(INDENT_MODE_CASES).unwrap();
     for case in cases {
-        let input = CString::new(json!({
+        let input = json!({
             "mode": "indent",
             "text": &case.text,
             "options": &case.options
-        }).to_string()).unwrap();
-        let answer: serde_json::Value = unsafe {
-            let out = CStr::from_ptr(cparinfer::run_parinfer(input.as_ptr())).to_str().unwrap();
-            serde_json::from_str(out).unwrap()
-        };
+        }).to_string();
+        let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
         case.check2(answer);
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[test]
 pub fn paren_mode() {
     let cases: Vec<Case> = serde_json::from_str(PAREN_MODE_CASES).unwrap();
     for case in cases {
-        let input = CString::new(json!({
+        let input = json!({
             "mode": "paren",
             "text": &case.text,
             "options": &case.options
-        }).to_string()).unwrap();
-        let answer: serde_json::Value = unsafe {
-            let out = CStr::from_ptr(cparinfer::run_parinfer(input.as_ptr())).to_str().unwrap();
-            serde_json::from_str(out).unwrap()
-        };
+        }).to_string();
+        let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
         case.check2(answer);
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[test]
 pub fn smart_mode() {
     let cases: Vec<Case> = serde_json::from_str(SMART_MODE_CASES).unwrap();
     for case in cases {
-        let input = CString::new(json!({
+        let input = json!({
             "mode": "smart",
             "text": &case.text,
             "options": &case.options
-        }).to_string()).unwrap();
-        let answer: serde_json::Value = unsafe {
-            let out = CStr::from_ptr(cparinfer::run_parinfer(input.as_ptr())).to_str().unwrap();
-            serde_json::from_str(out).unwrap()
-        };
+        }).to_string();
+        let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
         case.check2(answer);
     }
 }
