@@ -10,8 +10,7 @@ then
   printf 'bad version of node (does not support WebAssembly)\n' >&2
 fi
 
-( cd cparinfer
-  cargo build --release
+( cargo build --release
   cargo test
   cargo +nightly build
   cargo +nightly web test --nodejs )

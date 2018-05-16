@@ -22,7 +22,7 @@ If you are using Tim Pope's `pathogen`:
 
     $ cd ~/.vim/bundle
     $ git clone git@github.com:eraserhd/parinfer-rust
-    $ cd ~/.vim/bundle/parinfer-rust/cparinfer
+    $ cd ~/.vim/bundle/parinfer-rust
     $ cargo build --release
 
 ### `vim-plug`
@@ -33,14 +33,14 @@ Plug 'eraserhd/parinfer-rust'
 
 Then, build project using cargo:
 
-    $ cd /path/to/parinfer-rust/cparinfer
+    $ cd /path/to/parinfer-rust
     $ cargo build --release
 
 Or, with optional automatic recompilation on update:
 
 ```viml
 Plug 'eraserhd/parinfer-rust', {'do':
-        \  'cargo build --manifest-path=cparinfer/Cargo.toml --release'}
+        \  'cargo build --release'}
 ```
 
 ## Building WebAssembly

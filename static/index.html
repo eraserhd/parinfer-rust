@@ -4,9 +4,9 @@
     <meta charset="utf-8">
   </head>
   <body>
-    <script src="cparinfer.js"></script>
+    <script src="parinfer_rust.js"></script>
     <script>
-      Rust.cparinfer.then((cparinfer) => {
+      Rust.parinfer_rust.then((parinfer_rust) => {
         let request = JSON.stringify({
           mode: "indent",
           text: "(def x",
@@ -15,7 +15,7 @@
             "cursorLine": 0
           }
         });
-        let response = cparinfer.run_parinfer(request);
+        let response = parinfer_rust.run_parinfer(request);
         console.log(response);
       });
     </script>

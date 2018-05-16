@@ -10,16 +10,16 @@ endif
 
 if !exists('g:parinfer_dylib_path')
   if has('macunix')
-    let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libparinfer_rust.dylib'
+    let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/target/release/libparinfer_rust.dylib'
   elseif has('unix')
     let s:uname = system("uname")
     if s:uname == "Darwin\n"
-      let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libparinfer_rust.dylib'
+      let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/target/release/libparinfer_rust.dylib'
     else
-      let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/libparinfer_rust.so'
+      let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/target/release/libparinfer_rust.so'
     endif
   elseif has('win32')
-    let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/cparinfer/target/release/parinfer_rust.dll'
+    let g:parinfer_dylib_path = expand('<sfile>:p:h:h'). '/target/release/parinfer_rust.dll'
   else
     " I hope we don't come here!
   endif
