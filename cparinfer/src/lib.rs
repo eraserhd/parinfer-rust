@@ -1,13 +1,12 @@
 #![cfg_attr(target_arch = "wasm32", feature(proc_macro))]
 
-extern crate parinfer;
-
 extern crate serde;
 extern crate serde_json;
 
 #[macro_use]
 extern crate serde_derive;
 
+mod parinfer;
 mod json;
 mod changes;
 
