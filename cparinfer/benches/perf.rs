@@ -1,7 +1,7 @@
 #![feature(test)]
 
 extern crate test;
-extern crate cparinfer;
+extern crate parinfer_rust;
 
 #[macro_use]
 extern crate serde_json;
@@ -30,7 +30,7 @@ fn build_case(mode: &str, text: &str) -> CString {
 fn bench_paren_long_map_with_strings(b: &mut Bencher) {
     unsafe {
         let options = build_case("paren", LONG_MAP_WITH_STRINGS);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -38,7 +38,7 @@ fn bench_paren_long_map_with_strings(b: &mut Bencher) {
 fn bench_indent_long_map_with_strings(b: &mut Bencher) {
     unsafe {
         let options = build_case("indent", LONG_MAP_WITH_STRINGS);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -46,7 +46,7 @@ fn bench_indent_long_map_with_strings(b: &mut Bencher) {
 fn bench_smart_long_map_with_strings(b: &mut Bencher) {
     unsafe {
         let options = build_case("smart", LONG_MAP_WITH_STRINGS);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -54,7 +54,7 @@ fn bench_smart_long_map_with_strings(b: &mut Bencher) {
 fn bench_paren_really_long_file(b: &mut Bencher) {
     unsafe {
         let options = build_case("paren", REALLY_LONG_FILE);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -62,7 +62,7 @@ fn bench_paren_really_long_file(b: &mut Bencher) {
 fn bench_indent_really_long_file(b: &mut Bencher) {
     unsafe {
         let options = build_case("indent", REALLY_LONG_FILE);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -70,7 +70,7 @@ fn bench_indent_really_long_file(b: &mut Bencher) {
 fn bench_smart_really_long_file(b: &mut Bencher) {
     unsafe {
         let options = build_case("smart", REALLY_LONG_FILE);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -78,7 +78,7 @@ fn bench_smart_really_long_file(b: &mut Bencher) {
 fn bench_paren_really_long_file_with_unclosed_paren(b: &mut Bencher) {
     unsafe {
         let options = build_case("paren", REALLY_LONG_FILE_WITH_UNCLOSED_PAREN);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -86,7 +86,7 @@ fn bench_paren_really_long_file_with_unclosed_paren(b: &mut Bencher) {
 fn bench_indent_really_long_file_with_unclosed_paren(b: &mut Bencher) {
     unsafe {
         let options = build_case("indent", REALLY_LONG_FILE_WITH_UNCLOSED_PAREN);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -94,7 +94,7 @@ fn bench_indent_really_long_file_with_unclosed_paren(b: &mut Bencher) {
 fn bench_smart_really_long_file_with_unclosed_paren(b: &mut Bencher) {
     unsafe {
         let options = build_case("smart", REALLY_LONG_FILE_WITH_UNCLOSED_PAREN);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -102,7 +102,7 @@ fn bench_smart_really_long_file_with_unclosed_paren(b: &mut Bencher) {
 fn bench_quote_really_long_file_with_unclosed_quote(b: &mut Bencher) {
     unsafe {
         let options = build_case("paren", REALLY_LONG_FILE_WITH_UNCLOSED_QUOTE);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -110,7 +110,7 @@ fn bench_quote_really_long_file_with_unclosed_quote(b: &mut Bencher) {
 fn bench_indent_really_long_file_with_unclosed_quote(b: &mut Bencher) {
     unsafe {
         let options = build_case("indent", REALLY_LONG_FILE_WITH_UNCLOSED_QUOTE);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }
 
@@ -118,6 +118,6 @@ fn bench_indent_really_long_file_with_unclosed_quote(b: &mut Bencher) {
 fn bench_smart_really_long_file_with_unclosed_quote(b: &mut Bencher) {
     unsafe {
         let options = build_case("smart", REALLY_LONG_FILE_WITH_UNCLOSED_QUOTE);
-        b.iter(|| cparinfer::run_parinfer(options.as_ptr()));
+        b.iter(|| parinfer_rust::run_parinfer(options.as_ptr()));
     }
 }

@@ -1,4 +1,4 @@
-extern crate cparinfer;
+extern crate parinfer_rust;
 extern crate serde;
 #[macro_use]
 extern crate serde_json;
@@ -201,13 +201,13 @@ struct Source {
 fn run(input: &str) -> String {
     unsafe {
         let c_input = CString::new(input).unwrap();
-        String::from(CStr::from_ptr(cparinfer::run_parinfer(c_input.as_ptr())).to_str().unwrap())
+        String::from(CStr::from_ptr(parinfer_rust::run_parinfer(c_input.as_ptr())).to_str().unwrap())
     }
 }
 
 #[cfg(target_arch = "wasm32")]
 fn run(input: &str) -> String {
-    cparinfer::run_parinfer(String::from(input))
+    parinfer_rust::run_parinfer(String::from(input))
 }
 
 #[test]
