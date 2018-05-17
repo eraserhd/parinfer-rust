@@ -3,6 +3,8 @@
 - Support building for WebAssembly targets
 - Result from C wrapper is now in thread-local storage, allowing concurrent
   use from different threads.
+- Files have been reorganized so that `cargo build --release` is now run
+  at the top-level instead of in the `cparinfer` sub-directory.
 
 ## [v0.2.0]
 ### Fixed
