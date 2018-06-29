@@ -4,6 +4,10 @@
   "homepage": "https://github.com/eraserhd/parinfer-rust",
   "license": "ISC",
   "version": "0.2.0",
+  "author": {
+    "name": "Jason Felice",
+    "email": "jason.m.felice@gmail.com"
+  },
   "main": "dist/parinfer_rust.js",
   "repository": {
     "type": "git",
