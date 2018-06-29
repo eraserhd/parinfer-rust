@@ -1,3 +1,0 @@
-/target/
-!/target/wasm32-unknown-unknown/release/parinfer_rust.js
-!/target/wasm32-unknown-unknown/release/parinfer_rust.wasm

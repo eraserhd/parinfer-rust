@@ -4,12 +4,15 @@
   "homepage": "https://github.com/eraserhd/parinfer-rust",
   "license": "ISC",
   "version": "0.2.0",
-  "main": "target/wasm32-unknown-unknown/release/parinfer_rust.js",
+  "main": "dist/parinfer_rust.js",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/eraserhd/parinfer-rust.git"
   },
   "engines": {
     "node": ">=0.9"
+  },
+  "scripts": {
+    "build": "cargo +nightly web build && rm -rf dist/* && cp target/wasm32-unknown-unknown/release/parinfer_rust.{js,wasm} dist/"
   }
 }
