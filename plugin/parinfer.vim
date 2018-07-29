@@ -70,6 +70,9 @@ function! s:process_buffer() abort
   if !g:parinfer_enabled || &paste
     return
   endif
+  if !exists('b:parinfer_last_changedtick')
+    call s:enter_buffer()
+  endif
   if b:parinfer_last_changedtick != b:changedtick
     let l:pos = getpos(".")
     let l:orig_lines = getline(1,line('$'))
