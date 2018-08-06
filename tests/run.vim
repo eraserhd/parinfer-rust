@@ -100,6 +100,7 @@ function s:run(scenario) abort
   sleep 2
   call term_wait(l:term, 1000)
   for l:key in split(join(a:scenario["When"], "<Enter>"), '\([^<]\|<[^>]*>\)\zs')
+    call writefile([printf('%20s: "%s"', 'keys', l:key)], l:filename . '.log', 'a')
     if len(l:key) > 0 && l:key[0] ==# '<'
       let l:key = eval('"\' . l:key . '"')
     endif
