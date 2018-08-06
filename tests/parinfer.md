@@ -208,6 +208,24 @@ x
 y
 ```
 
+## Undo after triggering parinfer in insert mode
+
+This triggers a parinfer update while in insert mode.  In theory, we shouldn't
+need to call "undojoin" here because Vim groups all insert changes (and our
+call to |setline()|).
+
+```
+x
+y
+```
+
+After `2GO<Esc>O[<Esc>u`:
+```
+x
+
+y
+```
+
 ## [Not Working] Undo (#14)
 
 ```
