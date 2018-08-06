@@ -46,6 +46,48 @@ function! s:log(tag, data) abort
   endif
 endfunction
 
+function! s:log_diff(from, to) abort
+  if exists('g:parinfer_logfile')
+    let l:from_lines = split(a:from, "\n")
+    let l:to_lines = split(a:to, "\n")
+
+    " Compute the edit distance
+    let l:table = map(range(0, len(l:from_lines)), 'repeat([19999], 1+len(l:to_lines))')
+    for i in range(0, len(l:from_lines)) | let l:table[i][0] = i | endfor
+    for j in range(0, len(l:to_lines)) | let l:table[0][j] = j | endfor
+    for i in range(1, len(l:from_lines))
+      for j in range(1, len(l:to_lines))
+        let l:table[i][j] = min([ 1 + l:table[i-1][j], 1 + l:table[i][j-1] ])
+        if l:from_lines[i-1] ==# l:to_lines[j-1]
+          let l:table[i][j] = min([ l:table[i][j], 0 + l:table[i-1][j-1] ])
+        endif
+      endfor
+    endfor
+
+    " Construct a diff
+    let l:i = len(l:from_lines)
+    let l:j = len(l:to_lines)
+    let l:diff = []
+    while l:i > 0 || l:j > 0
+      if l:i > 0 && l:j > 0 && l:table[i-1][j-1] == l:table[i][j] && l:from_lines[i-1] ==# l:to_lines[j-1]
+        let l:diff += ['     ' . l:from_lines[i-1]]
+        let l:i -= 1
+        let l:j -= 1
+      elseif l:j > 0 && 1+l:table[i][j-1] == l:table[i][j]
+        let l:diff += ['    +' . l:to_lines[j-1]]
+        let l:j -= 1
+      elseif l:i > 0 && 1+l:table[i-1][j] == l:table[i][j]
+        let l:diff += ['    -' . l:from_lines[i-1]]
+        let l:i -= 1
+      else
+        throw 'bad case ' . l:i . ',' . l:j
+      endif
+    endwhile
+
+    call writefile(reverse(l:diff), g:parinfer_logfile, 'a')
+  endif
+endfunction
+
 command! -nargs=? ParinferLog call <SID>parinfer_log(<f-args>)
 
 " }}}
@@ -85,14 +127,18 @@ function! s:process_buffer() abort
                                  \ "prevCursorX": w:parinfer_previous_cursor[2] - 1,
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1] - 1,
                                  \ "prevText": b:parinfer_previous_text } }
-    call s:log('process-request', l:request)
     let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
-    call s:log('process-response', l:response)
     if l:response["success"]
       if l:response["text"] !=# l:orig_text
+        call s:log('change-request', l:request)
+        call s:log('change-response', l:response)
+        call s:log_diff(l:orig_text, l:response['text'])
         let l:lines = split(l:response["text"], "\n", 1)
         let l:changed = filter(range(len(l:lines)), 'l:lines[v:val] !=# l:orig_lines[v:val]')
-        silent! undojoin
+        if mode() !=# 'i' && mode() !=# 'R'
+          call s:log('undojoin', v:true)
+          silent! undojoin
+        endif
         try
           call setline(l:changed[0]+1, l:lines[l:changed[0]:l:changed[-1]])
         catch /E523:/ " not allowed here
@@ -107,6 +153,7 @@ function! s:process_buffer() abort
 
       let b:parinfer_previous_text = l:response["text"]
     else
+      call s:log('error-response', l:response)
       let g:parinfer_last_error = l:response["error"]
       let b:parinfer_previous_text = join(getline(1,line('$')),"\n")
     endif
