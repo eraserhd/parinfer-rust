@@ -128,29 +128,6 @@ After `lli <Esc>:w<CR>:split<CR>lay<Esc>`
 (f oyo)
 ```
 
-## [Not Working] Undo (#14)
-
-```
-(defn f
-  [x]
-  x)
-
-(defn g
-  [y]
-  y)
-```
-
-After `4GO<Enter>(defn h<Enter>  [z]<Enter>z)<Esc>u`:
-```
-(defn f
-  [x]
-  x)
-
-(defn g
-  [y]
-  y)
-```
-
 ## [Not Working] Deleting to end-of-line (#21)
 
 Normal-mode commands which delete to the end of the line move the cursor back
@@ -212,3 +189,45 @@ After `:call setline(1,input('=>'))<CR><C-F>i(x<CR>`:
 ```
 (x)
 ```
+
+# Undo (#14)
+## Regular Vim undo
+
+This case shouldn't need to do anything fancy to mess with Vim's undo
+handling.
+
+```
+x
+y
+```
+
+After `2GO<Esc>O<Esc>u`:
+```
+x
+
+y
+```
+
+## [Not Working] Undo (#14)
+
+```
+(defn f
+  [x]
+  x)
+
+(defn g
+  [y]
+  y)
+```
+
+After `4GO<Enter>(defn h<Enter>  [z]<Enter>z)<Esc>u`:
+```
+(defn f
+  [x]
+  x)
+
+(defn g
+  [y]
+  y)
+```
+
