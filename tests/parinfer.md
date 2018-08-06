@@ -226,6 +226,24 @@ x
 y
 ```
 
+## Undo after triggering parinfer (closing) in insert mode
+
+This one is like the last, except that it will delete an extra closing brace,
+which will hopefully not mess with Vim.
+
+```
+x
+y
+```
+
+After `2GO<Esc>O[]<Esc>u`:
+```
+x
+
+y
+```
+
+
 ## [Not Working] Undo (#14)
 
 ```
