@@ -128,6 +128,18 @@ After `lli <Esc>:w<CR>:split<CR>lay<Esc>`
 (f oyo)
 ```
 
+## Undefined variable `b:parinfer_last_changedtick`
+
+```
+(foo)
+```
+
+After `:unlet b:parinfer_last_changetick b:parinfer_previous_text w:parinfer_previous_cursor<CR>ixx<Esc>`:
+
+```
+xx(foo)
+```
+
 ## [Not Working] Deleting to end-of-line (#21)
 
 Normal-mode commands which delete to the end of the line move the cursor back
