@@ -128,7 +128,7 @@ After `lli <Esc>:w<CR>:split<CR>lay<Esc>`
 (f oyo)
 ```
 
-## Undefined variable `b:parinfer_last_changedtick`
+## Undefined variable `b:parinfer_last_changedtick` (#27, #28)
 
 ```
 (foo)
