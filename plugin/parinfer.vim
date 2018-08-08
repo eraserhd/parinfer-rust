@@ -135,10 +135,7 @@ function! s:process_buffer() abort
         call s:log_diff(l:orig_text, l:response['text'])
         let l:lines = split(l:response["text"], "\n", 1)
         let l:changed = filter(range(len(l:lines)), 'l:lines[v:val] !=# l:orig_lines[v:val]')
-        if mode() !=# 'i' && mode() !=# 'R'
-          call s:log('undojoin', v:true)
-          silent! undojoin
-        endif
+        silent! undojoin
         try
           call setline(l:changed[0]+1, l:lines[l:changed[0]:l:changed[-1]])
         catch /E523:/ " not allowed here

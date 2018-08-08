@@ -255,8 +255,9 @@ x
 y
 ```
 
+## Undo with multiple parinfer changes in insert (#14)
 
-## [Not Working] Undo (#14)
+This requires Vim >= 8.1.0256.
 
 ```
 (defn f
@@ -278,4 +279,3 @@ After `4GO<Enter>(defn h<Enter>  [z]<Enter>z)<Esc>u`:
   [y]
   y)
 ```
-
