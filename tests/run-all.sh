@@ -16,7 +16,7 @@ fi
   cargo +nightly web test --nodejs )
 
 result=0
-for VIM_TO_TEST in /usr/local/bin/vim /usr/local/Cellar/neovim/HEAD-0f1bc5d_1/bin/nvim
+for VIM_TO_TEST in /usr/local/bin/vim /usr/local/bin/nvim
 do
   export VIM_TO_TEST
   echo " === $VIM_TO_TEST ==="
