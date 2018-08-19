@@ -1,6 +1,7 @@
 # ChangeLog
 ## [Unreleased]
-- Support building for WebAssembly targets
+- Published to NPM, usable from JavaScript that supports WebAssembly with a
+  wrapper that works like the original JavaScript parinfer.
 - Result from C wrapper is now in thread-local storage, allowing concurrent
   use from different threads.
 - Files have been reorganized so that `cargo build --release` is now run

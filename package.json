@@ -8,7 +8,7 @@
     "name": "Jason Felice",
     "email": "jason.m.felice@gmail.com"
   },
-  "main": "dist/parinfer_rust.js",
+  "main": "dist/wrapper.js",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/eraserhd/parinfer-rust.git"
