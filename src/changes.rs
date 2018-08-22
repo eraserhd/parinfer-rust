@@ -1,6 +1,6 @@
 use super::parinfer;
 
-pub fn compute_text_change<'a>(prev_text: &'a str, text: &'a str) -> Vec<parinfer::Change<'a>> {
+pub fn compute_text_changes<'a>(prev_text: &'a str, text: &'a str) -> Vec<parinfer::Change<'a>> {
     let mut x: parinfer::Column = 0;
     let mut line_no: parinfer::LineNumber = 0;
     let mut start_text: usize = 0;
@@ -46,30 +46,30 @@ pub fn compute_text_change<'a>(prev_text: &'a str, text: &'a str) -> Vec<parinfe
 
 #[cfg(test)]
 #[test]
-fn compute_text_change_works() {
-    assert!(compute_text_change("hello", "hello").is_empty());
+fn compute_text_changes_works() {
+    assert!(compute_text_changes("hello", "hello").is_empty());
     assert_eq!(vec![parinfer::Change {
         x: 2,
         line_no: 0,
         old_text: "l",
         new_text: "x"
-    }], compute_text_change("hello", "hexlo"));
+    }], compute_text_changes("hello", "hexlo"));
     assert_eq!(vec![parinfer::Change {
         x: 0,
         line_no: 1,
         old_text: "l",
         new_text: "x"
-    }], compute_text_change("he\nllo", "he\nxlo"));
+    }], compute_text_changes("he\nllo", "he\nxlo"));
     assert_eq!(vec![parinfer::Change {
         x: 4,
         line_no: 0,
         old_text: "",
         new_text: "l"
-    }], compute_text_change("hello", "helllo"));
+    }], compute_text_changes("hello", "helllo"));
     assert_eq!(vec![parinfer::Change {
         x: 4,
         line_no: 0,
         old_text: "l",
         new_text: ""
-    }], compute_text_change("helllo", "hello"));
+    }], compute_text_changes("helllo", "hello"));
 }
