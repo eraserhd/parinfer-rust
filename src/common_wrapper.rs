@@ -8,10 +8,7 @@ pub fn internal_run(json_str: &str) -> Result<String, Error> {
     let mut options = request.options.to_parinfer();
 
     if let Some(ref prev_text) = request.options.prev_text {
-        options.changes.clear();
-        if let Some(change) = changes::compute_text_change(prev_text, &request.text) {
-            options.changes.push(change);
-        }
+        options.changes = changes::compute_text_change(prev_text, &request.text);
     }
 
     let answer: parinfer::Answer;
