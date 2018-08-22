@@ -7,12 +7,7 @@ jobs:
       - checkout
       - run:
           name: Running tests
-          command: |
-            cargo install cargo-test-junit
-            mkdir -p test-output
-            cargo test-junit --name test-output/output.xml
-      - store_test_results:
-          path: test-output
+          command: cargo test
 workflows:
   version: 2
   build-and-deploy:
