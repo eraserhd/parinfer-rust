@@ -6,6 +6,7 @@
   use from different threads.
 - Files have been reorganized so that `cargo build --release` is now run
   at the top-level instead of in the `cparinfer` sub-directory.
+- Tests now run on Linux
 
 ## [v0.2.0]
 ### Fixed

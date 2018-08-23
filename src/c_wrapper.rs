@@ -38,15 +38,23 @@ mod reference_hack {
         if dladdr(initialize_ptr, &mut info) == 0 {
             panic!("Could not get parinfer library path.");
         }
+        // First, try to use RTLD_NOLOAD to promote the existing object.  If
+        // this fails, it could be because we don't think we are already
+        // loaded (this happens when running the tests under Linux, but not
+        // Mac).  dlerror() is unhelfully NULL at that point, so try to
+        // *really* load ourselves, then report if that fails.
         let handle = dlopen(info.dli_fname, RTLD_LAZY|RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE);
         if handle == ptr::null_mut() {
-            if dlerror() == ptr::null_mut() {
-                panic!("Could not reference parinfer_rust library {:?}.",
-                       CStr::from_ptr(info.dli_fname));
-            } else {
-                panic!("Could not reference parinfer_rust library {:?}: {:?}.",
-                       CStr::from_ptr(info.dli_fname),
-                       CStr::from_ptr(dlerror()));
+            let handle = dlopen(info.dli_fname, RTLD_LAZY|RTLD_GLOBAL|RTLD_NODELETE);
+            if handle == ptr::null_mut() {
+                if dlerror() == ptr::null_mut() {
+                    panic!("Could not reference parinfer_rust library {:?}.",
+                           CStr::from_ptr(info.dli_fname));
+                } else {
+                    panic!("Could not reference parinfer_rust library {:?}: {:?}.",
+                           CStr::from_ptr(info.dli_fname),
+                           CStr::from_ptr(dlerror()));
+                }
             }
         }
         INITIALIZED = true;
