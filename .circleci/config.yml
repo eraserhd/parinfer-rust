@@ -2,7 +2,7 @@ version: 2
 jobs:
   build-and-test:
     docker:
-      - image: naftulikay/circleci-rust:latest
+      - image: circleci/rust:latest-node
     steps:
       - checkout
       - run:
