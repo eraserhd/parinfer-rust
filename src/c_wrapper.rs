@@ -40,9 +40,14 @@ mod reference_hack {
         }
         let handle = dlopen(info.dli_fname, RTLD_LAZY|RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE);
         if handle == ptr::null_mut() {
-            panic!("Could not reference parinfer_rust library {:?}: {:?}.",
-                   CStr::from_ptr(info.dli_fname),
-                   CStr::from_ptr(dlerror()));
+            if dlerror() == ptr::null_mut() {
+                panic!("Could not reference parinfer_rust library {:?}.",
+                       CStr::from_ptr(info.dli_fname));
+            } else {
+                panic!("Could not reference parinfer_rust library {:?}: {:?}.",
+                       CStr::from_ptr(info.dli_fname),
+                       CStr::from_ptr(dlerror()));
+            }
         }
         INITIALIZED = true;
     }
