@@ -2,7 +2,7 @@ version: 2
 jobs:
   build-and-test:
     docker:
-      - image: circleci/rust:1.28.0-stretch-node
+      - image: nhaftulikay/circleci-rust:latest
     steps:
       - checkout
       - run:
