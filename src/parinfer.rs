@@ -487,9 +487,18 @@ fn error(result: &mut State, name: ErrorName) -> Result<()> {
 // String Operations
 //------------------------------------------------------------------------------
 
+fn grapheme_start(s: &str, x: usize) -> usize {
+    s.grapheme_indices(true)
+        .enumerate()
+        .filter_map(|(n, (idx, _))| if n == x { Some(idx) } else { None })
+        .nth(0) 
+        .unwrap_or_else(|| s.len())
+}
+
 fn replace_within_string(orig: &str, start: usize, end: usize, replace: &str) -> String {
-    let end = std::cmp::min(end, orig.len());
-    String::from(&orig[0..start]) + replace + &orig[end..]
+    let start_i = grapheme_start(orig, start);
+    let end_i = grapheme_start(orig, end);
+    String::from(&orig[0..start_i]) + replace + &orig[end_i..]
 }
 
 #[cfg(test)]
@@ -498,6 +507,11 @@ fn replace_within_string_works() {
     assert_eq!(replace_within_string("aaa", 0, 2, ""), "a");
     assert_eq!(replace_within_string("aaa", 0, 1, "b"), "baa");
     assert_eq!(replace_within_string("aaa", 0, 2, "b"), "ba");
+    assert_eq!(replace_within_string("ééé", 0, 2, ""), "é");
+    assert_eq!(replace_within_string("ééé", 0, 1, "b"), "béé");
+    assert_eq!(replace_within_string("ééé", 1, 2, "b"), "ébé");
+    assert_eq!(replace_within_string("ééé", 0, 2, "b"), "bé");
+    assert_eq!(replace_within_string("ééé", 3, 3, "b"), "éééb");
 }
 
 fn repeat_string(text: &str, n: usize) -> String {
