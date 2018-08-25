@@ -93,7 +93,7 @@ command! -nargs=? ParinferLog call <SID>parinfer_log(<f-args>)
 " }}}
 
 function! s:enter_window()
-  let w:parinfer_previous_cursor = getpos(".")
+  let w:parinfer_previous_cursor = [line('.'), virtcol('.')]
 endfunction
 
 function! s:enter_buffer()
@@ -116,7 +116,8 @@ function! s:process_buffer() abort
     call s:enter_buffer()
   endif
   if b:parinfer_last_changedtick != b:changedtick
-    let l:pos = getpos(".")
+    let l:pos = getpos('.')
+    let l:pos[2] = virtcol('.')
     let l:orig_lines = getline(1,line('$'))
     let l:orig_text = join(l:orig_lines, "\n")
     let l:request = { "mode": g:parinfer_mode,
@@ -124,8 +125,8 @@ function! s:process_buffer() abort
                     \ "options": { "cursorX": l:pos[2] - 1,
                                  \ "cursorLine": l:pos[1] - 1,
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
-                                 \ "prevCursorX": w:parinfer_previous_cursor[2] - 1,
-                                 \ "prevCursorLine": w:parinfer_previous_cursor[1] - 1,
+                                 \ "prevCursorX": w:parinfer_previous_cursor[1] - 1,
+                                 \ "prevCursorLine": w:parinfer_previous_cursor[0] - 1,
                                  \ "prevText": b:parinfer_previous_text } }
     let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
     if l:response["success"]
@@ -145,7 +146,7 @@ function! s:process_buffer() abort
         endtry
       endif
       let l:pos[1] = l:response["cursorLine"] + 1
-      let l:pos[2] = l:response["cursorX"] + 1
+      let l:pos[2] = strlen(strcharpart(getline(l:pos[1]), 0, l:response["cursorX"])) + 1
       call setpos('.', l:pos)
 
       let b:parinfer_previous_text = l:response["text"]
@@ -156,7 +157,7 @@ function! s:process_buffer() abort
     endif
     let b:parinfer_last_changedtick = b:changedtick
   endif
-  let w:parinfer_previous_cursor = getpos(".")
+  let w:parinfer_previous_cursor = [line('.'), virtcol('.')]
 endfunction
 
 let s:EVENTS = {

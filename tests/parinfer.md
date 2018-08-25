@@ -279,3 +279,31 @@ After `4GO<Enter>(defn h<Enter>  [z]<Enter>z)<Esc>u`:
   [y]
   y)
 ```
+
+# Unicode (#26)
+## hukka's example (#26)
+
+```
+(def aaa {:foo 1
+          :bar 1})
+```
+
+After `wwciwäää<Esc>:`
+```
+(def äää {:foo 1
+          :bar 1})
+```
+
+## Smart mode after composed characters (#26)
+
+Vim's getpos('.') returns the column in byte count, so we need to use
+virtcol('.') to give a good column number to parinfer-rust.
+
+```
+(def å [])
+```
+
+After `f]ix<Esc>`:
+```
+(def å [x])
+```
