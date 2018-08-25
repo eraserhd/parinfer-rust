@@ -602,13 +602,15 @@ fn init_line<'a>(result: &mut State<'a>) {
 
 fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
     let ch = result.ch;
+    let ch_grapheme_count = ch.graphemes(true).count();
     if orig_ch != ch {
         let line_no = result.line_no;
         let x = result.x;
-        replace_within_line(result, line_no, x, x + orig_ch.len(), ch);
-        result.indent_delta -= orig_ch.len() as Delta - ch.len() as Delta;
+        let orig_ch_grapheme_count = orig_ch.graphemes(true).count();
+        replace_within_line(result, line_no, x, x + orig_ch_grapheme_count, ch);
+        result.indent_delta -= orig_ch_grapheme_count as Delta - ch_grapheme_count as Delta;
     }
-    result.x += ch.len();
+    result.x += ch_grapheme_count;
 }
 
 // {{{1 Misc Utils
@@ -947,7 +949,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     if is_closable(result) {
         let line_no = result.line_no;
         let x = result.x;
-        reset_paren_trail(result, line_no, x + ch.len());
+        reset_paren_trail(result, line_no, x + ch.graphemes(true).count());
     }
 
     let state = result.tracking_arg_tab_stop;
