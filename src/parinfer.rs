@@ -551,7 +551,7 @@ fn shift_cursor_on_edit<'a>(
     replace: &str,
 ) {
     let old_length = end - start;
-    let new_length = replace.len();
+    let new_length = replace.graphemes(true).count();
     let dx = new_length as Delta - old_length as Delta;
 
     if let (Some(cursor_x), Some(cursor_line)) = (result.cursor_x, result.cursor_line) {

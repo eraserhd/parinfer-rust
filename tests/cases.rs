@@ -293,8 +293,8 @@ pub fn graphemes_in_changes_are_counted_correctly() {
             text: String::from("(éxyåååé [h\n          i])"),
             success: true,
             error: None,
-            cursor_x: None,
-            cursor_line: None,
+            cursor_x: Some(10),
+            cursor_line: Some(1),
             tab_stops: None,
             paren_trails: None
         },
@@ -302,8 +302,8 @@ pub fn graphemes_in_changes_are_counted_correctly() {
             line_no: 0
         },
         options: Options {
-            cursor_x: None,
-            cursor_line: None,
+            cursor_x: Some(7),
+            cursor_line: Some(1),
             changes: Some(vec![
                 Change {
                     line_no: 0,
