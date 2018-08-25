@@ -2,6 +2,7 @@ use super::std;
 use std::collections::HashMap;
 use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 pub type LineNumber = usize;
 pub type Column = usize;
@@ -477,17 +478,33 @@ fn error(result: &mut State, name: ErrorName) -> Result<()> {
 
 // {{{1 String Operations
 
-fn grapheme_start(s: &str, x: usize) -> usize {
+fn column_byte_index(s: &str, x: usize) -> usize {
     s.grapheme_indices(true)
-        .enumerate()
+        .scan(0, |column, (idx, ch)| {
+            let start_column = *column;
+            *column = *column + UnicodeWidthStr::width(ch);
+            Some((start_column, (idx, ch)))
+        })
         .filter_map(|(n, (idx, _))| if n == x { Some(idx) } else { None })
         .nth(0) 
         .unwrap_or_else(|| s.len())
 }
 
+#[cfg(test)]
+#[test]
+fn column_byte_index_works() {
+    assert_eq!(column_byte_index("abc", 1), 1);
+    assert_eq!(column_byte_index("abc", 3), 3);
+    assert_eq!(column_byte_index("åbc", 3), 4);
+    assert_eq!(column_byte_index("åbc", 1), 2);
+    assert_eq!(column_byte_index("ｗｏ", 4), 6);
+    assert_eq!(column_byte_index("ｗｏ", 2), 3);
+    assert_eq!(column_byte_index("ｗｏ", 0), 0);
+}
+
 fn replace_within_string(orig: &str, start: usize, end: usize, replace: &str) -> String {
-    let start_i = grapheme_start(orig, start);
-    let end_i = grapheme_start(orig, end);
+    let start_i = column_byte_index(orig, start);
+    let end_i = column_byte_index(orig, end);
     String::from(&orig[0..start_i]) + replace + &orig[end_i..]
 }
 

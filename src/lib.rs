@@ -7,6 +7,7 @@ extern crate serde_json;
 extern crate serde_derive;
 
 extern crate unicode_segmentation;
+extern crate unicode_width;
 
 mod parinfer;
 mod json;
