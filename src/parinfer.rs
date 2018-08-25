@@ -79,8 +79,8 @@ fn transform_change<'a>(change: &Change<'a>) -> TransformedChange {
     //       |[])
     //     ++^ newEndX, newEndLineNo
 
-    let last_old_line_len = old_lines[old_lines.len() - 1].graphemes(true).count();
-    let last_new_line_len = new_lines[new_lines.len() - 1].graphemes(true).count();
+    let last_old_line_len = UnicodeWidthStr::width(old_lines[old_lines.len() - 1]);
+    let last_new_line_len = UnicodeWidthStr::width(new_lines[new_lines.len() - 1]);
 
     let old_end_x = (if old_lines.len() == 1 { change.x } else { 0 }) + last_old_line_len;
     let new_end_x = (if new_lines.len() == 1 { change.x } else { 0 }) + last_new_line_len;
@@ -568,7 +568,7 @@ fn shift_cursor_on_edit<'a>(
     replace: &str,
 ) {
     let old_length = end - start;
-    let new_length = replace.graphemes(true).count();
+    let new_length = UnicodeWidthStr::width(replace);
     let dx = new_length as Delta - old_length as Delta;
 
     if let (Some(cursor_x), Some(cursor_line)) = (result.cursor_x, result.cursor_line) {
@@ -619,15 +619,15 @@ fn init_line<'a>(result: &mut State<'a>) {
 
 fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
     let ch = result.ch;
-    let ch_grapheme_count = ch.graphemes(true).count();
+    let ch_width = UnicodeWidthStr::width(ch);
     if orig_ch != ch {
         let line_no = result.line_no;
         let x = result.x;
-        let orig_ch_grapheme_count = orig_ch.graphemes(true).count();
-        replace_within_line(result, line_no, x, x + orig_ch_grapheme_count, ch);
-        result.indent_delta -= orig_ch_grapheme_count as Delta - ch_grapheme_count as Delta;
+        let orig_ch_width = UnicodeWidthStr::width(orig_ch);
+        replace_within_line(result, line_no, x, x + orig_ch_width, ch);
+        result.indent_delta -= orig_ch_width as Delta - ch_width as Delta;
     }
-    result.x += ch_grapheme_count;
+    result.x += ch_width;
 }
 
 // {{{1 Misc Utils
@@ -966,7 +966,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     if is_closable(result) {
         let line_no = result.line_no;
         let x = result.x;
-        reset_paren_trail(result, line_no, x + ch.graphemes(true).count());
+        reset_paren_trail(result, line_no, x + UnicodeWidthStr::width(ch));
     }
 
     let state = result.tracking_arg_tab_stop;
@@ -1058,7 +1058,14 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
 
         let line = &result.lines[result.line_no];
         let mut remove_count = 0;
-        for (x, ch) in line.graphemes(true).enumerate() {
+        for (x, ch) in line
+            .graphemes(true)
+            .scan(0, |column, ch| {
+                let start_column = *column;
+                *column = *column + UnicodeWidthStr::width(ch);
+                Some((start_column, ch))
+            })
+        {
             if x < start_x || x >= new_start_x {
                 continue;
             }
@@ -1321,7 +1328,14 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
 
     let mut new_trail = String::new();
     let mut space_count = 0;
-    for (x, ch) in result.lines[result.line_no].graphemes(true).enumerate() {
+    for (x, ch) in result.lines[result.line_no]
+                    .graphemes(true)
+                    .scan(0, |column, ch| {
+                        let start_column = *column;
+                        *column = *column + UnicodeWidthStr::width(ch);
+                        Some((start_column, ch))
+                    })
+    {
         if x < start_x || x >= end_x {
             continue;
         }
@@ -1701,7 +1715,14 @@ fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
 
     set_tab_stops(result);
 
-    for (x, ch) in result.input_lines[line_no].graphemes(true).enumerate() {
+    for (x, ch) in result.input_lines[line_no]
+        .graphemes(true)
+        .scan(0, |column, ch| {
+            let start_column = *column;
+            *column = *column + UnicodeWidthStr::width(ch);
+            Some((start_column, ch))
+        })
+    {
         result.input_x = x;
         process_char(result, ch)?;
     }

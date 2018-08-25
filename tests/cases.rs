@@ -324,3 +324,43 @@ pub fn graphemes_in_changes_are_counted_correctly() {
     let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
     case.check2(answer);
 }
+
+#[test]
+pub fn wide_characters() {
+    let case = Case {
+        text: String::from("(def ｗｏｒｌｄ {:foo 1\n            :bar 2})"),
+        result: CaseResult {
+            text: String::from("(def ｗｏｒｌｄ {:foo 1\n                 :bar 2})"),
+            success: true,
+            error: None,
+            cursor_x: Some(17),
+            cursor_line: Some(1),
+            tab_stops: None,
+            paren_trails: None
+        },
+        source: Source {
+            line_no: 0
+        },
+        options: Options {
+            cursor_x: Some(12),
+            cursor_line: Some(1),
+            changes: Some(vec![
+                Change {
+                    line_no: 0,
+                    x: 5,
+                    old_text: String::from("world"),
+                    new_text: String::from("ｗｏｒｌｄ"),
+                }
+            ]),
+            prev_cursor_x: None,
+            prev_cursor_line: None
+        }
+    };
+    let input = json!({
+        "mode": "smart",
+        "text": &case.text,
+        "options": &case.options
+    }).to_string();
+    let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
+    case.check2(answer);
+}
