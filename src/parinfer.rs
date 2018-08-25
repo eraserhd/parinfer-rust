@@ -7,9 +7,7 @@ pub type LineNumber = usize;
 pub type Column = usize;
 pub type Delta = i64;
 
-//------------------------------------------------------------------------------
-// Constants / Predicates
-//------------------------------------------------------------------------------
+// {{{1 Constants / Predicates
 
 const BACKSLASH: &'static str = "\\";
 const BLANK_SPACE: &'static str = " ";
@@ -38,9 +36,7 @@ fn match_paren_works() {
     assert_eq!(match_paren("x"), None);
 }
 
-//------------------------------------------------------------------------------
-// Options Structure
-//------------------------------------------------------------------------------
+// {{{1 Options Structure
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Change<'a> {
@@ -127,9 +123,7 @@ pub struct Options<'a> {
     pub return_parens: bool,
 }
 
-//------------------------------------------------------------------------------
-// State Structure (was Result)
-//------------------------------------------------------------------------------
+// {{{1 State Structure (was Result)
 
 // This represents the running result. As we scan through each character
 // of a given text, we mutate this structure to update the state of our
@@ -352,9 +346,7 @@ fn get_initial_result<'a>(
     }
 }
 
-//------------------------------------------------------------------------------
-// Possible Errors
-//------------------------------------------------------------------------------
+// {{{1 Possible Errors
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum ErrorName {
@@ -483,9 +475,7 @@ fn error(result: &mut State, name: ErrorName) -> Result<()> {
     Err(e)
 }
 
-//------------------------------------------------------------------------------
-// String Operations
-//------------------------------------------------------------------------------
+// {{{1 String Operations
 
 fn grapheme_start(s: &str, x: usize) -> usize {
     s.grapheme_indices(true)
@@ -543,9 +533,7 @@ fn get_line_ending_works() {
     assert_eq!(get_line_ending("foo\r\nbar"), "\r\n");
 }
 
-//------------------------------------------------------------------------------
-// Line operations
-//------------------------------------------------------------------------------
+// {{{1 Line operations
 
 fn is_cursor_affected<'a>(result: &State<'a>, start: Column, end: Column) -> bool {
     match result.cursor_x {
@@ -623,9 +611,7 @@ fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
     result.x += ch.len();
 }
 
-//------------------------------------------------------------------------------
-// Misc Utils
-//------------------------------------------------------------------------------
+// {{{1 Misc Utils
 
 fn clamp<T: Clone + Ord>(val: T, min_n: Option<T>, max_n: Option<T>) -> T {
     if let Some(low) = min_n {
@@ -674,9 +660,7 @@ fn peek_works() {
     assert_eq!(peek(&empty, 1), None);
 }
 
-//------------------------------------------------------------------------------
-// Questions about characters
-//------------------------------------------------------------------------------
+// {{{1 Questions about characters
 
 fn is_open_paren(paren: &str) -> bool {
     match paren {
@@ -723,9 +707,7 @@ fn is_closable<'a>(result: &State<'a>) -> bool {
     return result.is_in_code && !is_whitespace(result) && ch != "" && !closer;
 }
 
-//------------------------------------------------------------------------------
-// Advanced operations on characters
-//------------------------------------------------------------------------------
+// {{{1 Advanced operations on characters
 
 fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
     let opener = peek(&result.paren_stack, 0).unwrap();
@@ -776,9 +758,7 @@ fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
     }
 }
 
-//------------------------------------------------------------------------------
-// Literal character events
-//------------------------------------------------------------------------------
+// {{{1 Literal character events
 
 fn on_open_paren<'a>(result: &mut State<'a>) {
     if result.is_in_code {
@@ -936,9 +916,7 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-//------------------------------------------------------------------------------
-// Character dispatch
-//------------------------------------------------------------------------------
+// {{{1 Character dispatch
 
 fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     let mut ch = result.ch;
@@ -980,9 +958,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-//------------------------------------------------------------------------------
-// Cursor functions
-//------------------------------------------------------------------------------
+// {{{1 Cursor functions
 
 fn is_cursor_left_of<'a>(
     cursor_x: Option<Column>,
@@ -1026,9 +1002,7 @@ fn handle_change_delta<'a>(result: &mut State<'a>) {
     }
 }
 
-//------------------------------------------------------------------------------
-// Paren Trail functions
-//------------------------------------------------------------------------------
+// {{{1 Paren Trail functions
 
 fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column) {
     result.paren_trail.line_no = Some(line_no);
@@ -1462,9 +1436,7 @@ fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
-//------------------------------------------------------------------------------
-// Indentation functions
-//------------------------------------------------------------------------------
+// {{{1 Indentation functions
 
 fn add_indent<'a>(result: &mut State<'a>, delta: Delta) {
     let orig_indent = result.x;
@@ -1679,9 +1651,7 @@ fn set_tab_stops<'a>(result: &mut State<'a>) {
     }
 }
 
-//------------------------------------------------------------------------------
-// High-level processing functions
-//------------------------------------------------------------------------------
+// {{{1 High-level processing functions
 
 fn process_char<'a>(result: &mut State<'a>, ch: &'a str) -> Result<()> {
     let orig_ch = ch;
@@ -1786,9 +1756,7 @@ fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: boo
     }
 }
 
-//------------------------------------------------------------------------------
-// Public API
-//------------------------------------------------------------------------------
+// {{{1 Public API
 
 fn public_result<'a>(result: State<'a>) -> Answer<'a> {
     let line_ending = get_line_ending(result.orig_text);
