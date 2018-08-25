@@ -284,3 +284,43 @@ pub fn composed_unicode_graphemes_count_as_a_single_character() {
     let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
     case.check2(answer);
 }
+
+#[test]
+pub fn graphemes_in_changes_are_counted_correctly() {
+    let case = Case {
+        text: String::from("(éxyåååé [h\n       i])"),
+        result: CaseResult {
+            text: String::from("(éxyåååé [h\n          i])"),
+            success: true,
+            error: None,
+            cursor_x: None,
+            cursor_line: None,
+            tab_stops: None,
+            paren_trails: None
+        },
+        source: Source {
+            line_no: 0
+        },
+        options: Options {
+            cursor_x: None,
+            cursor_line: None,
+            changes: Some(vec![
+                Change {
+                    line_no: 0,
+                    x: 2,
+                    old_text: String::from("éé"),
+                    new_text: String::from("xyååå"),
+                }
+            ]),
+            prev_cursor_x: None,
+            prev_cursor_line: None
+        }
+    };
+    let input = json!({
+        "mode": "smart",
+        "text": &case.text,
+        "options": &case.options
+    }).to_string();
+    let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
+    case.check2(answer);
+}

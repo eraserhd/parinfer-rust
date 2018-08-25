@@ -78,8 +78,8 @@ fn transform_change<'a>(change: &Change<'a>) -> TransformedChange {
     //       |[])
     //     ++^ newEndX, newEndLineNo
 
-    let last_old_line_len = old_lines[old_lines.len() - 1].len();
-    let last_new_line_len = new_lines[new_lines.len() - 1].len();
+    let last_old_line_len = old_lines[old_lines.len() - 1].graphemes(true).count();
+    let last_new_line_len = new_lines[new_lines.len() - 1].graphemes(true).count();
 
     let old_end_x = (if old_lines.len() == 1 { change.x } else { 0 }) + last_old_line_len;
     let new_end_x = (if new_lines.len() == 1 { change.x } else { 0 }) + last_new_line_len;
