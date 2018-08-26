@@ -130,13 +130,13 @@ function! s:process_buffer() abort
     call s:enter_buffer()
   endif
   if b:parinfer_last_changedtick != b:changedtick
-    let l:pos = s:get_cursor_position()
+    let l:cursor = s:get_cursor_position()
     let l:orig_lines = getline(1,line('$'))
     let l:orig_text = join(l:orig_lines, "\n")
     let l:request = { "mode": g:parinfer_mode,
                     \ "text": l:orig_text,
-                    \ "options": { "cursorX": l:pos[2] - 1,
-                                 \ "cursorLine": l:pos[1] - 1,
+                    \ "options": { "cursorX": l:cursor[2] - 1,
+                                 \ "cursorLine": l:cursor[1] - 1,
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2] - 1,
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1] - 1,
@@ -158,9 +158,9 @@ function! s:process_buffer() abort
           call s:log('not-allowed-here', {})
         endtry
       endif
-      let l:pos[1] = l:response["cursorLine"] + 1
-      let l:pos[2] = l:response["cursorX"] + 1
-      call s:set_cursor_position(l:pos)
+      let l:cursor[1] = l:response["cursorLine"] + 1
+      let l:cursor[2] = l:response["cursorX"] + 1
+      call s:set_cursor_position(l:cursor)
 
       let b:parinfer_previous_text = l:response["text"]
     else
