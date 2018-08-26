@@ -90,6 +90,14 @@ endfunction
 
 command! -nargs=? ParinferLog call <SID>parinfer_log(<f-args>)
 
+" {{{1 Cursor Position
+
+function! s:get_cursor_position()
+  let l:position = getpos('.')
+  let l:position[2] = virtcol('.')
+  return l:position
+endfunction
+
 " }}}
 
 function! s:enter_window()
@@ -116,8 +124,7 @@ function! s:process_buffer() abort
     call s:enter_buffer()
   endif
   if b:parinfer_last_changedtick != b:changedtick
-    let l:pos = getpos('.')
-    let l:pos[2] = virtcol('.')
+    let l:pos = s:get_cursor_position()
     let l:orig_lines = getline(1,line('$'))
     let l:orig_text = join(l:orig_lines, "\n")
     let l:request = { "mode": g:parinfer_mode,
