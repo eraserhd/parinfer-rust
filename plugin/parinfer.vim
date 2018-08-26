@@ -93,15 +93,15 @@ command! -nargs=? ParinferLog call <SID>parinfer_log(<f-args>)
 " {{{1 Cursor Position
 
 function! s:get_cursor_position()
-  let l:position = getpos('.')
-  let l:position[2] = virtcol('.')
-  return l:position
+  let l:cursor = getpos('.')
+  let l:cursor[2] = virtcol('.')
+  return l:cursor
 endfunction
 
 function! s:set_cursor_position(position)
-  let l:position = copy(a:position)
-  let l:position[2] = strlen(strcharpart(getline(l:position[1]), 0, l:position[2] - 1)) + 1
-  call setpos('.', l:position)
+  let l:cursor = copy(a:position)
+  let l:cursor[2] = strlen(strcharpart(getline(l:cursor[1]), 0, l:cursor[2] - 1)) + 1
+  call setpos('.', l:cursor)
 endfunction
 
 " }}}
