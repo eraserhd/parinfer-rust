@@ -99,7 +99,9 @@ function! s:get_cursor_position()
 endfunction
 
 function! s:set_cursor_position(position)
-  call setpos('.', a:position)
+  let l:position = copy(a:position)
+  let l:position[2] = strlen(strcharpart(getline(l:position[1]), 0, l:position[2] - 1)) + 1
+  call setpos('.', l:position)
 endfunction
 
 " }}}
@@ -157,7 +159,7 @@ function! s:process_buffer() abort
         endtry
       endif
       let l:pos[1] = l:response["cursorLine"] + 1
-      let l:pos[2] = strlen(strcharpart(getline(l:pos[1]), 0, l:response["cursorX"])) + 1
+      let l:pos[2] = l:response["cursorX"] + 1
       call s:set_cursor_position(l:pos)
 
       let b:parinfer_previous_text = l:response["text"]
