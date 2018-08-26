@@ -98,6 +98,10 @@ function! s:get_cursor_position()
   return l:position
 endfunction
 
+function! s:set_cursor_position(position)
+  call setpos('.', a:position)
+endfunction
+
 " }}}
 
 function! s:enter_window()
@@ -154,7 +158,7 @@ function! s:process_buffer() abort
       endif
       let l:pos[1] = l:response["cursorLine"] + 1
       let l:pos[2] = strlen(strcharpart(getline(l:pos[1]), 0, l:response["cursorX"])) + 1
-      call setpos('.', l:pos)
+      call s:set_cursor_position(l:pos)
 
       let b:parinfer_previous_text = l:response["text"]
     else
