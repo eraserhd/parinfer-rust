@@ -94,8 +94,10 @@ command! -nargs=? ParinferLog call <SID>parinfer_log(<f-args>)
 
 function! s:get_cursor_position() abort
   let l:cursor = getpos('.')
+  let l:line = getline('.')
+  let l:byte_column = l:cursor[2] - 1
   let l:cursor[1] -= 1
-  let l:cursor[2] = virtcol('.') - 1
+  let l:cursor[2] = strdisplaywidth(strpart(l:line, 0, l:byte_column))
   return l:cursor
 endfunction
 
