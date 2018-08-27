@@ -114,7 +114,7 @@ function! s:enter_buffer()
   call s:enter_window()
   if !exists('b:parinfer_last_changedtick')
     let b:parinfer_last_changedtick = -10
-    let b:parinfer_previous_text = join(getline(1,line('$')),"\n")
+    let b:parinfer_previous_text = join(getline(1,'$'),"\n")
   endif
   let orig_mode = g:parinfer_mode
   let g:parinfer_mode = 'paren'
@@ -131,7 +131,7 @@ function! s:process_buffer() abort
   endif
   if b:parinfer_last_changedtick != b:changedtick
     let l:cursor = s:get_cursor_position()
-    let l:orig_lines = getline(1,line('$'))
+    let l:orig_lines = getline(1,'$')
     let l:orig_text = join(l:orig_lines, "\n")
     let l:request = { "mode": g:parinfer_mode,
                     \ "text": l:orig_text,
@@ -166,7 +166,7 @@ function! s:process_buffer() abort
     else
       call s:log('error-response', l:response)
       let g:parinfer_last_error = l:response["error"]
-      let b:parinfer_previous_text = join(getline(1,line('$')),"\n")
+      let b:parinfer_previous_text = join(getline(1,'$'),"\n")
     endif
     let b:parinfer_last_changedtick = b:changedtick
   endif
