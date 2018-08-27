@@ -94,12 +94,14 @@ command! -nargs=? ParinferLog call <SID>parinfer_log(<f-args>)
 
 function! s:get_cursor_position()
   let l:cursor = getpos('.')
+  let l:cursor[1] -= 1
   let l:cursor[2] = virtcol('.') - 1
   return l:cursor
 endfunction
 
 function! s:set_cursor_position(position)
   let l:cursor = copy(a:position)
+  let l:cursor[1] += 1
   let l:cursor[2] = strlen(strcharpart(getline(l:cursor[1]), 0, l:cursor[2])) + 1
   call setpos('.', l:cursor)
 endfunction
@@ -136,10 +138,10 @@ function! s:process_buffer() abort
     let l:request = { "mode": g:parinfer_mode,
                     \ "text": l:orig_text,
                     \ "options": { "cursorX": l:cursor[2],
-                                 \ "cursorLine": l:cursor[1] - 1,
+                                 \ "cursorLine": l:cursor[1],
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],
-                                 \ "prevCursorLine": w:parinfer_previous_cursor[1] - 1,
+                                 \ "prevCursorLine": w:parinfer_previous_cursor[1],
                                  \ "prevText": b:parinfer_previous_text } }
     let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
     if l:response["success"]
@@ -158,7 +160,7 @@ function! s:process_buffer() abort
           call s:log('not-allowed-here', {})
         endtry
       endif
-      let l:cursor[1] = l:response["cursorLine"] + 1
+      let l:cursor[1] = l:response["cursorLine"]
       let l:cursor[2] = l:response["cursorX"]
       call s:set_cursor_position(l:cursor)
 
