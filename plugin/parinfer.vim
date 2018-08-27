@@ -90,16 +90,16 @@ endfunction
 
 command! -nargs=? ParinferLog call <SID>parinfer_log(<f-args>)
 
-" {{{1 Cursor Position
+" Cursor Position {{{1
 
-function! s:get_cursor_position()
+function! s:get_cursor_position() abort
   let l:cursor = getpos('.')
   let l:cursor[1] -= 1
   let l:cursor[2] = virtcol('.') - 1
   return l:cursor
 endfunction
 
-function! s:set_cursor_position(position)
+function! s:set_cursor_position(position) abort
   let l:cursor = copy(a:position)
   let l:cursor[1] += 1
   let l:cursor[2] = strlen(strcharpart(getline(l:cursor[1]), 0, l:cursor[2])) + 1
@@ -108,11 +108,11 @@ endfunction
 
 " }}}
 
-function! s:enter_window()
+function! s:enter_window() abort
   let w:parinfer_previous_cursor = s:get_cursor_position()
 endfunction
 
-function! s:enter_buffer()
+function! s:enter_buffer() abort
   call s:enter_window()
   if !exists('b:parinfer_last_changedtick')
     let b:parinfer_last_changedtick = -10
@@ -185,7 +185,7 @@ let s:EVENTS = {
   \ 'TextChangedP': function('<SID>process_buffer'),
   \ 'WinEnter': function('<SID>enter_window') }
 
-function! s:event(name)
+function! s:event(name) abort
   call s:log('event', {'name': a:name, 'bufnr': bufnr('%'), 'changedtick': b:changedtick })
   call call(s:EVENTS[a:name], [])
 endfunction
