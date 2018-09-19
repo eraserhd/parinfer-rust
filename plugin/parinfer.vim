@@ -180,6 +180,12 @@ function! s:initialize_buffer() abort
   if getcmdwintype() !=# ''
     return
   endif
+  
+  " Don't enable if preview window
+  if &previewwindow
+    return
+  endif
+
   for event_name in filter(keys(s:EVENTS),'exists("##".v:val)')
     execute "autocmd! Parinfer ".event_name." <buffer> call <SID>event('".event_name."')"
   endfor
