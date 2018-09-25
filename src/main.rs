@@ -48,7 +48,22 @@ pub fn main() -> io::Result<()> {
             Err(_) => common_wrapper::panic_result()
         };
         io::stdout().write(output.as_bytes())?;
+    } else {
+        let mut text = String::new();
+        io::stdin().read_to_string(&mut text)?;
+        let options = parinfer::Options {
+            changes: vec![],
+            cursor_x: None,
+            cursor_line: None,
+            prev_cursor_x: None,
+            prev_cursor_line: None,
+            force_balance: false,
+            return_parens: false,
+            partial_result: false,
+            selection_start_line: None
+        };
+        let answer = parinfer::indent_mode(&text, &options);
+        io::stdout().write(answer.text.as_bytes())?;
     }
-
     Ok(())
 }
