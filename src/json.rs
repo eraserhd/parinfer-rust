@@ -25,20 +25,20 @@ impl Change {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
-    cursor_x: Option<parinfer::Column>,
-    cursor_line: Option<parinfer::LineNumber>,
-    prev_cursor_x: Option<parinfer::Column>,
-    prev_cursor_line: Option<parinfer::LineNumber>,
+    pub cursor_x: Option<parinfer::Column>,
+    pub cursor_line: Option<parinfer::LineNumber>,
+    pub prev_cursor_x: Option<parinfer::Column>,
+    pub prev_cursor_line: Option<parinfer::LineNumber>,
     pub prev_text: Option<String>,
-    selection_start_line: Option<parinfer::LineNumber>,
+    pub selection_start_line: Option<parinfer::LineNumber>,
     #[serde(default = "Options::default_changes")]
-    changes: Vec<Change>,
+    pub changes: Vec<Change>,
     #[serde(default = "Options::default_false")]
-    partial_result: bool,
+    pub partial_result: bool,
     #[serde(default = "Options::default_false")]
-    force_balance: bool,
+    pub force_balance: bool,
     #[serde(default = "Options::default_false")]
-    return_parens: bool,
+    pub return_parens: bool,
 }
 
 impl Options {

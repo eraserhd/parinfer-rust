@@ -16,7 +16,6 @@ mod common_wrapper;
 use std::env;
 use std::io;
 use std::io::{Read,Write};
-use std::panic;
 
 extern crate getopts;
 
@@ -36,6 +35,16 @@ fn parse_args() -> getopts::Matches {
     }
 }
 
+fn mode(matches: &getopts::Matches) -> &'static str {
+    match matches.opt_str("m") {
+        None => "smart",
+        Some(ref s) if s == "i" || s == "indent" => "indent",
+        Some(ref s) if s == "p" || s == "paren"  => "paren",
+        Some(ref s) if s == "s" || s == "smart"  => "smart",
+        _ => panic!("invalid mode specified for `-m`")
+    }
+}
+
 pub fn main() -> io::Result<()> {
     let matches = parse_args();
     if matches.opt_present("h") {
@@ -43,32 +52,35 @@ pub fn main() -> io::Result<()> {
     } else if matches.opt_present("j") {
         let mut input = String::new();
         io::stdin().read_to_string(&mut input)?;
-        let output = match panic::catch_unwind(|| common_wrapper::internal_run(&input)) {
-            Ok(Ok(result)) => result,
-            Ok(Err(e)) => serde_json::to_string(&json::Answer::from(e)).unwrap(),
-            Err(_) => common_wrapper::panic_result()
+        let request: json::Request = serde_json::from_str(&input)?;
+        let answer = match common_wrapper::process(&request) {
+            Ok(result) => result,
+            Err(e) => json::Answer::from(e)
         };
+        let output = serde_json::to_string(&answer)?;
         io::stdout().write(output.as_bytes())?;
     } else {
         let mut text = String::new();
         io::stdin().read_to_string(&mut text)?;
-        let options = parinfer::Options {
-            changes: vec![],
-            cursor_x: None,
-            cursor_line: None,
-            prev_cursor_x: None,
-            prev_cursor_line: None,
-            force_balance: false,
-            return_parens: false,
-            partial_result: false,
-            selection_start_line: None
+        let request = json::Request {
+            mode: String::from(mode(&matches)),
+            text,
+            options: json::Options {
+                changes: vec![],
+                cursor_x: None,
+                cursor_line: None,
+                prev_text: None,
+                prev_cursor_x: None,
+                prev_cursor_line: None,
+                force_balance: false,
+                return_parens: false,
+                partial_result: false,
+                selection_start_line: None
+            }
         };
-        let answer = match matches.opt_str("m") {
-            None => parinfer::smart_mode(&text, &options),
-            Some(ref s) if s == "i" || s == "indent" => parinfer::indent_mode(&text, &options),
-            Some(ref s) if s == "p" || s == "paren"  => parinfer::paren_mode(&text, &options),
-            Some(ref s) if s == "s" || s == "smart"  => parinfer::smart_mode(&text, &options),
-            _ => panic!("invalid mode specified for `-m`")
+        let answer = match common_wrapper::process(&request) {
+            Ok(result) => result,
+            Err(e) => json::Answer::from(e)
         };
         io::stdout().write(answer.text.as_bytes())?;
     }
