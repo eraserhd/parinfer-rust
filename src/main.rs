@@ -22,6 +22,7 @@ extern crate getopts;
 
 fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
+    options.optflag("h", "help", "show this help message");
     options.optflag("j", "json", "read JSON input and write JSON response");
     options
 }
@@ -35,8 +36,10 @@ fn parse_args() -> getopts::Matches {
 }
 
 pub fn main() -> io::Result<()> {
-    let opts = parse_args();
-    if opts.opt_present("j") {
+    let matches = parse_args();
+    if matches.opt_present("h") {
+        print!("{}", options().usage("Usage: parinfer-rust [options]"));
+    } else if matches.opt_present("j") {
         let mut input = String::new();
         io::stdin().read_to_string(&mut input)?;
         let output = match panic::catch_unwind(|| common_wrapper::internal_run(&input)) {
