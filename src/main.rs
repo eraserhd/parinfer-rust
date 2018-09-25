@@ -23,6 +23,7 @@ extern crate getopts;
 fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
     options.optflag("h", "help", "show this help message");
+    options.optopt("m", "mode", "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
     options.optflag("j", "json", "read JSON input and write JSON response");
     options
 }
@@ -62,7 +63,13 @@ pub fn main() -> io::Result<()> {
             partial_result: false,
             selection_start_line: None
         };
-        let answer = parinfer::indent_mode(&text, &options);
+        let answer = match matches.opt_str("m") {
+            None => parinfer::smart_mode(&text, &options),
+            Some(ref s) if s == "i" || s == "indent" => parinfer::indent_mode(&text, &options),
+            Some(ref s) if s == "p" || s == "paren"  => parinfer::paren_mode(&text, &options),
+            Some(ref s) if s == "s" || s == "smart"  => parinfer::smart_mode(&text, &options),
+            _ => panic!("invalid mode specified for `-m`")
+        };
         io::stdout().write(answer.text.as_bytes())?;
     }
     Ok(())
