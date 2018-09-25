@@ -3,28 +3,30 @@ use std::borrow::Cow;
 use json::*;
 use changes;
 
-pub fn internal_run(json_str: &str) -> Result<String, Error> {
-    let request: Request = serde_json::from_str(json_str)?;
+pub fn process(request: &Request) -> Result<Answer, Error> {
     let mut options = request.options.to_parinfer();
 
     if let Some(ref prev_text) = request.options.prev_text {
         options.changes = changes::compute_text_changes(prev_text, &request.text);
     }
 
-    let answer: parinfer::Answer;
     if request.mode == "paren" {
-        answer = parinfer::paren_mode(&request.text, &options);
+        Ok(Answer::from(parinfer::paren_mode(&request.text, &options)))
     } else if request.mode == "indent" {
-        answer = parinfer::indent_mode(&request.text, &options);
+        Ok(Answer::from(parinfer::indent_mode(&request.text, &options)))
     } else if request.mode == "smart" {
-        answer = parinfer::smart_mode(&request.text, &options);
+        Ok(Answer::from(parinfer::smart_mode(&request.text, &options)))
     } else {
-        return Err(Error {
+        Err(Error {
             message: String::from("Bad value specified for `mode`"),
             ..Error::default()
-        });
+        })
     }
+}
 
+pub fn internal_run(json_str: &str) -> Result<String, Error> {
+    let request: Request = serde_json::from_str(json_str)?;
+    let answer = process(&request)?;
     Ok(serde_json::to_string(&Answer::from(answer))?)
 }
 
