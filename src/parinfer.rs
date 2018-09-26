@@ -36,14 +36,6 @@ fn match_paren_works() {
 
 // {{{1 Options Structure
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Change<'a> {
-    pub x: Column,
-    pub line_no: LineNumber,
-    pub old_text: &'a str,
-    pub new_text: &'a str,
-}
-
 struct TransformedChange {
     old_end_x: Column,
     new_end_x: Column,
@@ -59,7 +51,7 @@ fn chomp_cr<'a>(text: &'a str) -> &'a str {
     }
 }
 
-fn transform_change<'a>(change: &Change<'a>) -> TransformedChange {
+fn transform_change<'a>(change: &'a Change) -> TransformedChange {
     let new_lines: Vec<&'a str> = change.new_text.split('\n').map(chomp_cr).collect();
     let old_lines: Vec<&'a str> = change.old_text.split('\n').map(chomp_cr).collect();
 
@@ -93,7 +85,7 @@ fn transform_change<'a>(change: &Change<'a>) -> TransformedChange {
 }
 
 fn transform_changes<'a>(
-    changes: &Vec<Change<'a>>,
+    changes: &Vec<Change>,
 ) -> HashMap<(LineNumber, Column), TransformedChange> {
     let mut lines: HashMap<(LineNumber, Column), TransformedChange> = HashMap::new();
     for change in changes {
@@ -109,13 +101,13 @@ fn transform_changes<'a>(
     lines
 }
 
-pub struct Options<'a> {
+pub struct Options {
     pub cursor_x: Option<Column>,
     pub cursor_line: Option<LineNumber>,
     pub prev_cursor_x: Option<Column>,
     pub prev_cursor_line: Option<LineNumber>,
     pub selection_start_line: Option<LineNumber>,
-    pub changes: Vec<Change<'a>>,
+    pub changes: Vec<Change>,
     pub partial_result: bool,
     pub force_balance: bool,
     pub return_parens: bool,
@@ -280,7 +272,7 @@ fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
 
 fn get_initial_result<'a>(
     text: &'a str,
-    options: &Options<'a>,
+    options: &Options,
     mode: Mode,
     smart: bool,
 ) -> State<'a> {
@@ -1764,7 +1756,7 @@ fn process_error<'a>(result: &mut State<'a>, e: Error) {
     result.error = Some(e);
 }
 
-fn process_text<'a>(text: &'a str, options: &Options<'a>, mode: Mode, smart: bool) -> State<'a> {
+fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -> State<'a> {
     let mut result = get_initial_result(text, &options, mode, smart);
 
     let mut process_result: Result<()> = Ok(());
@@ -1834,15 +1826,15 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
     }
 }
 
-pub fn indent_mode<'a>(text: &'a str, options: &Options<'a>) -> Answer<'a> {
+pub fn indent_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
     public_result(process_text(text, options, Mode::Indent, false))
 }
 
-pub fn paren_mode<'a>(text: &'a str, options: &Options<'a>) -> Answer<'a> {
+pub fn paren_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
     public_result(process_text(text, options, Mode::Paren, false))
 }
 
-pub fn smart_mode<'a>(text: &'a str, options: &Options<'a>) -> Answer<'a> {
+pub fn smart_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
     let smart = options.selection_start_line == None;
     public_result(process_text(text, options, Mode::Indent, smart))
 }

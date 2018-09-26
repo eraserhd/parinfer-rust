@@ -1,7 +1,6 @@
-use super::parinfer;
 use super::types::*;
 
-pub fn compute_text_changes<'a>(prev_text: &'a str, text: &'a str) -> Vec<parinfer::Change<'a>> {
+pub fn compute_text_changes<'a>(prev_text: &'a str, text: &'a str) -> Vec<Change> {
     let mut x: Column = 0;
     let mut line_no: LineNumber = 0;
     let mut start_text: usize = 0;
@@ -34,11 +33,11 @@ pub fn compute_text_changes<'a>(prev_text: &'a str, text: &'a str) -> Vec<parinf
     }
 
     if different {
-        vec![parinfer::Change {
+        vec![Change {
             x,
             line_no,
-            old_text: &prev_text[start_prev..end_prev],
-            new_text: &text[start_text..end_text]
+            old_text: String::from(&prev_text[start_prev..end_prev]),
+            new_text: String::from(&text[start_text..end_text])
         }]
     } else {
         vec![]
@@ -49,28 +48,28 @@ pub fn compute_text_changes<'a>(prev_text: &'a str, text: &'a str) -> Vec<parinf
 #[test]
 fn compute_text_changes_works() {
     assert!(compute_text_changes("hello", "hello").is_empty());
-    assert_eq!(vec![parinfer::Change {
+    assert_eq!(vec![Change {
         x: 2,
         line_no: 0,
-        old_text: "l",
-        new_text: "x"
+        old_text: String::from("l"),
+        new_text: String::from("x")
     }], compute_text_changes("hello", "hexlo"));
-    assert_eq!(vec![parinfer::Change {
+    assert_eq!(vec![Change {
         x: 0,
         line_no: 1,
-        old_text: "l",
-        new_text: "x"
+        old_text: String::from("l"),
+        new_text: String::from("x")
     }], compute_text_changes("he\nllo", "he\nxlo"));
-    assert_eq!(vec![parinfer::Change {
+    assert_eq!(vec![Change {
         x: 4,
         line_no: 0,
-        old_text: "",
-        new_text: "l"
+        old_text: String::from(""),
+        new_text: String::from("l")
     }], compute_text_changes("hello", "helllo"));
-    assert_eq!(vec![parinfer::Change {
+    assert_eq!(vec![Change {
         x: 4,
         line_no: 0,
-        old_text: "l",
-        new_text: ""
+        old_text: String::from("l"),
+        new_text: String::from("")
     }], compute_text_changes("helllo", "hello"));
 }

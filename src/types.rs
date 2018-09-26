@@ -6,24 +6,13 @@ pub type LineNumber = usize;
 pub type Column = usize;
 pub type Delta = i64;
 
-#[derive(Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Change {
-    x: Column,
-    line_no: LineNumber,
-    old_text: String,
-    new_text: String,
-}
-
-impl Change {
-    pub fn to_parinfer(&self) -> parinfer::Change {
-        parinfer::Change {
-            x: self.x,
-            line_no: self.line_no,
-            old_text: &self.old_text,
-            new_text: &self.new_text,
-        }
-    }
+    pub x: Column,
+    pub line_no: LineNumber,
+    pub old_text: String,
+    pub new_text: String,
 }
 
 #[derive(Deserialize)]
@@ -61,7 +50,7 @@ impl Options {
             prev_cursor_x: self.prev_cursor_x,
             prev_cursor_line: self.prev_cursor_line,
             selection_start_line: self.selection_start_line,
-            changes: self.changes.iter().map(Change::to_parinfer).collect(),
+            changes: self.changes.clone(),
             partial_result: self.partial_result,
             force_balance: self.force_balance,
             return_parens: self.return_parens,
