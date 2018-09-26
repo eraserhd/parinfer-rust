@@ -15,7 +15,7 @@ pub struct Change {
     pub new_text: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
     pub cursor_x: Option<Column>,
@@ -41,20 +41,6 @@ impl Options {
 
     fn default_false() -> bool {
         false
-    }
-
-    pub fn to_parinfer(&self) -> parinfer::Options {
-        parinfer::Options {
-            cursor_x: self.cursor_x,
-            cursor_line: self.cursor_line,
-            prev_cursor_x: self.prev_cursor_x,
-            prev_cursor_line: self.prev_cursor_line,
-            selection_start_line: self.selection_start_line,
-            changes: self.changes.clone(),
-            partial_result: self.partial_result,
-            force_balance: self.force_balance,
-            return_parens: self.return_parens,
-        }
     }
 }
 

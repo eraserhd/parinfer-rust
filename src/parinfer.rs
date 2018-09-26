@@ -101,18 +101,6 @@ fn transform_changes<'a>(
     lines
 }
 
-pub struct Options {
-    pub cursor_x: Option<Column>,
-    pub cursor_line: Option<LineNumber>,
-    pub prev_cursor_x: Option<Column>,
-    pub prev_cursor_line: Option<LineNumber>,
-    pub selection_start_line: Option<LineNumber>,
-    pub changes: Vec<Change>,
-    pub partial_result: bool,
-    pub force_balance: bool,
-    pub return_parens: bool,
-}
-
 // {{{1 State Structure (was Result)
 
 // This represents the running result. As we scan through each character

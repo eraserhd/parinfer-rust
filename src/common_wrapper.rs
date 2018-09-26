@@ -4,7 +4,7 @@ use types::*;
 use changes;
 
 pub fn process(request: &Request) -> Result<Answer, Error> {
-    let mut options = request.options.to_parinfer();
+    let mut options = request.options.clone();
 
     if let Some(ref prev_text) = request.options.prev_text {
         options.changes = changes::compute_text_changes(prev_text, &request.text);
