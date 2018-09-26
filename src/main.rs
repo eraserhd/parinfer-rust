@@ -16,6 +16,7 @@ mod common_wrapper;
 use std::env;
 use std::io;
 use std::io::{Read,Write};
+use types::*;
 
 extern crate getopts;
 
@@ -74,15 +75,15 @@ fn output_type(matches: &getopts::Matches) -> OutputType {
     }
 }
 
-fn request(matches: &getopts::Matches) -> io::Result<types::Request> {
+fn request(matches: &getopts::Matches) -> io::Result<Request> {
     match input_type(matches) {
         InputType::Text => {
             let mut text = String::new();
             io::stdin().read_to_string(&mut text)?;
-            Ok(types::Request {
+            Ok(Request {
                 mode: String::from(mode(&matches)),
                 text,
-                options: types::Options {
+                options: Options {
                     changes: vec![],
                     cursor_x: None,
                     cursor_line: None,
@@ -113,7 +114,7 @@ pub fn main() -> io::Result<()> {
         let request = request(&matches)?;
         let answer = match common_wrapper::process(&request) {
             Ok(result) => result,
-            Err(e) => types::Answer::from(e)
+            Err(e) => Answer::from(e)
         };
         let output = match output_type(&matches) {
             OutputType::Json => serde_json::to_string(&answer)?,
