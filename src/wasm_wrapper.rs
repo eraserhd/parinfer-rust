@@ -1,4 +1,4 @@
-use json::*;
+use types::*;
 use serde_json;
 use std::panic;
 use super::common_wrapper;

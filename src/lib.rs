@@ -10,7 +10,7 @@ extern crate unicode_segmentation;
 extern crate unicode_width;
 
 mod parinfer;
-mod json;
+mod types;
 mod changes;
 
 // Native-specific stuff

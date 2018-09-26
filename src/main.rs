@@ -9,7 +9,7 @@ extern crate unicode_width;
 
 
 mod parinfer;
-mod json;
+mod types;
 mod changes;
 mod common_wrapper;
 
@@ -19,11 +19,22 @@ use std::io::{Read,Write};
 
 extern crate getopts;
 
+enum InputType {
+    Json,
+    Text
+}
+
+enum OutputType {
+    Json,
+    Text
+}
+
 fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
     options.optflag("h", "help", "show this help message");
+    options.optopt("", "input-format", "'json', 'text' (default: 'text')", "FMT");
     options.optopt("m", "mode", "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
-    options.optflag("j", "json", "read JSON input and write JSON response");
+    options.optopt("", "output-format", "'json', 'text' (default: 'text')", "FMT");
     options
 }
 
@@ -45,44 +56,70 @@ fn mode(matches: &getopts::Matches) -> &'static str {
     }
 }
 
+fn input_type(matches: &getopts::Matches) -> InputType {
+    match matches.opt_str("input-format") {
+        None => InputType::Text,
+        Some(ref s) if s == "text" => InputType::Text,
+        Some(ref s) if s == "json" => InputType::Json,
+        Some(ref s) => panic!("unknown input format `{}`", s)
+    }
+}
+
+fn output_type(matches: &getopts::Matches) -> OutputType {
+    match matches.opt_str("output-format") {
+        None => OutputType::Text,
+        Some(ref s) if s == "text" => OutputType::Text,
+        Some(ref s) if s == "json" => OutputType::Json,
+        Some(ref s) => panic!("unknown output fomrat `{}`", s)
+    }
+}
+
+fn request(matches: &getopts::Matches) -> io::Result<types::Request> {
+    match input_type(matches) {
+        InputType::Text => {
+            let mut text = String::new();
+            io::stdin().read_to_string(&mut text)?;
+            Ok(types::Request {
+                mode: String::from(mode(&matches)),
+                text,
+                options: types::Options {
+                    changes: vec![],
+                    cursor_x: None,
+                    cursor_line: None,
+                    prev_text: None,
+                    prev_cursor_x: None,
+                    prev_cursor_line: None,
+                    force_balance: false,
+                    return_parens: false,
+                    partial_result: false,
+                    selection_start_line: None
+                }
+            })
+        },
+        InputType::Json => {
+            let mut input = String::new();
+            io::stdin().read_to_string(&mut input)?;
+            Ok(serde_json::from_str(&input)?)
+        },
+    }
+}
+
 pub fn main() -> io::Result<()> {
     let matches = parse_args();
     if matches.opt_present("h") {
         print!("{}", options().usage("Usage: parinfer-rust [options]"));
-    } else if matches.opt_present("j") {
-        let mut input = String::new();
-        io::stdin().read_to_string(&mut input)?;
-        let request: json::Request = serde_json::from_str(&input)?;
-        let answer = match common_wrapper::process(&request) {
-            Ok(result) => result,
-            Err(e) => json::Answer::from(e)
-        };
-        let output = serde_json::to_string(&answer)?;
-        io::stdout().write(output.as_bytes())?;
+        Ok(())
     } else {
-        let mut text = String::new();
-        io::stdin().read_to_string(&mut text)?;
-        let request = json::Request {
-            mode: String::from(mode(&matches)),
-            text,
-            options: json::Options {
-                changes: vec![],
-                cursor_x: None,
-                cursor_line: None,
-                prev_text: None,
-                prev_cursor_x: None,
-                prev_cursor_line: None,
-                force_balance: false,
-                return_parens: false,
-                partial_result: false,
-                selection_start_line: None
-            }
-        };
+        let request = request(&matches)?;
         let answer = match common_wrapper::process(&request) {
             Ok(result) => result,
-            Err(e) => json::Answer::from(e)
+            Err(e) => types::Answer::from(e)
         };
-        io::stdout().write(answer.text.as_bytes())?;
+        let output = match output_type(&matches) {
+            OutputType::Json => serde_json::to_string(&answer)?,
+            OutputType::Text => String::from(answer.text)
+        };
+        io::stdout().write(output.as_bytes())?;
+        Ok(())
     }
-    Ok(())
 }
