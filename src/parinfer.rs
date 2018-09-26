@@ -165,14 +165,6 @@ enum TrackingArgTabStop {
     Arg,
 }
 
-#[derive(Clone)]
-pub struct TabStop<'a> {
-    pub ch: &'a str,
-    pub x: Column,
-    pub line_no: LineNumber,
-    pub arg_x: Option<Column>,
-}
-
 struct State<'a> {
     mode: Mode,
     smart: bool,

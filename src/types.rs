@@ -52,24 +52,13 @@ pub struct Request {
     pub options: Options,
 }
 
-#[derive(Serialize)]
+#[derive(Clone,Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TabStop<'a> {
-    ch: &'a str,
-    x: Column,
-    line_no: LineNumber,
-    arg_x: Option<Column>,
-}
-
-impl<'a> From<parinfer::TabStop<'a>> for TabStop<'a> {
-    fn from(tab_stop: parinfer::TabStop<'a>) -> TabStop<'a> {
-        TabStop {
-            ch: tab_stop.ch,
-            x: tab_stop.x,
-            line_no: tab_stop.line_no,
-            arg_x: tab_stop.arg_x,
-        }
-    }
+    pub ch: &'a str,
+    pub x: Column,
+    pub line_no: LineNumber,
+    pub arg_x: Option<Column>,
 }
 
 #[derive(Serialize)]
