@@ -2,11 +2,15 @@ use std;
 use parinfer;
 use serde_json;
 
+pub type LineNumber = usize;
+pub type Column = usize;
+pub type Delta = i64;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Change {
-    x: parinfer::Column,
-    line_no: parinfer::LineNumber,
+    x: Column,
+    line_no: LineNumber,
     old_text: String,
     new_text: String,
 }
@@ -25,12 +29,12 @@ impl Change {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
-    pub cursor_x: Option<parinfer::Column>,
-    pub cursor_line: Option<parinfer::LineNumber>,
-    pub prev_cursor_x: Option<parinfer::Column>,
-    pub prev_cursor_line: Option<parinfer::LineNumber>,
+    pub cursor_x: Option<Column>,
+    pub cursor_line: Option<LineNumber>,
+    pub prev_cursor_x: Option<Column>,
+    pub prev_cursor_line: Option<LineNumber>,
     pub prev_text: Option<String>,
-    pub selection_start_line: Option<parinfer::LineNumber>,
+    pub selection_start_line: Option<LineNumber>,
     #[serde(default = "Options::default_changes")]
     pub changes: Vec<Change>,
     #[serde(default = "Options::default_false")]
@@ -77,9 +81,9 @@ pub struct Request {
 #[serde(rename_all = "camelCase")]
 pub struct TabStop<'a> {
     ch: &'a str,
-    x: parinfer::Column,
-    line_no: parinfer::LineNumber,
-    arg_x: Option<parinfer::Column>,
+    x: Column,
+    line_no: LineNumber,
+    arg_x: Option<Column>,
 }
 
 impl<'a> From<parinfer::TabStop<'a>> for TabStop<'a> {
@@ -96,9 +100,9 @@ impl<'a> From<parinfer::TabStop<'a>> for TabStop<'a> {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ParenTrail {
-    line_no: parinfer::LineNumber,
-    start_x: parinfer::Column,
-    end_x: parinfer::Column,
+    line_no: LineNumber,
+    start_x: Column,
+    end_x: Column,
 }
 
 impl From<parinfer::ParenTrail> for ParenTrail {
@@ -114,14 +118,14 @@ impl From<parinfer::ParenTrail> for ParenTrail {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Paren<'a> {
-    line_no: parinfer::LineNumber,
+    line_no: LineNumber,
     ch: &'a str,
-    x: parinfer::Column,
-    indent_delta: parinfer::Delta,
-    max_child_indent: Option<parinfer::Column>,
-    arg_x: Option<parinfer::Column>,
-    input_line_no: parinfer::LineNumber,
-    input_x: parinfer::Column,
+    x: Column,
+    indent_delta: Delta,
+    max_child_indent: Option<Column>,
+    arg_x: Option<Column>,
+    input_line_no: LineNumber,
+    input_x: Column,
 }
 
 impl<'a> From<parinfer::Paren<'a>> for Paren<'a> {
@@ -145,8 +149,8 @@ pub struct Answer<'a> {
     pub text: std::borrow::Cow<'a, str>,
     pub success: bool,
     pub error: Option<Error>,
-    pub cursor_x: Option<parinfer::Column>,
-    pub cursor_line: Option<parinfer::LineNumber>,
+    pub cursor_x: Option<Column>,
+    pub cursor_line: Option<LineNumber>,
     pub tab_stops: Vec<TabStop<'a>>,
     pub paren_trails: Vec<ParenTrail>,
     pub parens: Vec<Paren<'a>>,
@@ -199,10 +203,10 @@ impl<'a> From<Error> for Answer<'a> {
 pub struct Error {
     pub name: String,
     pub message: String,
-    pub x: Option<parinfer::Column>,
-    pub line_no: Option<parinfer::LineNumber>,
-    pub input_x: Option<parinfer::Column>,
-    pub input_line_no: Option<parinfer::LineNumber>,
+    pub x: Option<Column>,
+    pub line_no: Option<LineNumber>,
+    pub input_x: Option<Column>,
+    pub input_line_no: Option<LineNumber>,
 }
 
 impl From<parinfer::Error> for Error {

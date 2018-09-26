@@ -3,10 +3,7 @@ use std::collections::HashMap;
 use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-
-pub type LineNumber = usize;
-pub type Column = usize;
-pub type Delta = i64;
+use types::*;
 
 // {{{1 Constants / Predicates
 

@@ -1,8 +1,9 @@
 use super::parinfer;
+use super::types::*;
 
 pub fn compute_text_changes<'a>(prev_text: &'a str, text: &'a str) -> Vec<parinfer::Change<'a>> {
-    let mut x: parinfer::Column = 0;
-    let mut line_no: parinfer::LineNumber = 0;
+    let mut x: Column = 0;
+    let mut line_no: LineNumber = 0;
     let mut start_text: usize = 0;
     let mut start_prev: usize = 0;
     let mut end_text: usize = text.len();
