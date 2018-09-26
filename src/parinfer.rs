@@ -145,13 +145,6 @@ struct InternalParenTrail<'a> {
     clamped: ParenTrailClamped<'a>,
 }
 
-#[derive(Clone, Debug)]
-pub struct ParenTrail {
-    pub line_no: LineNumber,
-    pub start_x: Column,
-    pub end_x: Column,
-}
-
 #[derive(PartialEq, Eq)]
 pub enum Mode {
     Indent,

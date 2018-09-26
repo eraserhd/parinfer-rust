@@ -61,22 +61,12 @@ pub struct TabStop<'a> {
     pub arg_x: Option<Column>,
 }
 
-#[derive(Serialize)]
+#[derive(Clone,Debug,Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ParenTrail {
-    line_no: LineNumber,
-    start_x: Column,
-    end_x: Column,
-}
-
-impl From<parinfer::ParenTrail> for ParenTrail {
-    fn from(trail: parinfer::ParenTrail) -> ParenTrail {
-        ParenTrail {
-            line_no: trail.line_no,
-            start_x: trail.start_x,
-            end_x: trail.end_x,
-        }
-    }
+    pub line_no: LineNumber,
+    pub start_x: Column,
+    pub end_x: Column,
 }
 
 #[derive(Serialize)]
