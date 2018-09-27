@@ -1,5 +1,3 @@
-#![cfg_attr(target_arch = "wasm32", feature(proc_macro))]
-
 extern crate serde;
 extern crate serde_json;
 
