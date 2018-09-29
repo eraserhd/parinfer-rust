@@ -1,5 +1,4 @@
 use std;
-use parinfer;
 use serde;
 use serde_json;
 use std::fmt;

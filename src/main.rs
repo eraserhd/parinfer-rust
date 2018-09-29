@@ -11,7 +11,6 @@ extern crate unicode_width;
 mod parinfer;
 mod types;
 mod changes;
-mod common_wrapper;
 
 use std::env;
 use std::io;
@@ -112,10 +111,7 @@ pub fn main() -> io::Result<()> {
         Ok(())
     } else {
         let request = request(&matches)?;
-        let answer = match common_wrapper::process(&request) {
-            Ok(result) => result,
-            Err(e) => Answer::from(e)
-        };
+        let answer = parinfer::process(&request);
         let output = match output_type(&matches) {
             OutputType::Json => serde_json::to_string(&answer)?,
             OutputType::Text => String::from(answer.text)

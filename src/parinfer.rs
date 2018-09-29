@@ -4,6 +4,7 @@ use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 use types::*;
+use changes;
 
 // {{{1 Constants / Predicates
 
@@ -1731,3 +1732,23 @@ pub fn smart_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
     public_result(process_text(text, options, Mode::Indent, smart))
 }
 
+pub fn process(request: &Request) -> Answer {
+    let mut options = request.options.clone();
+
+    if let Some(ref prev_text) = request.options.prev_text {
+        options.changes = changes::compute_text_changes(prev_text, &request.text);
+    }
+
+    if request.mode == "paren" {
+        Answer::from(paren_mode(&request.text, &options))
+    } else if request.mode == "indent" {
+        Answer::from(indent_mode(&request.text, &options))
+    } else if request.mode == "smart" {
+        Answer::from(smart_mode(&request.text, &options))
+    } else {
+        Answer::from(Error {
+            message: String::from("Bad value specified for `mode`"),
+            ..Error::default()
+        })
+    }
+}
