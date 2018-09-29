@@ -69,6 +69,14 @@ pub struct ParenTrail {
     pub end_x: Column,
 }
 
+#[derive(Clone, Debug)]
+pub struct Closer<'a> {
+    pub line_no: LineNumber,
+    pub x: Column,
+    pub ch: &'a str,
+    pub trail: Option<ParenTrail>
+}
+
 #[derive(Clone,Debug,Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Paren<'a> {

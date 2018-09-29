@@ -108,14 +108,6 @@ fn transform_changes<'a>(
 // system.
 
 #[derive(Clone, Debug)]
-pub struct Closer<'a> {
-    line_no: LineNumber,
-    x: Column,
-    ch: &'a str,
-    trail: Option<ParenTrail>
-}
-
-#[derive(Clone, Debug)]
 pub struct Paren<'a> {
     pub line_no: LineNumber,
     pub ch: &'a str,
