@@ -285,17 +285,6 @@ fn get_initial_result<'a>(
 
 // {{{1 Possible Errors
 
-#[derive(Debug)]
-pub struct Error {
-    pub name: ErrorName,
-    pub message: String,
-    pub x: Column,
-    pub line_no: LineNumber,
-    pub input_x: Column,
-    pub input_line_no: LineNumber,
-    pub extra: Option<ErrorExtra>
-}
-
 pub type Result<T> = std::result::Result<T, Error>;
 
 fn error_message(error: ErrorName) -> &'static str {

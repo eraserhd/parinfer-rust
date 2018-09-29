@@ -244,7 +244,7 @@ pub struct ErrorExtra {
     pub x: Column
 }
 
-#[derive(Default, Serialize)]
+#[derive(Debug, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Error {
     pub name: ErrorName,
@@ -256,20 +256,6 @@ pub struct Error {
 
     #[serde(skip)]
     pub extra: Option<ErrorExtra>
-}
-
-impl From<parinfer::Error> for Error {
-    fn from(error: parinfer::Error) -> Error {
-        Error {
-            name: error.name,
-            message: String::from(error.message),
-            x: error.x,
-            line_no: error.line_no,
-            input_x: error.input_x,
-            input_line_no: error.input_line_no,
-            extra: error.extra,
-        }
-    }
 }
 
 impl From<std::str::Utf8Error> for Error {
