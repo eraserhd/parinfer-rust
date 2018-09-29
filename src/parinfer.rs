@@ -103,24 +103,6 @@ fn transform_changes<'a>(
 
 // {{{1 State Structure (was Result)
 
-// This represents the running result. As we scan through each character
-// of a given text, we mutate this structure to update the state of our
-// system.
-
-#[derive(Clone, Debug)]
-pub struct Paren<'a> {
-    pub line_no: LineNumber,
-    pub ch: &'a str,
-    pub x: Column,
-    pub indent_delta: Delta,
-    pub max_child_indent: Option<Column>,
-    pub arg_x: Option<Column>,
-    pub input_line_no: LineNumber,
-    pub input_x: Column,
-    pub closer: Option<Closer<'a>>,
-    pub children: Vec<Paren<'a>>
-}
-
 #[derive(Debug)]
 struct ParenTrailClamped<'a> {
     start_x: Option<Column>,

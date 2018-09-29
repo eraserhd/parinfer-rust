@@ -88,21 +88,11 @@ pub struct Paren<'a> {
     pub arg_x: Option<Column>,
     pub input_line_no: LineNumber,
     pub input_x: Column,
-}
 
-impl<'a> From<parinfer::Paren<'a>> for Paren<'a> {
-    fn from(p: parinfer::Paren<'a>) -> Paren<'a> {
-        Paren {
-            line_no: p.line_no,
-            ch: p.ch,
-            x: p.x,
-            indent_delta: p.indent_delta,
-            max_child_indent: p.max_child_indent,
-            arg_x: p.arg_x,
-            input_line_no: p.input_line_no,
-            input_x: p.input_x,
-        }
-    }
+    #[serde(skip)]
+    pub closer: Option<Closer<'a>>,
+    #[serde(skip)]
+    pub children: Vec<Paren<'a>>
 }
 
 #[derive(Serialize)]
