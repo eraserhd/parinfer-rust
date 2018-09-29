@@ -110,33 +110,6 @@ pub struct Answer<'a> {
     pub parens: Vec<Paren<'a>>,
 }
 
-impl<'a> From<parinfer::Answer<'a>> for Answer<'a> {
-    fn from(answer: parinfer::Answer<'a>) -> Answer<'a> {
-        Answer {
-            text: answer.text.clone(),
-            success: answer.success,
-            error: answer.error.map(Error::from),
-            cursor_x: answer.cursor_x,
-            cursor_line: answer.cursor_line,
-            tab_stops: answer
-                .tab_stops
-                .iter()
-                .map(|t| TabStop::from(t.clone()))
-                .collect(),
-            paren_trails: answer
-                .paren_trails
-                .iter()
-                .map(|t| ParenTrail::from(t.clone()))
-                .collect(),
-            parens: answer
-                .parens
-                .iter()
-                .map(|t| Paren::from(t.clone()))
-                .collect(),
-        }
-    }
-}
-
 impl<'a> From<Error> for Answer<'a> {
     fn from(error: Error) -> Answer<'a> {
         Answer {

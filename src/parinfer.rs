@@ -192,17 +192,6 @@ struct State<'a> {
     error_pos_cache: HashMap<ErrorName, Error>,
 }
 
-pub struct Answer<'a> {
-    pub text: Cow<'a, str>,
-    pub cursor_x: Option<Column>,
-    pub cursor_line: Option<LineNumber>,
-    pub success: bool,
-    pub tab_stops: Vec<TabStop<'a>>,
-    pub paren_trails: Vec<ParenTrail>,
-    pub parens: Vec<Paren<'a>>,
-    pub error: Option<Error>,
-}
-
 fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
     InternalParenTrail {
         line_no: None,
@@ -1741,3 +1730,4 @@ pub fn smart_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
     let smart = options.selection_start_line == None;
     public_result(process_text(text, options, Mode::Indent, smart))
 }
+
