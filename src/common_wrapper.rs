@@ -38,9 +38,9 @@ pub fn panic_result() -> String {
             name: ErrorName::Panic,
             message: String::from("plugin panicked!"),
             x: 0,
-            line_no: None,
+            line_no: 0,
             input_x: 0,
-            input_line_no: None,
+            input_line_no: 0,
             extra: None
 
         }),

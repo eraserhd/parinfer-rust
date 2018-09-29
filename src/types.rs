@@ -250,9 +250,9 @@ pub struct Error {
     pub name: ErrorName,
     pub message: String,
     pub x: Column,
-    pub line_no: Option<LineNumber>,
+    pub line_no: LineNumber,
     pub input_x: Column,
-    pub input_line_no: Option<LineNumber>,
+    pub input_line_no: LineNumber,
 
     #[serde(skip)]
     pub extra: Option<ErrorExtra>
@@ -264,9 +264,9 @@ impl From<parinfer::Error> for Error {
             name: error.name,
             message: String::from(error.message),
             x: error.x,
-            line_no: Some(error.line_no),
+            line_no: error.line_no,
             input_x: error.input_x,
-            input_line_no: Some(error.input_line_no),
+            input_line_no: error.input_line_no,
             extra: error.extra,
         }
     }
