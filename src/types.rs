@@ -237,6 +237,13 @@ impl<'a> serde::Deserialize<'a> for ErrorName {
     }
 }
 
+#[derive(Debug)]
+pub struct ErrorExtra {
+    pub name: ErrorName,
+    pub line_no: LineNumber,
+    pub x: Column
+}
+
 #[derive(Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Error {
@@ -246,6 +253,9 @@ pub struct Error {
     pub line_no: Option<LineNumber>,
     pub input_x: Option<Column>,
     pub input_line_no: Option<LineNumber>,
+
+    #[serde(skip)]
+    pub extra: Option<ErrorExtra>
 }
 
 impl From<parinfer::Error> for Error {
@@ -257,6 +267,7 @@ impl From<parinfer::Error> for Error {
             line_no: Some(error.line_no),
             input_x: Some(error.input_x),
             input_line_no: Some(error.input_line_no),
+            extra: error.extra,
         }
     }
 }

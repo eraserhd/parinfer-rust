@@ -286,13 +286,6 @@ fn get_initial_result<'a>(
 // {{{1 Possible Errors
 
 #[derive(Debug)]
-pub struct ErrorExtra {
-    name: ErrorName,
-    line_no: LineNumber,
-    x: Column
-}
-
-#[derive(Debug)]
 pub struct Error {
     pub name: ErrorName,
     pub message: &'static str,
