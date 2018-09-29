@@ -150,6 +150,35 @@ impl<'a> From<Error> for Answer<'a> {
     }
 }
 
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+pub enum ErrorName {
+    QuoteDanger,
+    EolBackslash,
+    UnclosedQuote,
+    UnclosedParen,
+    UnmatchedCloseParen,
+    UnmatchedOpenParen,
+    LeadingCloseParen,
+
+    Restart,
+}
+
+impl ToString for ErrorName {
+    fn to_string(&self) -> String {
+        String::from(match self {
+            &ErrorName::QuoteDanger => "quote-danger",
+            &ErrorName::EolBackslash => "eol-backslash",
+            &ErrorName::UnclosedQuote => "unclosed-quote",
+            &ErrorName::UnclosedParen => "unclosed-paren",
+            &ErrorName::UnmatchedCloseParen => "unmatched-close-paren",
+            &ErrorName::UnmatchedOpenParen => "unmatched-open-paren",
+            &ErrorName::LeadingCloseParen => "leading-close-paren",
+
+            _ => "??",
+        })
+    }
+}
+
 #[derive(Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Error {
