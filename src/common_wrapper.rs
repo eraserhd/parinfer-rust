@@ -37,10 +37,11 @@ pub fn panic_result() -> String {
         error: Some(Error {
             name: ErrorName::Panic,
             message: String::from("plugin panicked!"),
-            x: None,
+            x: 0,
             line_no: None,
-            input_x: None,
+            input_x: 0,
             input_line_no: None,
+            extra: None
 
         }),
         cursor_x: None,
