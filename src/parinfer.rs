@@ -314,6 +314,9 @@ fn error_message(error: ErrorName) -> &'static str {
         ErrorName::UnmatchedCloseParen => "Unmatched close-paren.",
         ErrorName::UnmatchedOpenParen => "Unmatched open-paren.",
         ErrorName::LeadingCloseParen => "Line cannot lead with a close-paren.",
+        ErrorName::Utf8EncodingError => "UTF8 encoded incorrectly.",
+        ErrorName::JsonEncodingError => "JSON encoded incorrectly.",
+        ErrorName::Panic => "Internal error (please report!)",
 
         ErrorName::Restart => "Restart requested (you shouldn't see this).",
     }

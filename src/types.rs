@@ -1,6 +1,8 @@
 use std;
 use parinfer;
+use serde;
 use serde_json;
+use std::fmt;
 
 pub type LineNumber = usize;
 pub type Column = usize;
@@ -160,7 +162,17 @@ pub enum ErrorName {
     UnmatchedOpenParen,
     LeadingCloseParen,
 
+    Utf8EncodingError,
+    JsonEncodingError,
+    Panic,
+
     Restart,
+}
+
+impl Default for ErrorName {
+    fn default() -> ErrorName {
+        ErrorName::Restart
+    }
 }
 
 impl ToString for ErrorName {
@@ -173,16 +185,62 @@ impl ToString for ErrorName {
             &ErrorName::UnmatchedCloseParen => "unmatched-close-paren",
             &ErrorName::UnmatchedOpenParen => "unmatched-open-paren",
             &ErrorName::LeadingCloseParen => "leading-close-paren",
-
+            &ErrorName::Utf8EncodingError => "utf8-error",
+            &ErrorName::JsonEncodingError => "json-error",
+            &ErrorName::Panic => "panic",
             _ => "??",
         })
+    }
+}
+
+impl serde::Serialize for ErrorName {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'a> serde::Deserialize<'a> for ErrorName {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where D: serde::Deserializer<'a>
+    {
+        struct Visitor;
+
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = ErrorName;
+
+            fn expecting(&self,  formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("error name")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<ErrorName, E>
+            where E: serde::de::Error
+            {
+                match value {
+                    "quote-danger" => Ok(ErrorName::QuoteDanger),
+                     "eol-backslash" => Ok(ErrorName::EolBackslash),
+                     "unclosed-quote" => Ok(ErrorName::UnclosedQuote),
+                     "unclosed-paren" => Ok(ErrorName::UnclosedParen),
+                     "unmatched-close-paren" => Ok(ErrorName::UnmatchedCloseParen),
+                     "unmatched-open-paren" => Ok(ErrorName::UnmatchedOpenParen),
+                     "leading-close-paren" => Ok(ErrorName::LeadingCloseParen),
+                     "utf8-error" => Ok(ErrorName::Utf8EncodingError),
+                     "json-error" => Ok(ErrorName::JsonEncodingError),
+                     "panic" => Ok(ErrorName::Panic),
+                    _ => Err(E::custom(format!("unknown error name: {}", value)))
+                }
+            }
+        }
+
+        deserializer.deserialize_string(Visitor)
     }
 }
 
 #[derive(Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Error {
-    pub name: String,
+    pub name: ErrorName,
     pub message: String,
     pub x: Option<Column>,
     pub line_no: Option<LineNumber>,
@@ -193,7 +251,7 @@ pub struct Error {
 impl From<parinfer::Error> for Error {
     fn from(error: parinfer::Error) -> Error {
         Error {
-            name: error.name.to_string(),
+            name: error.name,
             message: String::from(error.message),
             x: Some(error.x),
             line_no: Some(error.line_no),
@@ -206,7 +264,7 @@ impl From<parinfer::Error> for Error {
 impl From<std::str::Utf8Error> for Error {
     fn from(error: std::str::Utf8Error) -> Error {
         Error {
-            name: String::from("utf8-error"),
+            name: ErrorName::Utf8EncodingError,
             message: format!("Error decoding UTF8: {}", error),
             ..Error::default()
         }
@@ -216,7 +274,7 @@ impl From<std::str::Utf8Error> for Error {
 impl From<std::ffi::NulError> for Error {
     fn from(error: std::ffi::NulError) -> Error {
         Error {
-            name: String::from("nul-error"),
+            name: ErrorName::Panic,
             message: format!("{}", error),
             ..Error::default()
         }
@@ -226,7 +284,7 @@ impl From<std::ffi::NulError> for Error {
 impl From<serde_json::Error> for Error {
     fn from(error: serde_json::Error) -> Error {
         Error {
-            name: String::from("json-error"),
+            name: ErrorName::JsonEncodingError,
             message: format!("Error parsing JSON: {}", error),
             ..Error::default()
         }

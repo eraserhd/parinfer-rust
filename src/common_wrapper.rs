@@ -35,7 +35,7 @@ pub fn panic_result() -> String {
         text: Cow::from(""),
         success: false,
         error: Some(Error {
-            name: String::from("panic"),
+            name: ErrorName::Panic,
             message: String::from("plugin panicked!"),
             x: None,
             line_no: None,
