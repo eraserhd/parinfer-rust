@@ -288,7 +288,7 @@ fn get_initial_result<'a>(
 #[derive(Debug)]
 pub struct Error {
     pub name: ErrorName,
-    pub message: &'static str,
+    pub message: String,
     pub x: Column,
     pub line_no: LineNumber,
     pub input_x: Column,
@@ -318,7 +318,7 @@ fn error_message(error: ErrorName) -> &'static str {
 fn cache_error_pos(result: &mut State, name: ErrorName) {
     let error = Error {
         name,
-        message: "",
+        message: String::new(),
         line_no: result.line_no,
         x: result.x,
         input_line_no: result.input_line_no,
@@ -340,7 +340,7 @@ fn error(result: &mut State, name: ErrorName) -> Result<()> {
         name,
         line_no,
         x,
-        message: error_message(name),
+        message: String::from(error_message(name)),
         input_line_no: result.input_line_no,
         input_x: result.input_x,
         extra: None
@@ -657,7 +657,7 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
                 input_line_no: 0,
                 input_x: 0,
                 line_no: 0,
-                message: "",
+                message: String::new(),
                 extra: None
             });
         }
