@@ -16,6 +16,7 @@ mod cli_options;
 use std::env;
 use std::io;
 use std::io::Write;
+use types::*;
 use cli_options::OutputType;
 
 extern crate getopts;
@@ -26,6 +27,23 @@ fn parse_args() -> cli_options::Options {
         .expect("failed to parse options")
 }
 
+fn json_output(_request: &Request, answer: Answer) -> (String, i32) {
+    let text = serde_json::to_string(&answer).expect("unable to produce JSON");
+    let error_code = if answer.success { 0 } else { 1 };
+    ( text, error_code )
+}
+
+fn text_output(_request: &Request, answer: Answer) -> (String, i32) {
+    if answer.success {
+        ( answer.text.into_owned(), 0 )
+    } else {
+        match answer.error {
+            None => ( String::from("parinfer-rust: unknown error.\n"), 1 ),
+            Some(e) => ( format!("parinfer-rust: {}\n", e.message), 1 )
+        }
+    }
+}
+
 pub fn main() {
     let opts = parse_args();
     if opts.want_help() {
@@ -33,10 +51,11 @@ pub fn main() {
     } else {
         let request = opts.request().expect("unable to parse options");
         let answer = parinfer::process(&request);
-        let output = match opts.output_type() {
-            OutputType::Json => serde_json::to_string(&answer).expect("unable to produce JSON"),
-            OutputType::Text => String::from(answer.text)
+        let (output, error_code) = match opts.output_type() {
+            OutputType::Json => json_output(&request, answer),
+            OutputType::Text => text_output(&request, answer)
         };
         io::stdout().write(output.as_bytes()).expect("unable to write output");
+        std::process::exit(error_code);
     }
 }
