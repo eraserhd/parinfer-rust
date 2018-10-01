@@ -18,7 +18,7 @@ jobs:
             cargo +nightly install cargo-web
 
             # Work-around for https://github.com/koute/cargo-web/issues/142
-            sed -i '' -e '/^\[\[bin\]\]/,/^[ 	]*$/d' Cargo.toml
+            sed -i.bak -e '/^\[\[bin\]\]/,/^[ 	]*$/d' Cargo.toml
 
             cargo +nightly web test --nodejs
 workflows:
