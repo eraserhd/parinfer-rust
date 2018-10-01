@@ -19,9 +19,18 @@ mod reference_hack {
     use std::ffi::CStr;
     use libc::{c_void, dladdr, dlerror, dlopen};
     use libc::Dl_info;
-    use libc::{RTLD_LAZY, RTLD_NOLOAD, RTLD_NODELETE, RTLD_GLOBAL};
 
     static mut INITIALIZED: bool = false;
+
+    use libc::{RTLD_LAZY, RTLD_NOLOAD, RTLD_NODELETE, RTLD_GLOBAL};
+
+    fn first_attempt_flags() -> i32 {
+        RTLD_LAZY|RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE
+    }
+
+    fn second_attempt_flags() -> i32 {
+        RTLD_LAZY|RTLD_GLOBAL|RTLD_NODELETE
+    }
 
     pub unsafe fn initialize() {
         if INITIALIZED {
@@ -43,9 +52,9 @@ mod reference_hack {
         // loaded (this happens when running the tests under Linux, but not
         // Mac).  dlerror() is unhelfully NULL at that point, so try to
         // *really* load ourselves, then report if that fails.
-        let handle = dlopen(info.dli_fname, RTLD_LAZY|RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE);
+        let handle = dlopen(info.dli_fname, first_attempt_flags());
         if handle == ptr::null_mut() {
-            let handle = dlopen(info.dli_fname, RTLD_LAZY|RTLD_GLOBAL|RTLD_NODELETE);
+            let handle = dlopen(info.dli_fname, second_attempt_flags());
             if handle == ptr::null_mut() {
                 if dlerror() == ptr::null_mut() {
                     panic!("Could not reference parinfer_rust library {:?}.",
