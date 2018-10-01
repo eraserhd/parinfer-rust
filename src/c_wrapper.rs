@@ -22,23 +22,27 @@ mod reference_hack {
 
     static mut INITIALIZED: bool = false;
 
-    #[cfg(not(target = "x86_64-unknown-openbsd"))]
-    use libc::{RTLD_LAZY, RTLD_NOLOAD, RTLD_NODELETE, RTLD_GLOBAL};
+    #[cfg(any(target_os = "netbsd", target_os = "openbsd", target_os = "bitrig"))]
+    mod netbsdlike {
+        use libc::{RTLD_LAZY, RTLD_GLOBAL};
 
-    #[cfg(not(target = "x86_64-unknown-openbsd"))]
-    fn first_attempt_flags() -> i32 { RTLD_LAZY|RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE }
+        pub fn first_attempt_flags() -> i32 { RTLD_LAZY|RTLD_GLOBAL }
+        pub fn second_attempt_flags() -> i32 { RTLD_LAZY|RTLD_GLOBAL }
+    }
 
-    #[cfg(not(target = "x86_64-unknown-openbsd"))]
-    fn second_attempt_flags() -> i32 { RTLD_LAZY|RTLD_GLOBAL|RTLD_NODELETE }
+    #[cfg(any(target_os = "netbsd", target_os = "openbsd", target_os = "bitrig"))]
+    use self::netbsdlike::*;
 
-    #[cfg(target = "x86_64-unknown-openbsd")]
-    use libc::{RTLD_LAZY, RTLD_GLOBAL};
+    #[cfg(not(any(target_os = "netbsd", target_os = "openbsd", target_os = "bitrig")))]
+    mod default {
+        use libc::{RTLD_LAZY, RTLD_NOLOAD, RTLD_NODELETE, RTLD_GLOBAL};
 
-    #[cfg(target = "x86_64-unknown-openbsd")]
-    fn first_attempt_flags() -> i32 { RTLD_LAZY|RTLD_GLOBAL }
+        pub fn first_attempt_flags() -> i32 { RTLD_LAZY|RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE }
+        pub fn second_attempt_flags() -> i32 { RTLD_LAZY|RTLD_GLOBAL|RTLD_NODELETE }
+    }
 
-    #[cfg(target = "x86_64-unknown-openbsd")]
-    fn second_attempt_flags() -> i32 { RTLD_LAZY|RTLD_GLOBAL }
+    #[cfg(not(any(target_os = "netbsd", target_os = "openbsd", target_os = "bitrig")))]
+    use self::default::*;
 
     pub unsafe fn initialize() {
         if INITIALIZED {
