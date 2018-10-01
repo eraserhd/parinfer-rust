@@ -12,6 +12,7 @@ pub enum InputType {
 
 pub enum OutputType {
     Json,
+    Kakoune,
     Text
 }
 
@@ -24,7 +25,7 @@ fn options() -> getopts::Options {
     options.optflag("h", "help", "show this help message");
     options.optopt("", "input-format", "'json', 'text' (default: 'text')", "FMT");
     options.optopt("m", "mode", "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
-    options.optopt("", "output-format", "'json', 'text' (default: 'text')", "FMT");
+    options.optopt("", "output-format", "'json', 'kakoune', 'text' (default: 'text')", "FMT");
     options
 }
 
@@ -68,6 +69,7 @@ impl Options {
             None => OutputType::Text,
             Some(ref s) if s == "text" => OutputType::Text,
             Some(ref s) if s == "json" => OutputType::Json,
+            Some(ref s) if s == "kakoune" => OutputType::Kakoune,
             Some(ref s) => panic!("unknown output fomrat `{}`", s)
         }
     }

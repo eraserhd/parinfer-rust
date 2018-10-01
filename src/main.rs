@@ -33,6 +33,25 @@ fn json_output(_request: &Request, answer: Answer) -> (String, i32) {
     ( text, error_code )
 }
 
+fn kakoune_escape(s: &str) -> String {
+    s.replace("'", "''")
+}
+
+fn kakoune_output(_request: &Request, answer: Answer) -> (String, i32) {
+    if answer.success {
+        ( format!("exec % ; set-register '\"' '{}' ; exec R",
+                  kakoune_escape(&answer.text)),
+          0 )
+    } else {
+        let error_msg = match answer.error {
+            None => String::from("unknown error."),
+            Some(e) => e.message
+        };
+
+        ( format!("fail '{}'\n", kakoune_escape(&error_msg)), 0 )
+    }
+}
+
 fn text_output(_request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
         ( answer.text.into_owned(), 0 )
@@ -53,6 +72,7 @@ pub fn main() {
         let answer = parinfer::process(&request);
         let (output, error_code) = match opts.output_type() {
             OutputType::Json => json_output(&request, answer),
+            OutputType::Kakoune => kakoune_output(&request, answer),
             OutputType::Text => text_output(&request, answer)
         };
         io::stdout().write(output.as_bytes()).expect("unable to write output");
