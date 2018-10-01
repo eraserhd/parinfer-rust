@@ -104,19 +104,17 @@ fn request(matches: &getopts::Matches) -> io::Result<Request> {
     }
 }
 
-pub fn main() -> io::Result<()> {
+pub fn main() {
     let matches = parse_args();
     if matches.opt_present("h") {
         print!("{}", options().usage("Usage: parinfer-rust [options]"));
-        Ok(())
     } else {
-        let request = request(&matches)?;
+        let request = request(&matches).expect("unable to parse options");
         let answer = parinfer::process(&request);
         let output = match output_type(&matches) {
-            OutputType::Json => serde_json::to_string(&answer)?,
+            OutputType::Json => serde_json::to_string(&answer).expect("unable to produce JSON"),
             OutputType::Text => String::from(answer.text)
         };
-        io::stdout().write(output.as_bytes())?;
-        Ok(())
+        io::stdout().write(output.as_bytes()).expect("unable to write output");
     }
 }
