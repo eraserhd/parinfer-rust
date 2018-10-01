@@ -22,15 +22,23 @@ mod reference_hack {
 
     static mut INITIALIZED: bool = false;
 
+    #[cfg(not(target = "x86_64-unknown-openbsd"))]
     use libc::{RTLD_LAZY, RTLD_NOLOAD, RTLD_NODELETE, RTLD_GLOBAL};
 
-    fn first_attempt_flags() -> i32 {
-        RTLD_LAZY|RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE
-    }
+    #[cfg(not(target = "x86_64-unknown-openbsd"))]
+    fn first_attempt_flags() -> i32 { RTLD_LAZY|RTLD_NOLOAD|RTLD_GLOBAL|RTLD_NODELETE }
 
-    fn second_attempt_flags() -> i32 {
-        RTLD_LAZY|RTLD_GLOBAL|RTLD_NODELETE
-    }
+    #[cfg(not(target = "x86_64-unknown-openbsd"))]
+    fn second_attempt_flags() -> i32 { RTLD_LAZY|RTLD_GLOBAL|RTLD_NODELETE }
+
+    #[cfg(target = "x86_64-unknown-openbsd")]
+    use libc::{RTLD_LAZY, RTLD_GLOBAL};
+
+    #[cfg(target = "x86_64-unknown-openbsd")]
+    fn first_attempt_flags() -> i32 { RTLD_LAZY|RTLD_GLOBAL }
+
+    #[cfg(target = "x86_64-unknown-openbsd")]
+    fn second_attempt_flags() -> i32 { RTLD_LAZY|RTLD_GLOBAL }
 
     pub unsafe fn initialize() {
         if INITIALIZED {
