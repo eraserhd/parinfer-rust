@@ -39,7 +39,7 @@ fn kakoune_escape(s: &str) -> String {
 
 fn kakoune_output(_request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
-        ( format!("exec % ; set-register '\"' '{}' ; exec R",
+        ( format!("exec '%' ; set-register '\"' '{}' ; exec -draft '\\R'",
                   kakoune_escape(&answer.text)),
           0 )
     } else {
