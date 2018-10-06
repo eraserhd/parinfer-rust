@@ -16,16 +16,18 @@ information about how the user is changing the file to decide what to do.
 
 You need to have [rust installed](https://www.rust-lang.org/en-US/install.html).
 
-### `pathogen`
+### Vim and Neovim
+
+#### `pathogen`
 
 If you are using Tim Pope's `pathogen`:
 
     $ cd ~/.vim/bundle
-    $ git clone git@github.com:eraserhd/parinfer-rust
+    $ git clone git@github.com:eraserhd/parinfer-rust.git
     $ cd ~/.vim/bundle/parinfer-rust
     $ cargo build --release
 
-### `vim-plug`
+#### `vim-plug`
 
 ```viml
 Plug 'eraserhd/parinfer-rust'
@@ -42,6 +44,17 @@ Or, with optional automatic recompilation on update:
 Plug 'eraserhd/parinfer-rust', {'do':
         \  'cargo build --release'}
 ```
+
+### Kakoune
+
+    $ cd ~/my-projects
+    $ git clone git@github.com:eraserhd/parinfer-rust.git
+    $ cd parinfer-rust
+    $ make install
+    $ cargo build --release
+    $ cargo install
+
+This links
 
 ## Building WebAssembly
 
