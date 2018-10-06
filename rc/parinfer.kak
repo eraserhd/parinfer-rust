@@ -1,5 +1,5 @@
 
-define-command -override -hidden parinfer %{
+define-command -docstring "format bufffer with parinfer-rust" parinfer %{
     eval -draft -save-regs '/"|^@' %{
         exec -save-regs '' 'Z%'
         eval -draft %sh{
