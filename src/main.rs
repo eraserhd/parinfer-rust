@@ -1,8 +1,12 @@
+extern crate getopts;
+
 extern crate serde;
 extern crate serde_json;
 
 #[macro_use]
 extern crate serde_derive;
+
+extern crate text_diff;
 
 extern crate unicode_segmentation;
 extern crate unicode_width;
@@ -18,8 +22,6 @@ use std::io;
 use std::io::Write;
 use types::*;
 use cli_options::OutputType;
-
-extern crate getopts;
 
 fn parse_args() -> cli_options::Options {
     let args: Vec<String> = env::args().collect();
