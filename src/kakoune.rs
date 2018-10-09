@@ -29,26 +29,26 @@ impl Change {
     fn has_changes(&self) -> bool {
         !self.added.is_empty() || !self.removed.is_empty()
     }
+
+    fn new() -> Change {
+        Change {
+            leader: String::new(),
+            added: String::new(),
+            removed: String::new()
+        }
+    }
 }
 
 fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
     let mut result: Vec<Change> = vec![];
     for change in changeset {
         if result.is_empty() {
-            result.push(Change {
-               leader: String::new(),
-               added: String::new(),
-               removed: String::new()
-            });
+            result.push(Change::new());
         }
         match change {
             Difference::Same(s) => {
                 if result.last().unwrap().has_changes() {
-                    result.push(Change {
-                       leader: String::new(),
-                       added: String::new(),
-                       removed: String::new()
-                    });
+                    result.push(Change::new());
                 }
                 result.last_mut().unwrap().leader += &s;
             },
