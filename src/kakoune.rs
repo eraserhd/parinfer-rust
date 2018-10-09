@@ -181,7 +181,16 @@ pub fn replacements<'a>(from: &'a str, to: &'a str) -> Vec<Replacement> {
             }
         }
         let anchor = pos.clone();
-        let cursor = pos.clone();
+        let mut cursor = pos.clone();
+        for ch in change_group.removed_text.chars() {
+            cursor = pos.clone();
+            if ch == '\n' {
+                pos.line += 1;
+                pos.column = 1;
+            } else {
+                pos.column += 1;
+            }
+        }
 
         result.push(Replacement {
            selection: Selection {
@@ -202,5 +211,10 @@ pub fn replacements_works() {
         replacements("abc", "axc"),
         vec![Replacement::new(1,2,1,2,"x")],
         "it can produce a replacement for a single changed letter"
+    );
+    assert_eq!(
+        replacements("hello, worxx", "herxx"),
+        vec![Replacement::new(1,3,1,9,"")],
+        "it can produce a longer deletion"
     );
 }
