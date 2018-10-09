@@ -194,7 +194,7 @@ fn advance(pos: Coord, s: &str) -> (Coord, Coord) {
     (previous, pos)
 }
 
-pub fn replacements<'a>(from: &'a str, to: &'a str) -> Fixes {
+pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
     let (_, changeset) = diff(from, to, "");
     let mut result = Fixes {
         insertions: vec![],
@@ -237,9 +237,9 @@ pub fn replacements<'a>(from: &'a str, to: &'a str) -> Fixes {
 
 #[cfg(test)]
 #[test]
-pub fn replacements_works() {
+pub fn fixes_works() {
     assert_eq!(
-        replacements("abc", "abc"),
+        fixes("abc", "abc"),
         Fixes {
             deletions: vec![],
             insertions: vec![]
@@ -247,7 +247,7 @@ pub fn replacements_works() {
         "it can handle no changes"
     );
     assert_eq!(
-        replacements("abcd", "axcy"),
+        fixes("abcd", "axcy"),
         Fixes {
             deletions: vec![
                 Selection::new(1,2,1,2),
@@ -261,7 +261,7 @@ pub fn replacements_works() {
         "it can produce a replacement for a single changed letter"
     );
     assert_eq!(
-        replacements("hello, worxxyz", "herxx"),
+        fixes("hello, worxxyz", "herxx"),
         Fixes {
             deletions: vec![
                 Selection::new(1,3,1,9),
