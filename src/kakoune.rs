@@ -1,5 +1,4 @@
 use text_diff::*;
-
 #[derive(Debug, Eq, PartialEq)]
 pub struct Coord {
     line: u64,
@@ -19,19 +18,19 @@ pub struct Replacement {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-struct Change {
+struct ChangeGroup {
     leader: String,
     added: String,
     removed: String
 }
 
-impl Change {
+impl ChangeGroup {
     fn has_changes(&self) -> bool {
         !self.added.is_empty() || !self.removed.is_empty()
     }
 
-    fn new() -> Change {
-        Change {
+    fn new() -> ChangeGroup {
+        ChangeGroup {
             leader: String::new(),
             added: String::new(),
             removed: String::new()
@@ -39,13 +38,13 @@ impl Change {
     }
 }
 
-fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
-    let mut result: Vec<Change> = vec![Change::new()];
+fn group_changeset(changeset: Vec<Difference>) -> Vec<ChangeGroup> {
+    let mut result: Vec<ChangeGroup> = vec![ChangeGroup::new()];
     for change in changeset {
         match change {
             Difference::Same(s) => {
                 if result.last().unwrap().has_changes() {
-                    result.push(Change::new());
+                    result.push(ChangeGroup::new());
                 }
                 result.last_mut().unwrap().leader += &s;
             },
@@ -73,7 +72,7 @@ pub fn group_changeset_works() {
             Difference::Same(", world".to_string()),
             Difference::Add("foo".to_string())
         ]),
-        vec![Change {
+        vec![ChangeGroup {
             leader: String::from("hello, world"),
             added: String::from("foo"),
             removed: String::from("")
@@ -86,7 +85,7 @@ pub fn group_changeset_works() {
             Difference::Add("there".to_string()),
             Difference::Add("!".to_string())
         ]),
-        vec![Change {
+        vec![ChangeGroup {
             leader: "hello".to_string(),
             added: "there!".to_string(),
             removed: "".to_string()
@@ -99,7 +98,7 @@ pub fn group_changeset_works() {
             Difference::Rem("there".to_string()),
             Difference::Add("!".to_string())
         ]),
-        vec![Change {
+        vec![ChangeGroup {
             leader: "".to_string(),
             added: "!".to_string(),
             removed: "hellothere".to_string()
@@ -112,11 +111,11 @@ pub fn group_changeset_works() {
             Difference::Same("there".to_string()),
             Difference::Add("!".to_string())
         ]),
-        vec![Change {
+        vec![ChangeGroup {
             leader: "".to_string(),
             added: "".to_string(),
             removed: "hello".to_string()
-        }, Change {
+        }, ChangeGroup {
             leader: "there".to_string(),
             added: "!".to_string(),
             removed: "".to_string()
@@ -129,7 +128,7 @@ pub fn group_changeset_works() {
             Difference::Same("there".to_string()),
             Difference::Same("!".to_string())
         ]),
-        vec![Change {
+        vec![ChangeGroup {
             leader: "".to_string(),
             added: "".to_string(),
             removed: "hello".to_string()
