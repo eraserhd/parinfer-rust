@@ -60,7 +60,8 @@ pub fn group_changeset_works() {
             leader: String::from("hello"),
             added: String::from(""),
             removed: String::from("")
-        }]
+        }],
+        "it collects leader text"
     );
     assert_eq!(
         group_changeset(vec![
@@ -71,7 +72,8 @@ pub fn group_changeset_works() {
             leader: String::from("hello, world"),
             added: String::from(""),
             removed: String::from("")
-        }]
+        }],
+        "it collects and combines leader text"
     );
     assert_eq!(
         group_changeset(vec![
@@ -83,7 +85,8 @@ pub fn group_changeset_works() {
             leader: "hello".to_string(),
             added: "there!".to_string(),
             removed: "".to_string()
-        }]
+        }],
+        "it collects and combines added text"
     );
     assert_eq!(
         group_changeset(vec![
@@ -95,7 +98,8 @@ pub fn group_changeset_works() {
             leader: "".to_string(),
             added: "!".to_string(),
             removed: "hellothere".to_string()
-        }]
+        }],
+        "it collects and combines removed text"
     );
 }
 
