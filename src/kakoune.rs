@@ -127,14 +127,14 @@ pub fn group_changeset_works() {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Coord {
-    line: u64,
-    column: u64
+    pub line: u64,
+    pub column: u64
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Selection {
-    anchor: Coord,
-    cursor: Coord
+    pub anchor: Coord,
+    pub cursor: Coord
 }
 
 impl Selection {
@@ -157,8 +157,8 @@ impl Selection {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Insertion {
-    cursor: Coord,
-    text: String
+    pub cursor: Coord,
+    pub text: String
 }
 
 impl Insertion {
@@ -175,8 +175,8 @@ impl Insertion {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Fixes {
-    deletions: Vec<Selection>,
-    insertions: Vec<Insertion>
+    pub deletions: Vec<Selection>,
+    pub insertions: Vec<Insertion>
 }
 
 fn advance(pos: Coord, s: &str) -> (Coord, Coord) {

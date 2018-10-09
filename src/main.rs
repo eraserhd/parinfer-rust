@@ -40,11 +40,50 @@ fn kakoune_escape(s: &str) -> String {
     s.replace("'", "''")
 }
 
-fn kakoune_output(_request: &Request, answer: Answer) -> (String, i32) {
+fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
-        ( format!("exec '%' ; set-register '\"' '{}' ; exec -draft '\\R'",
-                  kakoune_escape(&answer.text)),
-          0 )
+        let fixes = kakoune::fixes(&request.text, &answer.text);
+        let script = format!(
+            "select {}
+             exec '<a-d>'
+             select {}
+             set-register '\"' {}
+             exec 'P'",
+            fixes
+                .deletions
+                .iter()
+                .map(|d| {
+                    format!(
+                        "{}.{},{}.{}",
+                        d.anchor.line,
+                        d.anchor.column,
+                        d.cursor.line,
+                        d.cursor.column
+                    )
+                })
+                .fold(String::new(), |acc, s| acc + " " + &s),
+            fixes
+                .insertions
+                .iter()
+                .map(|i| {
+                    format!(
+                        "{}.{},{}.{}",
+                        i.cursor.line,
+                        i.cursor.column,
+                        i.cursor.line,
+                        i.cursor.column
+                    )
+                })
+                .fold(String::new(), |acc, s| acc + " " + &s),
+            fixes
+                .insertions
+                .iter()
+                .map(|i| {
+                    format!("'{}'", kakoune_escape(&i.text))
+                })
+                .fold(String::new(), |acc, s| acc + " " + &s)
+        );
+        ( script, 0 )
     } else {
         let error_msg = match answer.error {
             None => String::from("unknown error."),
