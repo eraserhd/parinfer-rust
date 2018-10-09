@@ -12,10 +12,11 @@ extern crate unicode_segmentation;
 extern crate unicode_width;
 
 
-mod parinfer;
-mod types;
 mod changes;
 mod cli_options;
+mod kakoune;
+mod parinfer;
+mod types;
 
 use std::env;
 use std::io;
