@@ -25,6 +25,12 @@ struct Change {
     removed: String
 }
 
+impl Change {
+    fn has_changes(&self) -> bool {
+        !self.added.is_empty() || !self.removed.is_empty()
+    }
+}
+
 fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
     let mut result: Vec<Change> = vec![];
     for change in changeset {
@@ -37,6 +43,13 @@ fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
         }
         match change {
             Difference::Same(s) => {
+                if result.last().unwrap().has_changes() {
+                    result.push(Change {
+                       leader: String::new(),
+                       added: String::new(),
+                       removed: String::new()
+                    });
+                }
                 result.last_mut().unwrap().leader += &s;
             },
             Difference::Add(s) => {
@@ -100,6 +113,23 @@ pub fn group_changeset_works() {
             removed: "hellothere".to_string()
         }],
         "it collects and combines removed text"
+    );
+    assert_eq!(
+        group_changeset(vec![
+            Difference::Rem("hello".to_string()),
+            Difference::Same("there".to_string()),
+            Difference::Add("!".to_string())
+        ]),
+        vec![Change {
+            leader: "".to_string(),
+            added: "".to_string(),
+            removed: "hello".to_string()
+        }, Change {
+            leader: "there".to_string(),
+            added: "!".to_string(),
+            removed: "".to_string()
+        }],
+        "it starts a new change when seeing a 'Same' node"
     );
 }
 
