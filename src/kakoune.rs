@@ -164,6 +164,17 @@ impl Replacement {
     }
 }
 
+fn advance(pos: &mut Coord, s: &str) {
+    for ch in s.chars() {
+        if ch == '\n' {
+            pos.line += 1;
+            pos.column = 1;
+        } else {
+            pos.column += 1;
+        }
+    }
+}
+
 pub fn replacements<'a>(from: &'a str, to: &'a str) -> Vec<Replacement> {
     let (_, changeset) = diff(from, to, "");
     let mut result: Vec<Replacement> = vec![];
@@ -172,14 +183,7 @@ pub fn replacements<'a>(from: &'a str, to: &'a str) -> Vec<Replacement> {
         column: 1
     };
     for change_group in group_changeset(changeset) {
-        for ch in change_group.unchanged_leader.chars() {
-            if ch == '\n' {
-                pos.line += 1;
-                pos.column = 1;
-            } else {
-                pos.column += 1;
-            }
-        }
+        advance(&mut pos, &change_group.unchanged_leader);
         let anchor = pos.clone();
         let mut cursor = pos.clone();
         for ch in change_group.removed_text.chars() {
