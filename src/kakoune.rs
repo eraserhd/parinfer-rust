@@ -40,11 +40,8 @@ impl Change {
 }
 
 fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
-    let mut result: Vec<Change> = vec![];
+    let mut result: Vec<Change> = vec![Change::new()];
     for change in changeset {
-        if result.is_empty() {
-            result.push(Change::new());
-        }
         match change {
             Difference::Same(s) => {
                 if result.last().unwrap().has_changes() {
@@ -60,6 +57,9 @@ fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
             }
         }
     }
+    if !result.last().unwrap().has_changes() {
+        result.pop();
+    }
     result
 }
 
@@ -68,22 +68,14 @@ fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
 pub fn group_changeset_works() {
     assert_eq!(group_changeset(vec![]), vec![]);
     assert_eq!(
-        group_changeset(vec![Difference::Same("hello".to_string())]),
-        vec![Change {
-            leader: String::from("hello"),
-            added: String::from(""),
-            removed: String::from("")
-        }],
-        "it collects leader text"
-    );
-    assert_eq!(
         group_changeset(vec![
             Difference::Same("hello".to_string()),
-            Difference::Same(", world".to_string())
+            Difference::Same(", world".to_string()),
+            Difference::Add("foo".to_string())
         ]),
         vec![Change {
             leader: String::from("hello, world"),
-            added: String::from(""),
+            added: String::from("foo"),
             removed: String::from("")
         }],
         "it collects and combines leader text"
@@ -130,6 +122,19 @@ pub fn group_changeset_works() {
             removed: "".to_string()
         }],
         "it starts a new change when seeing a 'Same' node"
+    );
+    assert_eq!(
+        group_changeset(vec![
+            Difference::Rem("hello".to_string()),
+            Difference::Same("there".to_string()),
+            Difference::Same("!".to_string())
+        ]),
+        vec![Change {
+            leader: "".to_string(),
+            added: "".to_string(),
+            removed: "hello".to_string()
+        }],
+        "it doesn't return a trailing node without changes"
     );
 }
 
