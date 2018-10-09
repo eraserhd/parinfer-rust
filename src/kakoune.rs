@@ -164,8 +164,11 @@ impl Replacement {
     }
 }
 
-fn advance(pos: &mut Coord, s: &str) {
+fn advance(pos: Coord, s: &str) -> (Coord, Coord) {
+    let mut pos = pos;
+    let mut previous = pos.clone();
     for ch in s.chars() {
+        previous = pos.clone();
         if ch == '\n' {
             pos.line += 1;
             pos.column = 1;
@@ -173,6 +176,7 @@ fn advance(pos: &mut Coord, s: &str) {
             pos.column += 1;
         }
     }
+    (previous, pos)
 }
 
 pub fn replacements<'a>(from: &'a str, to: &'a str) -> Vec<Replacement> {
@@ -183,24 +187,14 @@ pub fn replacements<'a>(from: &'a str, to: &'a str) -> Vec<Replacement> {
         column: 1
     };
     for change_group in group_changeset(changeset) {
-        advance(&mut pos, &change_group.unchanged_leader);
+        pos = advance(pos, &change_group.unchanged_leader).1;
         let anchor = pos.clone();
-        let mut cursor = pos.clone();
-        for ch in change_group.removed_text.chars() {
-            cursor = pos.clone();
-            if ch == '\n' {
-                pos.line += 1;
-                pos.column = 1;
-            } else {
-                pos.column += 1;
-            }
-        }
+        let advanced = advance(pos, &change_group.removed_text);
+        pos = advanced.1;
+        let cursor = advanced.0;
 
         result.push(Replacement {
-           selection: Selection {
-               anchor,
-               cursor
-           },
+           selection: Selection { anchor, cursor },
            text: change_group.added_text
         });
     }
