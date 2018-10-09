@@ -28,13 +28,16 @@ struct Change {
 fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
     let mut result: Vec<Change> = vec![];
     for change in changeset {
+        if result.is_empty() {
+            result.push(Change {
+               leader: String::new(),
+               added: String::new(),
+               removed: String::new()
+            });
+        }
         match change {
             Difference::Same(s) => {
-                result.push(Change {
-                   leader: s,
-                   added: String::new(),
-                   removed: String::new()
-                });
+                result.last_mut().unwrap().leader += &s;
             },
             _ => ()
         }
@@ -49,6 +52,13 @@ pub fn group_changeset_works() {
     assert_eq!(group_changeset(vec![Difference::Same("hello".to_string())]),
                vec![Change {
                    leader: String::from("hello"),
+                   added: String::from(""),
+                   removed: String::from("")
+               }]);
+    assert_eq!(group_changeset(vec![Difference::Same("hello".to_string()),
+                                    Difference::Same(", world".to_string())]),
+               vec![Change {
+                   leader: String::from("hello, world"),
                    added: String::from(""),
                    removed: String::from("")
                }]);
