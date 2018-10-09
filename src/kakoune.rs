@@ -20,20 +20,20 @@ pub struct Replacement {
 #[derive(Debug, Eq, PartialEq)]
 struct ChangeGroup {
     unchanged_leader: String,
-    added: String,
-    removed: String
+    added_text: String,
+    removed_text: String
 }
 
 impl ChangeGroup {
     fn has_changes(&self) -> bool {
-        !self.added.is_empty() || !self.removed.is_empty()
+        !self.added_text.is_empty() || !self.removed_text.is_empty()
     }
 
     fn new() -> ChangeGroup {
         ChangeGroup {
             unchanged_leader: String::new(),
-            added: String::new(),
-            removed: String::new()
+            added_text: String::new(),
+            removed_text: String::new()
         }
     }
 }
@@ -49,10 +49,10 @@ fn group_changeset(changeset: Vec<Difference>) -> Vec<ChangeGroup> {
                 result.last_mut().unwrap().unchanged_leader += &s;
             },
             Difference::Add(s) => {
-                result.last_mut().unwrap().added += &s;
+                result.last_mut().unwrap().added_text += &s;
             },
             Difference::Rem(s) => {
-                result.last_mut().unwrap().removed += &s;
+                result.last_mut().unwrap().removed_text += &s;
             }
         }
     }
@@ -74,8 +74,8 @@ pub fn group_changeset_works() {
         ]),
         vec![ChangeGroup {
             unchanged_leader: String::from("hello, world"),
-            added: String::from("foo"),
-            removed: String::from("")
+            added_text: String::from("foo"),
+            removed_text: String::from("")
         }],
         "it collects and combines unchanged_leader text"
     );
@@ -87,10 +87,10 @@ pub fn group_changeset_works() {
         ]),
         vec![ChangeGroup {
             unchanged_leader: "hello".to_string(),
-            added: "there!".to_string(),
-            removed: "".to_string()
+            added_text: "there!".to_string(),
+            removed_text: "".to_string()
         }],
-        "it collects and combines added text"
+        "it collects and combines added_text text"
     );
     assert_eq!(
         group_changeset(vec![
@@ -100,10 +100,10 @@ pub fn group_changeset_works() {
         ]),
         vec![ChangeGroup {
             unchanged_leader: "".to_string(),
-            added: "!".to_string(),
-            removed: "hellothere".to_string()
+            added_text: "!".to_string(),
+            removed_text: "hellothere".to_string()
         }],
-        "it collects and combines removed text"
+        "it collects and combines removed_text text"
     );
     assert_eq!(
         group_changeset(vec![
@@ -113,12 +113,12 @@ pub fn group_changeset_works() {
         ]),
         vec![ChangeGroup {
             unchanged_leader: "".to_string(),
-            added: "".to_string(),
-            removed: "hello".to_string()
+            added_text: "".to_string(),
+            removed_text: "hello".to_string()
         }, ChangeGroup {
             unchanged_leader: "there".to_string(),
-            added: "!".to_string(),
-            removed: "".to_string()
+            added_text: "!".to_string(),
+            removed_text: "".to_string()
         }],
         "it starts a new change when seeing a 'Same' node"
     );
@@ -130,8 +130,8 @@ pub fn group_changeset_works() {
         ]),
         vec![ChangeGroup {
             unchanged_leader: "".to_string(),
-            added: "".to_string(),
-            removed: "hello".to_string()
+            added_text: "".to_string(),
+            removed_text: "hello".to_string()
         }],
         "it doesn't return a trailing node without changes"
     );
