@@ -19,7 +19,7 @@ pub struct Replacement {
 
 #[derive(Debug, Eq, PartialEq)]
 struct ChangeGroup {
-    leader: String,
+    unchanged_leader: String,
     added: String,
     removed: String
 }
@@ -31,7 +31,7 @@ impl ChangeGroup {
 
     fn new() -> ChangeGroup {
         ChangeGroup {
-            leader: String::new(),
+            unchanged_leader: String::new(),
             added: String::new(),
             removed: String::new()
         }
@@ -46,7 +46,7 @@ fn group_changeset(changeset: Vec<Difference>) -> Vec<ChangeGroup> {
                 if result.last().unwrap().has_changes() {
                     result.push(ChangeGroup::new());
                 }
-                result.last_mut().unwrap().leader += &s;
+                result.last_mut().unwrap().unchanged_leader += &s;
             },
             Difference::Add(s) => {
                 result.last_mut().unwrap().added += &s;
@@ -73,11 +73,11 @@ pub fn group_changeset_works() {
             Difference::Add("foo".to_string())
         ]),
         vec![ChangeGroup {
-            leader: String::from("hello, world"),
+            unchanged_leader: String::from("hello, world"),
             added: String::from("foo"),
             removed: String::from("")
         }],
-        "it collects and combines leader text"
+        "it collects and combines unchanged_leader text"
     );
     assert_eq!(
         group_changeset(vec![
@@ -86,7 +86,7 @@ pub fn group_changeset_works() {
             Difference::Add("!".to_string())
         ]),
         vec![ChangeGroup {
-            leader: "hello".to_string(),
+            unchanged_leader: "hello".to_string(),
             added: "there!".to_string(),
             removed: "".to_string()
         }],
@@ -99,7 +99,7 @@ pub fn group_changeset_works() {
             Difference::Add("!".to_string())
         ]),
         vec![ChangeGroup {
-            leader: "".to_string(),
+            unchanged_leader: "".to_string(),
             added: "!".to_string(),
             removed: "hellothere".to_string()
         }],
@@ -112,11 +112,11 @@ pub fn group_changeset_works() {
             Difference::Add("!".to_string())
         ]),
         vec![ChangeGroup {
-            leader: "".to_string(),
+            unchanged_leader: "".to_string(),
             added: "".to_string(),
             removed: "hello".to_string()
         }, ChangeGroup {
-            leader: "there".to_string(),
+            unchanged_leader: "there".to_string(),
             added: "!".to_string(),
             removed: "".to_string()
         }],
@@ -129,7 +129,7 @@ pub fn group_changeset_works() {
             Difference::Same("!".to_string())
         ]),
         vec![ChangeGroup {
-            leader: "".to_string(),
+            unchanged_leader: "".to_string(),
             added: "".to_string(),
             removed: "hello".to_string()
         }],
