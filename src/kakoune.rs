@@ -18,6 +18,25 @@ pub struct Replacement {
     text: String
 }
 
+#[derive(Debug, Eq, PartialEq)]
+struct Change {
+    leader: String,
+    added: String,
+    removed: String
+}
+
+fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
+    let mut result: Vec<Change> = vec![];
+    result
+}
+
+#[cfg(test)]
+#[test]
+pub fn group_changeset_works() {
+    assert_eq!(group_changeset(vec![]), vec![]);
+}
+
+
 pub fn replacements<'a>(from: &'a str, to: &'a str) -> Vec<Replacement> {
     vec![]
 }
