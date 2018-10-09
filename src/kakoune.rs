@@ -41,8 +41,10 @@ fn group_changeset(changeset: Vec<Difference>) -> Vec<Change> {
             },
             Difference::Add(s) => {
                 result.last_mut().unwrap().added += &s;
+            },
+            Difference::Rem(s) => {
+                result.last_mut().unwrap().removed += &s;
             }
-            _ => ()
         }
     }
     result
@@ -83,7 +85,18 @@ pub fn group_changeset_works() {
             removed: "".to_string()
         }]
     );
-
+    assert_eq!(
+        group_changeset(vec![
+            Difference::Rem("hello".to_string()),
+            Difference::Rem("there".to_string()),
+            Difference::Add("!".to_string())
+        ]),
+        vec![Change {
+            leader: "".to_string(),
+            added: "!".to_string(),
+            removed: "hellothere".to_string()
+        }]
+    );
 }
 
 
