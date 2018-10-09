@@ -1,21 +1,4 @@
 use text_diff::*;
-#[derive(Debug, Eq, PartialEq)]
-pub struct Coord {
-    line: u64,
-    column: u64
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct Selection {
-    anchor: Coord,
-    cursor: Coord
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct Replacement {
-    selection: Selection,
-    text: String
-}
 
 /// A ChangeGroup is a (possibly empty) bit of unchanged leading text followed
 /// by added and removed text.
@@ -142,13 +125,82 @@ pub fn group_changeset_works() {
     );
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Coord {
+    line: u64,
+    column: u64
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Selection {
+    anchor: Coord,
+    cursor: Coord
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Replacement {
+    selection: Selection,
+    text: String
+}
+
+impl Replacement {
+    fn new(anchor_line: u64, anchor_column: u64,
+        cursor_line: u64, cursor_column: u64,
+        text: &str) -> Replacement
+    {
+        Replacement {
+            selection: Selection{
+                anchor: Coord {
+                    line: anchor_line,
+                    column: anchor_column
+                },
+                cursor: Coord {
+                    line: cursor_line,
+                    column: cursor_column
+                }
+            },
+            text: String::from(text)
+        }
+    }
+}
 
 pub fn replacements<'a>(from: &'a str, to: &'a str) -> Vec<Replacement> {
-    vec![]
+    let (_, changeset) = diff(from, to, "");
+    let mut result: Vec<Replacement> = vec![];
+    let mut pos = Coord {
+        line: 1,
+        column: 1
+    };
+    for change_group in group_changeset(changeset) {
+        for ch in change_group.unchanged_leader.chars() {
+            if ch == '\n' {
+                pos.line += 1;
+                pos.column = 1;
+            } else {
+                pos.column += 1;
+            }
+        }
+        let anchor = pos.clone();
+        let cursor = pos.clone();
+
+        result.push(Replacement {
+           selection: Selection {
+               anchor,
+               cursor
+           },
+           text: change_group.added_text
+        });
+    }
+    result
 }
 
 #[cfg(test)]
 #[test]
 pub fn replacements_works() {
-    assert_eq!(replacements("abc", "abc"), vec![]);
+    assert_eq!(replacements("abc", "abc"), vec![], "it can handle no changes");
+    assert_eq!(
+        replacements("abc", "axc"),
+        vec![Replacement::new(1,2,1,2,"x")],
+        "it can produce a replacement for a single changed letter"
+    );
 }
