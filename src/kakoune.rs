@@ -5,7 +5,7 @@ use text_diff::*;
 ///
 /// The order of the added and removed text doesn't matter to us since we want
 /// to make one big replace or delete from it.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct ChangeGroup {
     unchanged_leader: String,
     added_text: String,
@@ -137,31 +137,46 @@ pub struct Selection {
     cursor: Coord
 }
 
+impl Selection {
+    fn new(
+        anchor_line: u64, anchor_column: u64, cursor_line: u64,
+        cursor_column: u64) -> Selection
+    {
+        Selection {
+            anchor: Coord {
+                line: anchor_line,
+                column: anchor_column
+            },
+            cursor: Coord {
+                line: cursor_line,
+                column: cursor_column
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Replacement {
-    selection: Selection,
+pub struct Insertion {
+    cursor: Coord,
     text: String
 }
 
-impl Replacement {
-    fn new(anchor_line: u64, anchor_column: u64,
-        cursor_line: u64, cursor_column: u64,
-        text: &str) -> Replacement
-    {
-        Replacement {
-            selection: Selection{
-                anchor: Coord {
-                    line: anchor_line,
-                    column: anchor_column
-                },
-                cursor: Coord {
-                    line: cursor_line,
-                    column: cursor_column
-                }
+impl Insertion {
+    fn new(cursor_line: u64, cursor_column: u64, text: &str) -> Insertion {
+        Insertion {
+            cursor: Coord {
+                line: cursor_line,
+                column: cursor_column
             },
-            text: String::from(text)
+            text: text.to_string()
         }
     }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Fixes {
+    deletions: Vec<Selection>,
+    insertions: Vec<Insertion>
 }
 
 fn advance(pos: Coord, s: &str) -> (Coord, Coord) {
@@ -179,24 +194,43 @@ fn advance(pos: Coord, s: &str) -> (Coord, Coord) {
     (previous, pos)
 }
 
-pub fn replacements<'a>(from: &'a str, to: &'a str) -> Vec<Replacement> {
+pub fn replacements<'a>(from: &'a str, to: &'a str) -> Fixes {
     let (_, changeset) = diff(from, to, "");
-    let mut result: Vec<Replacement> = vec![];
+    let mut result = Fixes {
+        insertions: vec![],
+        deletions: vec![]
+    };
     let mut pos = Coord {
         line: 1,
         column: 1
     };
-    for change_group in group_changeset(changeset) {
+    let change_groups = group_changeset(changeset);
+    for change_group in change_groups.clone() {
         pos = advance(pos, &change_group.unchanged_leader).1;
-        let anchor = pos.clone();
-        let advanced = advance(pos, &change_group.removed_text);
-        pos = advanced.1;
-        let cursor = advanced.0;
+        if !change_group.removed_text.is_empty() {
+            let anchor = pos.clone();
+            let advanced = advance(pos, &change_group.removed_text);
+            pos = advanced.1;
+            let cursor = advanced.0;
 
-        result.push(Replacement {
-           selection: Selection { anchor, cursor },
-           text: change_group.added_text
-        });
+            result.deletions.push(Selection {
+                anchor,
+                cursor
+            });
+        }
+    }
+    pos = Coord {
+        line: 1,
+        column: 1
+    };
+    for change_group in change_groups {
+        pos = advance(pos, &change_group.unchanged_leader).1;
+        if !change_group.added_text.is_empty() {
+            result.insertions.push(Insertion {
+                cursor: pos.clone(),
+                text: change_group.added_text
+            });
+        }
     }
     result
 }
@@ -204,15 +238,37 @@ pub fn replacements<'a>(from: &'a str, to: &'a str) -> Vec<Replacement> {
 #[cfg(test)]
 #[test]
 pub fn replacements_works() {
-    assert_eq!(replacements("abc", "abc"), vec![], "it can handle no changes");
     assert_eq!(
-        replacements("abc", "axc"),
-        vec![Replacement::new(1,2,1,2,"x")],
+        replacements("abc", "abc"),
+        Fixes {
+            deletions: vec![],
+            insertions: vec![]
+        },
+        "it can handle no changes"
+    );
+    assert_eq!(
+        replacements("abcd", "axcy"),
+        Fixes {
+            deletions: vec![
+                Selection::new(1,2,1,2),
+                Selection::new(1,4,1,4)
+            ],
+            insertions: vec![
+                Insertion::new(1,2,"x"),
+                Insertion::new(1,3,"y")
+            ]
+        },
         "it can produce a replacement for a single changed letter"
     );
     assert_eq!(
-        replacements("hello, worxx", "herxx"),
-        vec![Replacement::new(1,3,1,9,"")],
+        replacements("hello, worxxyz", "herxx"),
+        Fixes {
+            deletions: vec![
+                Selection::new(1,3,1,9),
+                Selection::new(1,13,1,14)
+            ],
+            insertions: vec![]
+        },
         "it can produce a longer deletion"
     );
 }
