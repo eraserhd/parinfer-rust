@@ -17,6 +17,11 @@ pub struct Replacement {
     text: String
 }
 
+/// A ChangeGroup is a (possibly empty) bit of unchanged leading text followed
+/// by added and removed text.
+///
+/// The order of the added and removed text doesn't matter to us since we want
+/// to make one big replace or delete from it.
 #[derive(Debug, Eq, PartialEq)]
 struct ChangeGroup {
     unchanged_leader: String,
