@@ -43,46 +43,61 @@ fn kakoune_escape(s: &str) -> String {
 fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
         let fixes = kakoune::fixes(&request.text, &answer.text);
-        let script = format!(
-            "select {}
-             exec '<a-d>'
-             select {}
-             set-register '\"' {}
-             exec 'P'",
-            fixes
-                .deletions
-                .iter()
-                .map(|d| {
-                    format!(
-                        "{}.{},{}.{}",
-                        d.anchor.line,
-                        d.anchor.column,
-                        d.cursor.line,
-                        d.cursor.column
-                    )
-                })
-                .fold(String::new(), |acc, s| acc + " " + &s),
-            fixes
-                .insertions
-                .iter()
-                .map(|i| {
-                    format!(
-                        "{}.{},{}.{}",
-                        i.cursor.line,
-                        i.cursor.column,
-                        i.cursor.line,
-                        i.cursor.column
-                    )
-                })
-                .fold(String::new(), |acc, s| acc + " " + &s),
-            fixes
-                .insertions
-                .iter()
-                .map(|i| {
-                    format!("'{}'", kakoune_escape(&i.text))
-                })
-                .fold(String::new(), |acc, s| acc + " " + &s)
-        );
+
+        let delete_script: String;
+        if fixes.deletions.is_empty() {
+            delete_script = String::new()
+        } else {
+            delete_script = format!(
+                "select {}\nexec '<a-d>'\n",
+                fixes
+                    .deletions
+                    .iter()
+                    .map(|d| {
+                        format!(
+                            "{}.{},{}.{}",
+                            d.anchor.line,
+                            d.anchor.column,
+                            d.cursor.line,
+                            d.cursor.column
+                        )
+                    })
+                    .fold(String::new(), |acc, s| acc + " " + &s)
+            );
+        }
+
+        let insert_script: String;
+        if fixes.insertions.is_empty() {
+            insert_script = String::new()
+        } else {
+            insert_script = format!(
+                "select {}
+                 set-register '\"' {}
+                 exec 'P'",
+                fixes
+                    .insertions
+                    .iter()
+                    .map(|i| {
+                        format!(
+                            "{}.{},{}.{}",
+                            i.cursor.line,
+                            i.cursor.column,
+                            i.cursor.line,
+                            i.cursor.column
+                        )
+                    })
+                    .fold(String::new(), |acc, s| acc + " " + &s),
+                fixes
+                    .insertions
+                    .iter()
+                    .map(|i| {
+                        format!("'{}'", kakoune_escape(&i.text))
+                    })
+                    .fold(String::new(), |acc, s| acc + " " + &s)
+            );
+        }
+
+        let script = format!("{}\n{}", delete_script, insert_script);
         ( script, 0 )
     } else {
         let error_msg = match answer.error {
