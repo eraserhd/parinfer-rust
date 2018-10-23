@@ -1,14 +1,14 @@
 define-command -params .. \
     -docstring %{parinfer [<switches>]: reformat buffer with parinfer-rust
 Modes:
-    -indent  Preserve indentation and fix parentheses.
+    -indent  Preserve indentation and fix parentheses (default).
     -paren   Preserve parentheses and fix indentation.
-    -smart   Try to be smart about what to fix (default).} \
+    -smart   Try to be smart about what to fix.} \
     parinfer %{
     eval -draft -save-regs '/"|^@' %{
         exec -save-regs '' 'Z%'
         eval -draft %sh{
-            mode=smart
+            mode=indent
             while [ $# -ne 0 ]; do
                 case "$1" in
                     -smart) mode=smart;;
