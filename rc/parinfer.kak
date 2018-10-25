@@ -11,7 +11,7 @@ Modes:
     -smart   Try to be smart about what to fix.} \
     parinfer %{
     eval -draft -save-regs '/"|^@' %{
-        exec -save-regs '' 'Z%'
+        exec '%'
         eval -draft %sh{
             mode=indent
             while [ $# -ne 0 ]; do
@@ -80,7 +80,6 @@ Modes:
             set-option buffer parinfer_previous_cursor_char_column %val{cursor_char_column}
             set-option buffer parinfer_previous_cursor_line %val{cursor_line}
         }
-        exec -save-regs '' z
     }
 }
 
