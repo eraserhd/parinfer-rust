@@ -64,4 +64,13 @@ Modes:
 
 hook -group parinfer global WinSetOption filetype=clojure %{
     parinfer -paren
+    hook -group parinfer window NormalIdle '' %{
+        parinfer -smart
+    }
+    hook -group parinfer window InsertChar .* %{
+        parinfer -smart
+    }
+    hook -group parinfer window InsertDelete .* %{
+        parinfer -smart
+    }
 }
