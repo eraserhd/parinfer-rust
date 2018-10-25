@@ -1,4 +1,4 @@
-use text_diff::*;
+use difference::*;
 
 /// A ChangeGroup is a (possibly empty) bit of unchanged leading text followed
 /// by added and removed text.
