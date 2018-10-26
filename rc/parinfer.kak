@@ -33,24 +33,10 @@ Modes:
                 exit 0
             fi
             exec awk '
-                BEGIN{
-                    for (i = 0; i <= 31; i++) {
-                        CODES[sprintf("%c", i)] = sprintf("\\u%04X", i);
-                    }
-                    CODES["\n"] = "\\n";
-                    CODES["\\"] = "\\\\";
-                    CODES["\""] = "\\\"";
-                }
                 function json_encode(data) {
-                    result = "";
-                    for (i = 1; i <= length(data); i++) {
-                        char = substr(data,i,1);
-                        if ((char) in CODES) {
-                            char = CODES[char];
-                        }
-                        result = result char;
-                    }
-                    return result;
+                    gsub(/["\\]/, "\\&", data);
+                    gsub(/\n/, "\\n", data);
+                    return data;
                 }
                 BEGIN{
                     printf \
@@ -68,7 +54,7 @@ Modes:
                         ENVIRON["mode"],
                         json_encode(ENVIRON["kak_selection"]),
                         (ENVIRON["kak_cursor_char_column"] - 1),
-                        (ENVIRON["kak_cursor_line"] - 1), \
+                        (ENVIRON["kak_cursor_line"] - 1),
                         (ENVIRON["kak_opt_parinfer_previous_cursor_char_column"] - 1),
                         (ENVIRON["kak_opt_parinfer_previous_cursor_line"] - 1),
                         json_encode(ENVIRON["kak_opt_parinfer_previous_text"]) \
