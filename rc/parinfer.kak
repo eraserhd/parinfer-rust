@@ -33,7 +33,6 @@ Modes:
                 exit 0
             fi
             exec awk '
-                # -- JSON encoding of strings --
                 BEGIN{
                     for (i = 0; i <= 31; i++) {
                         CODES[sprintf("%c", i)] = sprintf("\\u%04X", i);
@@ -53,7 +52,6 @@ Modes:
                     }
                     return result;
                 }
-                # -- Main program --
                 BEGIN{
                     printf \
                         "{\n" \
