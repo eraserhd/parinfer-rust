@@ -28,6 +28,9 @@ Modes:
                 export kak_opt_parinfer_previous_text="${kak_selection}"
                 export kak_opt_parinfer_previous_cursor_char_column="${kak_cursor_char_column}"
                 export kak_opt_parinfer_previous_cursor_line="${kak_cursor_line}"
+            elif [ "$mode" = smart ] &&
+                 [ "${kak_opt_parinfer_previous_timestamp}" = "$kak_timestamp" ]; then
+                exit 0
             fi
             exec awk '
                 # -- JSON encoding of strings --
