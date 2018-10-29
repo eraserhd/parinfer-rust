@@ -11,24 +11,6 @@ jobs:
       - run:
           name: Running tests
           command: RUST_BACKTRACE=1 cargo test
-      - run:
-          name: Testing WASM build
-          command: |
-            export RUST_BACKTRACE=1
-            rustup install nightly
-            cargo +nightly install --version 0.6.15 cargo-web
-
-            # Work-around for https://github.com/koute/cargo-web/issues/142
-            sed -i.bak \
-                -e '/^\[package\]/a\
-            exclude = ["src/main.rs"]' \
-                -e '/^\[\[bin\]\]/,/^[ 	]*$/d' \
-                Cargo.toml
-            echo ====
-            cat Cargo.toml
-            echo ====
-
-            cargo +nightly web test --nodejs
 workflows:
   version: 2
   build-and-deploy:
