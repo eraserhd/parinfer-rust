@@ -22,8 +22,8 @@ jobs:
             sed -i.bak -e '/^\[\[bin\]\]/,/^[ 	]*$/{
                 d
                 a\
-[package]\
-exclude = "src/main.rs"
+            [package]\
+            exclude = "src/main.rs"
             }' Cargo.toml
             echo ====
             cat Cargo.toml
