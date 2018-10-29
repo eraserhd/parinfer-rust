@@ -21,7 +21,7 @@ jobs:
             # Work-around for https://github.com/koute/cargo-web/issues/142
             sed -i.bak \
                 -e '/^\[package\]/a\
-            exclude = "src/main.rs"' \
+            exclude = ["src/main.rs"]' \
                 -e '/^\[\[bin\]\]/,/^[ 	]*$/d' \
                 Cargo.toml
             echo ====
