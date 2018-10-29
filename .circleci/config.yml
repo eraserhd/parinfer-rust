@@ -19,6 +19,9 @@ jobs:
 
             # Work-around for https://github.com/koute/cargo-web/issues/142
             sed -i.bak -e '/^\[\[bin\]\]/,/^[ 	]*$/d' Cargo.toml
+            echo ====
+            cat Cargo.toml
+            echo ====
 
             cargo +nightly web test --nodejs
 workflows:
