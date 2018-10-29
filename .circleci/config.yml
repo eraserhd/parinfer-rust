@@ -19,7 +19,12 @@ jobs:
             cargo +nightly install --version 0.6.15 cargo-web
 
             # Work-around for https://github.com/koute/cargo-web/issues/142
-            sed -i.bak -e '/^\[\[bin\]\]/,/^[ 	]*$/d' Cargo.toml
+            sed -i.bak -e '/^\[\[bin\]\]/,/^[ 	]*$/{
+                d
+                a\
+[package]\
+exclude = "src/main.rs"
+            }' Cargo.toml
             echo ====
             cat Cargo.toml
             echo ====
