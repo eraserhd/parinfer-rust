@@ -14,6 +14,7 @@ jobs:
       - run:
           name: Testing WASM build
           command: |
+            export RUST_BACKTRACE=1
             rustup install nightly
             cargo +nightly install cargo-web
 
