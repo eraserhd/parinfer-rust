@@ -16,7 +16,7 @@ jobs:
           command: |
             export RUST_BACKTRACE=1
             rustup install nightly
-            cargo +nightly install cargo-web
+            cargo +nightly install --version 0.6.15 cargo-web
 
             # Work-around for https://github.com/koute/cargo-web/issues/142
             sed -i.bak -e '/^\[\[bin\]\]/,/^[ 	]*$/d' Cargo.toml
