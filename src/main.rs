@@ -49,7 +49,7 @@ fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
             delete_script = String::new()
         } else {
             delete_script = format!(
-                "select {}\nexec '<a-d>'\n",
+                "select {}\nexec '\\<a-d>'\n",
                 fixes
                     .deletions
                     .iter()
@@ -73,7 +73,7 @@ fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
             insert_script = format!(
                 "select {}
                  set-register '\"' {}
-                 exec 'P'",
+                 exec '\\P'",
                 fixes
                     .insertions
                     .iter()

@@ -12,9 +12,9 @@ Modes:
     -paren   Preserve parentheses and fix indentation.
     -smart   Try to be smart about what to fix.} \
     parinfer %{
-    eval -draft -save-regs '/"|^@' %{
-        exec '%'
-        eval -draft %sh{
+    eval -draft -save-regs '/"|^@' -no-hooks %{
+        exec '\%'
+        eval -draft -no-hooks %sh{
             mode=indent
             while [ $# -ne 0 ]; do
                 case "$1" in
@@ -88,27 +88,27 @@ Modes:
 
 hook -group parinfer global WinSetOption filetype=clojure %{
     evaluate-commands %sh{
-        if [ $parinfer_enabled = true ]; then
+        if [ $kak_opt_parinfer_enabled = true ]; then
             parinfer -paren
         fi
     }
     hook -group parinfer window NormalIdle '' %{
         evaluate-commands %sh{
-            if [ $parinfer_enabled = true ]; then
+            if [ $kak_opt_parinfer_enabled = true ]; then
                 parinfer -smart
             fi
         }
     }
     hook -group parinfer window InsertChar .* %{
         evaluate-commands %sh{
-            if [ $parinfer_enabled = true ]; then
+            if [ $kak_opt_parinfer_enabled = true ]; then
                 parinfer -smart
             fi
         }
     }
     hook -group parinfer window InsertDelete .* %{
         evaluate-commands %sh{
-            if [ $parinfer_enabled = true ]; then
+            if [ $kak_opt_parinfer_enabled = true ]; then
                 parinfer -smart
             fi
         }
