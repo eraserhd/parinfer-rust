@@ -70,7 +70,7 @@ Modes:
                         ENVIRON["mode"],
                         json_encode(ENVIRON["kak_selection"]),
                         (ENVIRON["kak_cursor_char_column"] - 1),
-                        (ENVIRON["kak_cursor_line"] - 1), \
+                        (ENVIRON["kak_cursor_line"] - 1),
                         (ENVIRON["kak_opt_parinfer_previous_cursor_char_column"] - 1),
                         (ENVIRON["kak_opt_parinfer_previous_cursor_line"] - 1),
                         json_encode(ENVIRON["kak_opt_parinfer_previous_text"]) \
