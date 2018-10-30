@@ -1,3 +1,5 @@
+declare-option -docstring %{Whether to automatically update the buffer on changes} bool parinfer_enabled no
+
 declare-option -hidden str parinfer_previous_text
 declare-option -hidden str parinfer_previous_cursor_char_column
 declare-option -hidden str parinfer_previous_cursor_line
@@ -71,14 +73,30 @@ Modes:
 }
 
 hook -group parinfer global WinSetOption filetype=clojure %{
-    parinfer -paren
+    evaluate-commands %sh{
+        if [ $parinfer_enabled = true ]; then
+            parinfer -paren
+        fi
+    }
     hook -group parinfer window NormalIdle '' %{
-        parinfer -smart
+        evaluate-commands %sh{
+            if [ $parinfer_enabled = true ]; then
+                parinfer -smart
+            fi
+        }
     }
     hook -group parinfer window InsertChar .* %{
-        parinfer -smart
+        evaluate-commands %sh{
+            if [ $parinfer_enabled = true ]; then
+                parinfer -smart
+            fi
+        }
     }
     hook -group parinfer window InsertDelete .* %{
-        parinfer -smart
+        evaluate-commands %sh{
+            if [ $parinfer_enabled = true ]; then
+                parinfer -smart
+            fi
+        }
     }
 }
