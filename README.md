@@ -47,6 +47,19 @@ Plug 'eraserhd/parinfer-rust', {'do':
 
 ### Kakoune
 
+#### `plug.kak`
+
+Add this to your `kakrc`
+```kak
+plug "eraserhd/parinfer-rust" do %{
+    cargo build --release
+    cargo install
+}
+```
+Re-source your `kakrc` or restart Kakoune. Then run `:plug-install`. `plug.kak` will download, build and install plugin for you.
+
+#### Manual
+
     $ cd ~/my-projects
     $ git clone git@github.com:eraserhd/parinfer-rust.git
     $ cd parinfer-rust
