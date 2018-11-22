@@ -41,3 +41,6 @@ mod wasm_wrapper;
 pub fn run_parinfer(input: String) -> String {
     wasm_wrapper::run_parinfer(input)
 }
+
+#[cfg(windows)]
+extern crate winapi;

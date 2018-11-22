@@ -82,7 +82,20 @@ mod reference_hack {
     }
 }
 
-#[cfg(not(all(unix)))]
+#[cfg(windows)]
+mod reference_hack {
+    use std::ptr;
+    use winapi::um::libloaderapi::{GET_MODULE_HANDLE_EX_FLAG_PIN, GetModuleHandleExW};
+
+    pub fn initialize() {
+        unsafe {
+            let mut out = ptr::null_mut();
+            GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, ptr::null(), &mut out);
+        }
+    }
+}
+
+#[cfg(all(not(windows), all(unix)))]
 mod reference_hack {
     pub fn initialize() {
     }
