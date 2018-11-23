@@ -89,27 +89,27 @@ Modes:
 hook -group parinfer global WinSetOption filetype=clojure %{
     evaluate-commands %sh{
         if [ $kak_opt_parinfer_enabled = true ]; then
-            parinfer -paren
+            printf 'parinfer -paren\n'
         fi
     }
     hook -group parinfer window NormalIdle '' %{
         evaluate-commands %sh{
             if [ $kak_opt_parinfer_enabled = true ]; then
-                parinfer -smart
+                printf 'parinfer -smart\n'
             fi
         }
     }
     hook -group parinfer window InsertChar .* %{
         evaluate-commands %sh{
             if [ $kak_opt_parinfer_enabled = true ]; then
-                parinfer -smart
+                printf 'parinfer -smart\n'
             fi
         }
     }
     hook -group parinfer window InsertDelete .* %{
         evaluate-commands %sh{
             if [ $kak_opt_parinfer_enabled = true ]; then
-                parinfer -smart
+                printf 'parinfer -smart\n'
             fi
         }
     }
