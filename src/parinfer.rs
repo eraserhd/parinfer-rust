@@ -44,12 +44,16 @@ struct TransformedChange {
     lookup_x: Column,
 }
 
-fn chomp_cr<'a>(text: &'a str) -> &'a str {
+pub fn chomp_cr<'a>(text: &'a str) -> &'a str {
     if text.chars().last() == Some('\r') {
         &text[0..text.len() - 1]
     } else {
         text
     }
+}
+
+fn split_lines<'a>(text: &'a str) -> Vec<&'a str> {
+    text.split('\n').map(chomp_cr).collect()
 }
 
 fn transform_change<'a>(change: &'a Change) -> TransformedChange {
@@ -221,7 +225,7 @@ fn get_initial_result<'a>(
         orig_cursor_x: options.cursor_x,
         orig_cursor_line: options.cursor_line,
 
-        input_lines: text.split('\n').map(chomp_cr).collect(),
+        input_lines: split_lines(text),
         input_line_no: 0,
         input_x: 0,
 
