@@ -119,21 +119,22 @@ fn insert_script(fixes: &Fixes) -> String {
     }
 }
 
+fn cursor_script(answer: &Answer) -> String {
+    if let (Some(line), Some(x)) = (answer.cursor_line, answer.cursor_x) {
+        format!(
+            "set buffer parinfer_cursor_char_column {}
+             set buffer parinfer_cursor_line {}
+            ", x + 1, line + 1)
+    } else {
+        String::new()
+    }
+}
+
 pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
         let fixes = fixes(&request.text, &answer.text);
-
-        let cursor_script: String;
-        if let (Some(line), Some(x)) = (answer.cursor_line, answer.cursor_x) {
-            cursor_script = format!(
-                "set buffer parinfer_cursor_char_column {}
-                 set buffer parinfer_cursor_line {}
-                ", x + 1, line + 1);
-        } else {
-            cursor_script = String::new();
-        }
-
-        let script = format!("{}\n{}\n{}", delete_script(&fixes), insert_script(&fixes), cursor_script);
+        let script = format!("{}\n{}\n{}", delete_script(&fixes), insert_script(&fixes),
+                             cursor_script(&answer));
 
         use std::fs;
         fs::write("/tmp/parinfer.log", script.clone()).expect("???");
