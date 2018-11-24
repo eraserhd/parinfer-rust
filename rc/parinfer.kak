@@ -90,10 +90,13 @@ Modes:
         }
     }
     evaluate-commands %sh{
-        set -- $kak_selections_desc
-        shift
         line=$kak_opt_parinfer_cursor_line
         column=$kak_opt_parinfer_cursor_char_column
+        set -- $kak_selections_desc
+        case "$1" in
+            *,${line}.${column}) exit;;
+        esac
+        shift
         echo "select ${line}.${column},${line}.${column} $@"
     }
 }
