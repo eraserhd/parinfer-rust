@@ -75,7 +75,7 @@ Modes:
                         (ENVIRON["kak_opt_parinfer_previous_cursor_line"] - 1),
                         json_encode(ENVIRON["kak_opt_parinfer_previous_text"]) \
                         | "parinfer-rust --input-format=json --output-format=kakoune";
-                }'
+                }' </dev/null
         }
         evaluate-commands %{
             set-option buffer parinfer_previous_text %val{selection}
