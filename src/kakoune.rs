@@ -13,40 +13,11 @@ pub struct Selection {
     pub cursor: Coord
 }
 
-impl Selection {
-    fn new(
-        anchor_line: LineNumber, anchor_column: Column, cursor_line: LineNumber,
-        cursor_column: Column) -> Selection
-    {
-        Selection {
-            anchor: Coord {
-                line: anchor_line,
-                column: anchor_column
-            },
-            cursor: Coord {
-                line: cursor_line,
-                column: cursor_column
-            }
-        }
-    }
-}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Insertion {
     pub cursor: Coord,
     pub text: String
-}
-
-impl Insertion {
-    fn new(cursor_line: LineNumber, cursor_column: Column, text: &str) -> Insertion {
-        Insertion {
-            cursor: Coord {
-                line: cursor_line,
-                column: cursor_column
-            },
-            text: text.to_string()
-        }
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -91,36 +62,70 @@ pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
 }
 
 #[cfg(test)]
-#[test]
-pub fn fixes_works() {
-    assert_eq!(
-        fixes("abc", "abc"),
-        Fixes {
-            deletions: vec![],
-            insertions: vec![]
-        },
-        "it can handle no changes"
-    );
-    assert_eq!(
-        fixes("abcd", "axcy"),
-        Fixes {
-            deletions: vec![
-                Selection::new(1,1,1,4),
-            ],
-            insertions: vec![
-                Insertion::new(1,1,"axcy"),
-            ]
-        },
-        "it can produce a replacement for a single changed letter"
-    );
-    assert_eq!(
-        fixes("hello, worxxyz", ""),
-        Fixes {
-            deletions: vec![
-                Selection::new(1,1,1,14)
-            ],
-            insertions: vec![]
-        },
-        "it can produce a longer deletion"
-    );
+mod test {
+    use super::*;
+
+    impl Selection {
+        fn new(
+            anchor_line: LineNumber, anchor_column: Column, cursor_line: LineNumber,
+            cursor_column: Column) -> Selection
+        {
+            Selection {
+                anchor: Coord {
+                    line: anchor_line,
+                    column: anchor_column
+                },
+                cursor: Coord {
+                    line: cursor_line,
+                    column: cursor_column
+                }
+            }
+        }
+    }
+
+    impl Insertion {
+        fn new(cursor_line: LineNumber, cursor_column: Column, text: &str) -> Insertion {
+            Insertion {
+                cursor: Coord {
+                    line: cursor_line,
+                    column: cursor_column
+                },
+                text: text.to_string()
+            }
+        }
+    }
+
+    #[test]
+    pub fn fixes_works() {
+        assert_eq!(
+            fixes("abc", "abc"),
+            Fixes {
+                deletions: vec![],
+                insertions: vec![]
+            },
+            "it can handle no changes"
+        );
+        assert_eq!(
+            fixes("abcd", "axcy"),
+            Fixes {
+                deletions: vec![
+                    Selection::new(1,1,1,4),
+                ],
+                insertions: vec![
+                    Insertion::new(1,1,"axcy"),
+                ]
+            },
+            "it can produce a replacement for a single changed letter"
+        );
+        assert_eq!(
+            fixes("hello, worxxyz", ""),
+            Fixes {
+                deletions: vec![
+                    Selection::new(1,1,1,14)
+                ],
+                insertions: vec![]
+            },
+            "it can produce a longer deletion"
+        );
+    }
 }
