@@ -1,4 +1,5 @@
 use getopts;
+use std::env;
 use std::io;
 use std::io::Read;
 use serde_json;
@@ -7,6 +8,7 @@ use types::*;
 
 pub enum InputType {
     Json,
+    Kakoune,
     Text
 }
 
@@ -60,6 +62,7 @@ impl Options {
             None => InputType::Text,
             Some(ref s) if s == "text" => InputType::Text,
             Some(ref s) if s == "json" => InputType::Json,
+            Some(ref s) if s == "kakoune" => InputType::Kakoune,
             Some(ref s) => panic!("unknown input format `{}`", s)
         }
     }
@@ -89,6 +92,33 @@ impl Options {
                         prev_text: None,
                         prev_cursor_x: None,
                         prev_cursor_line: None,
+                        force_balance: false,
+                        return_parens: false,
+                        partial_result: false,
+                        selection_start_line: None
+                    }
+                })
+            },
+            InputType::Kakoune => {
+                Ok  (Request {
+                    mode: String::from(self.mode()),
+                    text: env::var("kak_selection").unwrap(),
+                    options: types::Options {
+                        changes: vec![],
+                        cursor_x: env::var("kak_opt_parinfer_cursor_char_column")
+                            .map(|s| s.parse::<Column>().unwrap() - 1)
+                            .ok(),
+                        cursor_line: env::var("kak_opt_parinfer_cursor_line")
+                            .map(|s| s.parse::<LineNumber>().unwrap() - 1)
+                            .ok(),
+                        prev_text: env::var("kak_opt_parinfer_previous_text")
+                            .ok(),
+                        prev_cursor_x: env::var("kak_opt_parinfer_previous_cursor_char_column")
+                            .map(|s| s.parse::<Column>().unwrap() - 1)
+                            .ok(),
+                        prev_cursor_line: env::var("kak_opt_parinfer_previous_cursor_line")
+                            .map(|s| s.parse::<LineNumber>().unwrap() - 1)
+                            .ok(),
                         force_balance: false,
                         return_parens: false,
                         partial_result: false,

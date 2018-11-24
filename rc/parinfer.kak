@@ -39,48 +39,14 @@ Modes:
                  [ "${kak_opt_parinfer_previous_timestamp}" = "$kak_timestamp" ]; then
                 exit 0
             fi
-            exec awk '
-                BEGIN{
-                    for (i = 0; i <= 31; i++) {
-                        CODES[sprintf("%c", i)] = sprintf("\\u%04X", i);
-                    }
-                    CODES["\n"] = "\\n";
-                    CODES["\\"] = "\\\\";
-                    CODES["\""] = "\\\"";
-                }
-                function json_encode(data) {
-                    result = "";
-                    for (i = 1; i <= length(data); i++) {
-                        char = substr(data,i,1);
-                        if ((char) in CODES) {
-                            char = CODES[char];
-                        }
-                        result = result char;
-                    }
-                    return result;
-                }
-                BEGIN{
-                    printf \
-                        "{\n" \
-                        "    \"mode\": \"%s\",\n" \
-                        "    \"text\": \"%s\",\n" \
-                        "    \"options\": {\n" \
-                        "        \"cursorX\": %d,\n" \
-                        "        \"cursorLine\": %d,\n" \
-                        "        \"prevCursorX\": %d,\n" \
-                        "        \"prevCursorLine\": %d,\n" \
-                        "        \"prevText\": \"%s\"\n" \
-                        "    }\n" \
-                        "}\n", \
-                        ENVIRON["mode"],
-                        json_encode(ENVIRON["kak_selection"]),
-                        (ENVIRON["kak_opt_parinfer_cursor_char_column"] - 1),
-                        (ENVIRON["kak_opt_parinfer_cursor_line"] - 1),
-                        (ENVIRON["kak_opt_parinfer_previous_cursor_char_column"] - 1),
-                        (ENVIRON["kak_opt_parinfer_previous_cursor_line"] - 1),
-                        json_encode(ENVIRON["kak_opt_parinfer_previous_text"]) \
-                        | "parinfer-rust --input-format=json --output-format=kakoune";
-                }' </dev/null
+            # VARIABLES USED:
+            # kak_selection,
+            # kak_opt_parinfer_cursor_char_column,
+            # kak_opt_parinfer_cursor_line,
+            # kak_opt_parinfer_previous_text,
+            # kak_opt_parinfer_previous_cursor_char_column,
+            # kak_opt_parinfer_previous_cursor_line,
+            exec parinfer-rust --mode=$mode --input-format=kakoune --output-format=kakoune
         }
         evaluate-commands %{
             set-option buffer parinfer_previous_text %val{selection}
