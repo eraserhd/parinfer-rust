@@ -8,11 +8,10 @@ none="00"; red="31"; green="32"; yellow="33"; magenta="35"; bold="01"
 main() {
   kak_commands='
         source '"$(pwd)"'/../../rc/parinfer.kak
-        map global user i ": parinfer -smart<ret>"
         set global autoreload yes
         set global autoinfo ""
         set global auto_complete ""
-        parinfer -paren
+        set window filetype clojure
         try %{
             exec -save-regs / %{%s%\(\K[^)]+\)<ret>a<backspace><esc>i<backspace><backspace><c-u><esc><a-;>}
         } catch %{ exec gg }
