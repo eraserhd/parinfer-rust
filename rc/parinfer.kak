@@ -4,6 +4,8 @@ declare-option -hidden str parinfer_previous_text
 declare-option -hidden str parinfer_previous_cursor_char_column
 declare-option -hidden str parinfer_previous_cursor_line
 declare-option -hidden str parinfer_previous_timestamp
+declare-option -hidden int parinfer_cursor_char_column
+declare-option -hidden int parinfer_cursor_line
 
 define-command -params .. \
     -docstring %{parinfer [<switches>]: reformat buffer with parinfer-rust
@@ -13,6 +15,8 @@ Modes:
     -smart   Try to be smart about what to fix.} \
     parinfer %{
     eval -draft -save-regs '/"|^@' -no-hooks %{
+        set buffer parinfer_cursor_char_column %val{cursor_char_column}
+        set buffer parinfer_cursor_line %val{cursor_line}
         exec '\%'
         eval -draft -no-hooks %sh{
             mode=indent
@@ -29,8 +33,8 @@ Modes:
             export mode
             if [ -z "${kak_opt_parinfer_previous_timestamp}" ]; then
                 export kak_opt_parinfer_previous_text="${kak_selection}"
-                export kak_opt_parinfer_previous_cursor_char_column="${kak_cursor_char_column}"
-                export kak_opt_parinfer_previous_cursor_line="${kak_cursor_line}"
+                export kak_opt_parinfer_previous_cursor_char_column="${kak_opt_parinfer_cursor_char_column}"
+                export kak_opt_parinfer_previous_cursor_line="${kak_opt_parinfer_cursor_line}"
             elif [ "$mode" = smart ] &&
                  [ "${kak_opt_parinfer_previous_timestamp}" = "$kak_timestamp" ]; then
                 exit 0
@@ -70,8 +74,8 @@ Modes:
                         "}\n", \
                         ENVIRON["mode"],
                         json_encode(ENVIRON["kak_selection"]),
-                        (ENVIRON["kak_cursor_char_column"] - 1),
-                        (ENVIRON["kak_cursor_line"] - 1),
+                        (ENVIRON["kak_opt_parinfer_cursor_char_column"] - 1),
+                        (ENVIRON["kak_opt_parinfer_cursor_line"] - 1),
                         (ENVIRON["kak_opt_parinfer_previous_cursor_char_column"] - 1),
                         (ENVIRON["kak_opt_parinfer_previous_cursor_line"] - 1),
                         json_encode(ENVIRON["kak_opt_parinfer_previous_text"]) \
@@ -84,6 +88,13 @@ Modes:
             set-option buffer parinfer_previous_cursor_char_column %val{cursor_char_column}
             set-option buffer parinfer_previous_cursor_line %val{cursor_line}
         }
+    }
+    evaluate-commands %sh{
+        set -- $kak_selections_desc
+        shift
+        line=$kak_opt_parinfer_cursor_line
+        column=$kak_opt_parinfer_cursor_char_column
+        echo "select ${line}.${column},${line}.${column} $@"
     }
 }
 

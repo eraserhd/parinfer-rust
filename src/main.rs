@@ -95,7 +95,21 @@ fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
             );
         }
 
-        let script = format!("{}\n{}", delete_script, insert_script);
+        let cursor_script: String;
+        if let (Some(line), Some(x)) = (answer.cursor_line, answer.cursor_x) {
+            cursor_script = format!(
+                "set buffer parinfer_cursor_char_column {}
+                 set buffer parinfer_cursor_line {}
+                ", x + 1, line + 1);
+        } else {
+            cursor_script = String::new();
+        }
+
+        let script = format!("{}\n{}\n{}", delete_script, insert_script, cursor_script);
+
+        use std::fs;
+        fs::write("/tmp/parinfer.log", script.clone()).expect("???");
+
         ( script, 0 )
     } else {
         let error_msg = match answer.error {
