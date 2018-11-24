@@ -60,7 +60,7 @@ pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
     result
 }
 
-fn kakoune_escape(s: &str) -> String {
+fn escape(s: &str) -> String {
     s.replace("'", "''")
 }
 
@@ -112,7 +112,7 @@ fn insert_script(fixes: &Fixes) -> String {
                 .insertions
                 .iter()
                 .map(|i| {
-                    format!("'{}'", kakoune_escape(&i.text))
+                    format!("'{}'", escape(&i.text))
                 })
                 .fold(String::new(), |acc, s| acc + " " + &s)
         )
@@ -136,9 +136,6 @@ pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
         let script = format!("{}\n{}\n{}", delete_script(&fixes), insert_script(&fixes),
                              cursor_script(&answer));
 
-        use std::fs;
-        fs::write("/tmp/parinfer.log", script.clone()).expect("???");
-
         ( script, 0 )
     } else {
         let error_msg = match answer.error {
@@ -146,7 +143,7 @@ pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
             Some(e) => e.message
         };
 
-        ( format!("fail '{}'\n", kakoune_escape(&error_msg)), 0 )
+        ( format!("fail '{}'\n", escape(&error_msg)), 0 )
     }
 }
 
