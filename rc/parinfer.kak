@@ -18,6 +18,7 @@ Modes:
             mode=indent
             while [ $# -ne 0 ]; do
                 case "$1" in
+                    -if-enabled) [ $kak_opt_parinfer_enabled = true ] || exit 0;;
                     -smart) mode=smart;;
                     -paren) mode=paren;;
                     -indent) mode=indent;;
@@ -87,30 +88,11 @@ Modes:
 }
 
 hook -group parinfer global WinSetOption filetype=clojure %{
-    evaluate-commands %sh{
-        if [ $kak_opt_parinfer_enabled = true ]; then
-            printf 'parinfer -paren\n'
-        fi
-    }
-    hook -group parinfer window NormalIdle '' %{
-        evaluate-commands %sh{
-            if [ $kak_opt_parinfer_enabled = true ]; then
-                printf 'parinfer -smart\n'
-            fi
-        }
-    }
-    hook -group parinfer window InsertChar .* %{
-        evaluate-commands %sh{
-            if [ $kak_opt_parinfer_enabled = true ]; then
-                printf 'parinfer -smart\n'
-            fi
-        }
-    }
-    hook -group parinfer window InsertDelete .* %{
-        evaluate-commands %sh{
-            if [ $kak_opt_parinfer_enabled = true ]; then
-                printf 'parinfer -smart\n'
-            fi
-        }
-    }
+    parinfer -if-enabled -paren
+    hook -group parinfer window NormalKey .* %{ parinfer -if-enabled -smart }
+    hook -group parinfer window InsertChar .* %{ parinfer -if-enabled -smart }
+    hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled -smart }
+}
+hook -group parinfer global WinSetOption parinfer_enabled=true %{
+    parinfer -paren
 }
