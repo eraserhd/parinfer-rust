@@ -1,9 +1,10 @@
 use parinfer::chomp_cr;
+use types::{Column, LineNumber};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Coord {
-    pub line: u64,
-    pub column: u64
+    pub line: LineNumber,
+    pub column: Column
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -14,8 +15,8 @@ pub struct Selection {
 
 impl Selection {
     fn new(
-        anchor_line: u64, anchor_column: u64, cursor_line: u64,
-        cursor_column: u64) -> Selection
+        anchor_line: LineNumber, anchor_column: Column, cursor_line: LineNumber,
+        cursor_column: Column) -> Selection
     {
         Selection {
             anchor: Coord {
@@ -37,7 +38,7 @@ pub struct Insertion {
 }
 
 impl Insertion {
-    fn new(cursor_line: u64, cursor_column: u64, text: &str) -> Insertion {
+    fn new(cursor_line: LineNumber, cursor_column: Column, text: &str) -> Insertion {
         Insertion {
             cursor: Coord {
                 line: cursor_line,
@@ -60,7 +61,7 @@ pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
         deletions: vec![]
     };
 
-    let mut line: u64 = 1; // LineNumber type
+    let mut line: LineNumber = 1;
     for (a_line, b_line) in from.split('\n').map(chomp_cr).zip(to.split('\n').map(chomp_cr)) {
         if a_line != b_line {
             result.deletions.push(Selection {
@@ -70,7 +71,7 @@ pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
               },
               cursor: Coord {
                   line,
-                  column: a_line.chars().count() as u64 // type
+                  column: a_line.chars().count() as Column
               }
             });
             if b_line != "" {
