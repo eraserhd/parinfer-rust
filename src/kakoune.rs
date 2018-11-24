@@ -119,14 +119,13 @@ fn insert_script(fixes: &Fixes) -> String {
     }
 }
 
-fn cursor_script(answer: &Answer) -> String {
-    if let (Some(line), Some(x)) = (answer.cursor_line, answer.cursor_x) {
-        format!(
-            "set buffer parinfer_cursor_char_column {}
-             set buffer parinfer_cursor_line {}
-            ", x + 1, line + 1)
-    } else {
-        String::new()
+fn cursor_script(request: &Request, answer: &Answer) -> String {
+    match (request.options.cursor_line, request.options.cursor_x, answer.cursor_line, answer.cursor_x) {
+        (Some(r_line), Some(r_x), Some(a_line), Some(a_x)) if r_line == a_line && r_x == a_x => String::new(),
+        (_, _, Some(line), Some(x)) => format!("set buffer parinfer_cursor_char_column {}
+                                                set buffer parinfer_cursor_line {}",
+                                               x + 1, line + 1),
+        _ => String::new()
     }
 }
 
@@ -134,7 +133,7 @@ pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
         let fixes = fixes(&request.text, &answer.text);
         let script = format!("{}\n{}\n{}", delete_script(&fixes), insert_script(&fixes),
-                             cursor_script(&answer));
+                             cursor_script(&request, &answer));
 
         ( script, 0 )
     } else {
