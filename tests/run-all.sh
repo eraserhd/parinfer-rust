@@ -23,4 +23,6 @@ do
   vim --clean -u tests/run.vim || result=$?
 done
 
+( cd tests/kakoune && ../run-kakoune.sh )
+
 exit $result

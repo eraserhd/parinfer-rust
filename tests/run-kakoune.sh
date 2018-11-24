@@ -1,0 +1,142 @@
+#!/bin/sh
+
+# Color codes ├──────────────────────────────────────────────────────────────────
+none="00"; red="31"; green="32"; yellow="33"; magenta="35"; bold="01"
+
+# Main ├────────────────────────────────────────────────────────────────────────
+
+main() {
+  kak_commands='
+        source '"$(pwd)"'/../../rc/parinfer.kak
+        map global user i ": parinfer -smart<ret>"
+        set global autoreload yes
+        set global autoinfo ""
+        set global auto_complete ""
+        parinfer -paren
+        try %{
+            exec -save-regs / %{%s%\(\K[^)]+\)<ret>a<backspace><esc>i<backspace><backspace><c-u><esc><a-;>}
+        } catch %{ exec gg }
+        try %{ source rc }
+        hook global RuntimeError .+ %{
+            echo -debug -- error: %val{hook_param}
+            eval -buffer *debug* write debug
+            quit!
+        }
+        try %{ exec -with-maps -with-hooks "%sh{cat cmd}" }
+        exec -with-hooks <c-l>
+        eval -buffer *debug* write debug
+        nop %sh{
+          printf %s\\n "$kak_selections"      > selections
+          printf %s\\n "$kak_selections_desc" > state
+        }
+        write out
+        quit!
+      '
+
+  root=$PWD
+  tmpdir="${TMPDIR:-/tmp}"
+  work=$(mktemp -d $tmpdir/kak-tests.XXXXXXXX)
+  trap "rm -R $work" EXIT
+
+  number_tests=0
+  number_failures=0
+  for dir in $(find "${@:-.}" -type d | sort); do
+    cd $root/$dir;
+    mkdir -p $work/$dir
+    for file in in cmd rc; do
+      [ -f $file ] && cp $file $work/$dir/
+    done
+    cd $work/$dir;
+    indent="$(echo "$dir/" | sed -e 's|[^/]*//*|  |g')"
+    name=${PWD##*/}
+    if [ ! -f cmd ]; then
+      echo "$indent$name"
+      continue
+    elif [ -x enabled ] && ! ./enabled; then
+      echo "$indent$name (disabled)" | colorize $yellow $none
+      continue
+    fi
+
+    ui_in="${root}/${dir}/ui-in"
+    [ ! -f $ui_in ] && ui_in="/dev/null"
+
+    number_tests=$(($number_tests + 1))
+    touch in; cp in out
+    session="kak-tests"
+    rm -f $tmpdir/kakoune/$USER/$session
+    kak out -n -s "$session" -ui json -e "$kak_commands" > ui-out < "${ui_in}"
+    retval=$?
+    failed=0
+    if [ ! -e error ]; then # failure not expected
+      if [ $retval -ne 0 ]; then
+        echo "$indent$name" | colorize $red $none
+        echo "$indent  Kakoune returned error $retval"
+        failed=1
+      else
+        for file in out selections state ui-out; do
+          if [ -f $root/$dir/$file ] && ! cmp -s $root/$dir/$file $file; then
+            if [ $failed -eq 0 ]; then
+              echo "$indent$name" | colorize $red $none
+              failed=1
+            fi
+            show_diff $root/$dir/$file $file
+          fi
+        done
+        if [ $failed -ne 0 ] && [ -f debug ]; then
+          printf "\ndebug buffer:\n" | colorize $yellow $none
+          cat debug
+        fi
+      fi
+    else # failure expected
+      if [ -f stderr ]; then
+        sed -i -e 's/^[0-9]*:[0-9]*: //g' stderr
+        if [ -s error ] && ! cmp -s error stderr; then
+          echo "$indent$name" | colorize $yellow $none
+          show_diff error stderr
+          failed=1
+        fi
+      elif [ $retval -eq 0 ]; then
+        echo "$indent$name" | colorize $red $none
+        echo "$indent  Expected failure, but Kakoune returned 0"
+        failed=1
+      fi
+    fi
+
+    if [ $failed -eq 0 ]; then
+      echo "$indent$name" | colorize $green $none
+    else
+      number_failures=$(($number_failures + 1))
+    fi
+  done
+
+  if [ $number_failures -gt 0 ]; then
+    color=$red
+  else
+    color=$green
+  fi
+  printf "\nResume: %s tests, %s failures\n" $number_tests $number_failures | colorize $color $none
+  exit $number_failures
+}
+
+# Utility ├─────────────────────────────────────────────────────────────────────
+
+colorize() {
+  color=${1:-$none}
+  style=${2:-$none}
+  printf '\033[%s;%sm%s\033[00;00m\n' $style $color "$(cat)"
+}
+
+show_diff() {
+  diff -u $1 $2 | while IFS='' read -r line; do
+    first_character=$(printf '%s\n' "$line" | cut -b 1)
+    case $first_character in
+      +) color=$green ;;
+      -) color=$red ;;
+      @) color=$magenta ;;
+      *) color=$none ;;
+    esac
+    printf '%s\n' "$line" | colorize $color $none
+  done
+}
+
+main "$@"
