@@ -87,40 +87,41 @@ fn delete_script(fixes: &Fixes) -> String {
     }
 }
 
+fn insert_script(fixes: &Fixes) -> String {
+    if fixes.insertions.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "select {}
+             set-register '\"' {}
+             exec '\\P'",
+            fixes
+                .insertions
+                .iter()
+                .map(|i| {
+                    format!(
+                        "{}.{},{}.{}",
+                        i.cursor.line,
+                        i.cursor.column,
+                        i.cursor.line,
+                        i.cursor.column
+                    )
+                })
+                .fold(String::new(), |acc, s| acc + " " + &s),
+            fixes
+                .insertions
+                .iter()
+                .map(|i| {
+                    format!("'{}'", kakoune_escape(&i.text))
+                })
+                .fold(String::new(), |acc, s| acc + " " + &s)
+        )
+    }
+}
+
 pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
         let fixes = fixes(&request.text, &answer.text);
-
-        let insert_script: String;
-        if fixes.insertions.is_empty() {
-            insert_script = String::new()
-        } else {
-            insert_script = format!(
-                "select {}
-                 set-register '\"' {}
-                 exec '\\P'",
-                fixes
-                    .insertions
-                    .iter()
-                    .map(|i| {
-                        format!(
-                            "{}.{},{}.{}",
-                            i.cursor.line,
-                            i.cursor.column,
-                            i.cursor.line,
-                            i.cursor.column
-                        )
-                    })
-                    .fold(String::new(), |acc, s| acc + " " + &s),
-                fixes
-                    .insertions
-                    .iter()
-                    .map(|i| {
-                        format!("'{}'", kakoune_escape(&i.text))
-                    })
-                    .fold(String::new(), |acc, s| acc + " " + &s)
-            );
-        }
 
         let cursor_script: String;
         if let (Some(line), Some(x)) = (answer.cursor_line, answer.cursor_x) {
@@ -132,7 +133,7 @@ pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
             cursor_script = String::new();
         }
 
-        let script = format!("{}\n{}\n{}", delete_script(&fixes), insert_script, cursor_script);
+        let script = format!("{}\n{}\n{}", delete_script(&fixes), insert_script(&fixes), cursor_script);
 
         use std::fs;
         fs::write("/tmp/parinfer.log", script.clone()).expect("???");
