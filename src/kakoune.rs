@@ -1,5 +1,5 @@
 use parinfer::chomp_cr;
-use types::{Column, LineNumber};
+use types::*;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Coord {
@@ -12,7 +12,6 @@ pub struct Selection {
     pub anchor: Coord,
     pub cursor: Coord
 }
-
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Insertion {
@@ -59,6 +58,93 @@ pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
     }
 
     result
+}
+
+fn kakoune_escape(s: &str) -> String {
+    s.replace("'", "''")
+}
+
+pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
+    if answer.success {
+        let fixes = fixes(&request.text, &answer.text);
+
+        let delete_script: String;
+        if fixes.deletions.is_empty() {
+            delete_script = String::new()
+        } else {
+            delete_script = format!(
+                "select {}\nexec '\\<a-d>'\n",
+                fixes
+                    .deletions
+                    .iter()
+                    .map(|d| {
+                        format!(
+                            "{}.{},{}.{}",
+                            d.anchor.line,
+                            d.anchor.column,
+                            d.cursor.line,
+                            d.cursor.column
+                        )
+                    })
+                    .fold(String::new(), |acc, s| acc + " " + &s)
+            );
+        }
+
+        let insert_script: String;
+        if fixes.insertions.is_empty() {
+            insert_script = String::new()
+        } else {
+            insert_script = format!(
+                "select {}
+                 set-register '\"' {}
+                 exec '\\P'",
+                fixes
+                    .insertions
+                    .iter()
+                    .map(|i| {
+                        format!(
+                            "{}.{},{}.{}",
+                            i.cursor.line,
+                            i.cursor.column,
+                            i.cursor.line,
+                            i.cursor.column
+                        )
+                    })
+                    .fold(String::new(), |acc, s| acc + " " + &s),
+                fixes
+                    .insertions
+                    .iter()
+                    .map(|i| {
+                        format!("'{}'", kakoune_escape(&i.text))
+                    })
+                    .fold(String::new(), |acc, s| acc + " " + &s)
+            );
+        }
+
+        let cursor_script: String;
+        if let (Some(line), Some(x)) = (answer.cursor_line, answer.cursor_x) {
+            cursor_script = format!(
+                "set buffer parinfer_cursor_char_column {}
+                 set buffer parinfer_cursor_line {}
+                ", x + 1, line + 1);
+        } else {
+            cursor_script = String::new();
+        }
+
+        let script = format!("{}\n{}\n{}", delete_script, insert_script, cursor_script);
+
+        use std::fs;
+        fs::write("/tmp/parinfer.log", script.clone()).expect("???");
+
+        ( script, 0 )
+    } else {
+        let error_msg = match answer.error {
+            None => String::from("unknown error."),
+            Some(e) => e.message
+        };
+
+        ( format!("fail '{}'\n", kakoune_escape(&error_msg)), 0 )
+    }
 }
 
 #[cfg(test)]

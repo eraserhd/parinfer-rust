@@ -16,11 +16,12 @@ mod kakoune;
 mod parinfer;
 mod types;
 
+use cli_options::OutputType;
+use kakoune::kakoune_output;
 use std::env;
 use std::io;
 use std::io::Write;
 use types::*;
-use cli_options::OutputType;
 
 fn parse_args() -> cli_options::Options {
     let args: Vec<String> = env::args().collect();
@@ -34,92 +35,6 @@ fn json_output(_request: &Request, answer: Answer) -> (String, i32) {
     ( text, error_code )
 }
 
-fn kakoune_escape(s: &str) -> String {
-    s.replace("'", "''")
-}
-
-fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
-    if answer.success {
-        let fixes = kakoune::fixes(&request.text, &answer.text);
-
-        let delete_script: String;
-        if fixes.deletions.is_empty() {
-            delete_script = String::new()
-        } else {
-            delete_script = format!(
-                "select {}\nexec '\\<a-d>'\n",
-                fixes
-                    .deletions
-                    .iter()
-                    .map(|d| {
-                        format!(
-                            "{}.{},{}.{}",
-                            d.anchor.line,
-                            d.anchor.column,
-                            d.cursor.line,
-                            d.cursor.column
-                        )
-                    })
-                    .fold(String::new(), |acc, s| acc + " " + &s)
-            );
-        }
-
-        let insert_script: String;
-        if fixes.insertions.is_empty() {
-            insert_script = String::new()
-        } else {
-            insert_script = format!(
-                "select {}
-                 set-register '\"' {}
-                 exec '\\P'",
-                fixes
-                    .insertions
-                    .iter()
-                    .map(|i| {
-                        format!(
-                            "{}.{},{}.{}",
-                            i.cursor.line,
-                            i.cursor.column,
-                            i.cursor.line,
-                            i.cursor.column
-                        )
-                    })
-                    .fold(String::new(), |acc, s| acc + " " + &s),
-                fixes
-                    .insertions
-                    .iter()
-                    .map(|i| {
-                        format!("'{}'", kakoune_escape(&i.text))
-                    })
-                    .fold(String::new(), |acc, s| acc + " " + &s)
-            );
-        }
-
-        let cursor_script: String;
-        if let (Some(line), Some(x)) = (answer.cursor_line, answer.cursor_x) {
-            cursor_script = format!(
-                "set buffer parinfer_cursor_char_column {}
-                 set buffer parinfer_cursor_line {}
-                ", x + 1, line + 1);
-        } else {
-            cursor_script = String::new();
-        }
-
-        let script = format!("{}\n{}\n{}", delete_script, insert_script, cursor_script);
-
-        use std::fs;
-        fs::write("/tmp/parinfer.log", script.clone()).expect("???");
-
-        ( script, 0 )
-    } else {
-        let error_msg = match answer.error {
-            None => String::from("unknown error."),
-            Some(e) => e.message
-        };
-
-        ( format!("fail '{}'\n", kakoune_escape(&error_msg)), 0 )
-    }
-}
 
 fn text_output(_request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
