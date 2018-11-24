@@ -64,31 +64,32 @@ fn kakoune_escape(s: &str) -> String {
     s.replace("'", "''")
 }
 
+fn delete_script(fixes: &Fixes) -> String {
+    if fixes.deletions.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "select {}\nexec '\\<a-d>'\n",
+            fixes
+                .deletions
+                .iter()
+                .map(|d| {
+                    format!(
+                        "{}.{},{}.{}",
+                        d.anchor.line,
+                        d.anchor.column,
+                        d.cursor.line,
+                        d.cursor.column
+                    )
+                })
+                .fold(String::new(), |acc, s| acc + " " + &s)
+        )
+    }
+}
+
 pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
         let fixes = fixes(&request.text, &answer.text);
-
-        let delete_script: String;
-        if fixes.deletions.is_empty() {
-            delete_script = String::new()
-        } else {
-            delete_script = format!(
-                "select {}\nexec '\\<a-d>'\n",
-                fixes
-                    .deletions
-                    .iter()
-                    .map(|d| {
-                        format!(
-                            "{}.{},{}.{}",
-                            d.anchor.line,
-                            d.anchor.column,
-                            d.cursor.line,
-                            d.cursor.column
-                        )
-                    })
-                    .fold(String::new(), |acc, s| acc + " " + &s)
-            );
-        }
 
         let insert_script: String;
         if fixes.insertions.is_empty() {
@@ -131,7 +132,7 @@ pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
             cursor_script = String::new();
         }
 
-        let script = format!("{}\n{}\n{}", delete_script, insert_script, cursor_script);
+        let script = format!("{}\n{}\n{}", delete_script(&fixes), insert_script, cursor_script);
 
         use std::fs;
         fs::write("/tmp/parinfer.log", script.clone()).expect("???");
