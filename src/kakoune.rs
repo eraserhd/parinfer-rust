@@ -19,6 +19,18 @@ pub struct Insertion {
     pub text: String
 }
 
+impl Insertion {
+    fn new(cursor_line: LineNumber, cursor_column: Column, text: &str) -> Insertion {
+        Insertion {
+            cursor: Coord {
+                line: cursor_line,
+                column: cursor_column
+            },
+            text: text.to_string()
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Fixes {
     pub deletions: Vec<Selection>,
@@ -35,23 +47,17 @@ pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
     for (a_line, b_line) in from.split('\n').map(chomp_cr).zip(to.split('\n').map(chomp_cr)) {
         if a_line != b_line {
             result.deletions.push(Selection {
-              anchor: Coord {
-                  line,
-                  column: 1
-              },
-              cursor: Coord {
-                  line,
-                  column: a_line.chars().count() as Column
-              }
+                anchor: Coord {
+                    line,
+                    column: 1
+                },
+                cursor: Coord {
+                    line,
+                    column: a_line.chars().count() as Column
+                }
             });
             if b_line != "" {
-                result.insertions.push(Insertion {
-                   cursor: Coord {
-                       line,
-                       column: 1
-                   },
-                   text: String::from(b_line)
-                });
+                result.insertions.push(Insertion::new(line, 1, b_line));
             }
         }
         line += 1;
@@ -164,18 +170,6 @@ mod test {
                     line: cursor_line,
                     column: cursor_column
                 }
-            }
-        }
-    }
-
-    impl Insertion {
-        fn new(cursor_line: LineNumber, cursor_column: Column, text: &str) -> Insertion {
-            Insertion {
-                cursor: Coord {
-                    line: cursor_line,
-                    column: cursor_column
-                },
-                text: text.to_string()
             }
         }
     }
