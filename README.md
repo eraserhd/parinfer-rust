@@ -1,8 +1,10 @@
 # parinfer-rust
 
+Infer parentheses for Clojure, Lisp and Scheme.
+
 https://github.com/eraserhd/parinfer-rust
 
-A full-featured, super snappy port of [Shaun Lebron's parinfer] to Rust.  This
+A full-featured, super fast implementation of [Shaun Lebron's parinfer].  This
 repo comes with Vim plugin files that work with Vim8 and Neovim.  The Rust
 library can be called from other editors that can load dynamic libraries.
 
@@ -46,6 +48,11 @@ Plug 'eraserhd/parinfer-rust', {'do':
 ```
 
 ### Kakoune
+
+<a href="https://asciinema.org/a/iMxZ19c4caRQ3rdc17yzYnfYd" target="_blank"><img src="https://asciinema.org/a/iMxZ19c4caRQ3rdc17yzYnfYd.svg" /></a>
+<a href="https://asciinema.org/a/SeGdvzwiimphYaMDL4YNyP84F" target="_blank"><img src="https://asciinema.org/a/SeGdvzwiimphYaMDL4YNyP84F.svg" /></a>
+<a href="https://asciinema.org/a/6U5weRwpisGFsqNwoL4bFLpyB" target="_blank"><img src="https://asciinema.org/a/6U5weRwpisGFsqNwoL4bFLpyB.svg" /></a>
+<a href="https://asciinema.org/a/QrZ06KsfxOBNMD8DUt7u6bbgD" target="_blank"><img src="https://asciinema.org/a/QrZ06KsfxOBNMD8DUt7u6bbgD.svg" /></a>
 
 #### `plug.kak`
 
