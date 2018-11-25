@@ -13,6 +13,24 @@ pub struct Selection {
     pub cursor: Coord
 }
 
+impl Selection {
+    fn new(
+        anchor_line: LineNumber, anchor_column: Column, cursor_line: LineNumber,
+        cursor_column: Column) -> Selection
+    {
+        Selection {
+            anchor: Coord {
+                line: anchor_line,
+                column: anchor_column
+            },
+            cursor: Coord {
+                line: cursor_line,
+                column: cursor_column
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Insertion {
     pub cursor: Coord,
@@ -46,16 +64,7 @@ pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
     let mut line: LineNumber = 1;
     for (a_line, b_line) in from.split('\n').map(chomp_cr).zip(to.split('\n').map(chomp_cr)) {
         if a_line != b_line {
-            result.deletions.push(Selection {
-                anchor: Coord {
-                    line,
-                    column: 1
-                },
-                cursor: Coord {
-                    line,
-                    column: a_line.chars().count() as Column
-                }
-            });
+            result.deletions.push(Selection::new(line, 1, line, a_line.chars().count()));
             if b_line != "" {
                 result.insertions.push(Insertion::new(line, 1, b_line));
             }
@@ -155,24 +164,6 @@ pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    impl Selection {
-        fn new(
-            anchor_line: LineNumber, anchor_column: Column, cursor_line: LineNumber,
-            cursor_column: Column) -> Selection
-        {
-            Selection {
-                anchor: Coord {
-                    line: anchor_line,
-                    column: anchor_column
-                },
-                cursor: Coord {
-                    line: cursor_line,
-                    column: cursor_column
-                }
-            }
-        }
-    }
 
     #[test]
     pub fn fixes_works() {
