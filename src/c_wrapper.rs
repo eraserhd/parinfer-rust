@@ -85,12 +85,17 @@ mod reference_hack {
 #[cfg(windows)]
 mod reference_hack {
     use std::ptr;
-    use winapi::um::libloaderapi::{GET_MODULE_HANDLE_EX_FLAG_PIN, GetModuleHandleExW};
+    use winapi::um::winnt::{LPCWSTR};
+    use winapi::um::libloaderapi::{ GET_MODULE_HANDLE_EX_FLAG_PIN,
+                                    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, 
+                                    GetModuleHandleExW};
 
-    pub fn initialize() {
-        unsafe {
-            let mut out = ptr::null_mut();
-            GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, ptr::null(), &mut out);
+    pub unsafe fn initialize() {
+        let mut out = ptr::null_mut();
+        if GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                           initialize as LPCWSTR,
+                           &mut out) == 0 {
+            panic!("Could not pin parinfer_rust DLL.")
         }
     }
 }
