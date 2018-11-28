@@ -73,6 +73,6 @@ hook -group parinfer global WinSetOption filetype=clojure %{
     hook -group parinfer window InsertChar .* %{ parinfer -if-enabled -smart }
     hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled -smart }
 }
-hook -group parinfer global WinSetOption parinfer_enabled=true %{
-    parinfer -paren
+hook -group parinfer global WinSetOption filetype=(!clojure).* %{
+    remove-hooks window parinfer
 }
