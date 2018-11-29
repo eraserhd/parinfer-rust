@@ -119,7 +119,7 @@ mod reference_hack {
     }
 }
 
-#[cfg(all(not(windows), all(unix)))]
+#[cfg(all(not(windows), not(unix)))]
 mod reference_hack {
     pub fn initialize() {
     }
