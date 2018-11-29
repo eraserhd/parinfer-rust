@@ -82,7 +82,44 @@ mod reference_hack {
     }
 }
 
-#[cfg(not(all(unix)))]
+#[cfg(windows)]
+mod reference_hack {
+    use std::ptr;
+    use std::ffi::{OsString};
+    use std::os::windows::ffi::{OsStringExt};
+    use winapi::um::winnt::{LPCWSTR};
+    use winapi::um::libloaderapi::{ GET_MODULE_HANDLE_EX_FLAG_PIN,
+                                    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, 
+                                    GetModuleHandleExW, GetModuleFileNameW};
+
+    pub unsafe fn initialize() {
+        let mut out = ptr::null_mut();
+        if GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                           initialize as LPCWSTR,
+                           &mut out) == 0 {
+            panic!("Could not pin parinfer_rust DLL.")
+        }
+        else {
+            let mut buf = Vec::with_capacity(512);
+            let len = GetModuleFileNameW(out, buf.as_mut_ptr(), 512 as u32) as usize;
+            if len > 0 {
+                buf.set_len(len);
+                let filename = OsString::from_wide(&buf).into_string().expect("expect a string");
+                if filename.ends_with(".dll") {
+                    ;
+                }
+                else {
+                    panic! ("parinfer_rust: reference_hack failed to find DLL.");
+                }
+            }
+            else {
+                panic!("parinfer_rust: could not get DLL filename");
+            }
+        }
+    }
+}
+
+#[cfg(all(not(windows), all(unix)))]
 mod reference_hack {
     pub fn initialize() {
     }
