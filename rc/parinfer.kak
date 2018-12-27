@@ -70,7 +70,7 @@ Modes:
 hook -group parinfer global WinSetOption filetype=(clojure|lisp|scheme) %{
     parinfer -if-enabled -paren
     hook -group parinfer window NormalKey .* %{ parinfer -if-enabled -smart }
-    hook -group parinfer window InsertChar .* %{ parinfer -if-enabled -smart }
+    hook -group parinfer window InsertChar (?!\n).* %{ parinfer -if-enabled -smart }
     hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled -smart }
 }
 hook -group parinfer global WinSetOption filetype=(!clojure|lisp|scheme).* %{
