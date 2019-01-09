@@ -1,7 +1,10 @@
 use getopts;
 use std::env;
+use std::fs;
 use std::io;
 use std::io::Read;
+use std::os::unix;
+use std::os::unix::io::FromRawFd;
 use serde_json;
 use types;
 use types::*;
@@ -26,6 +29,7 @@ fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
     options.optflag("h", "help", "show this help message");
     options.optopt("", "input-format", "'json', 'text' (default: 'text')", "FMT");
+    options.optopt("", "kakoune-selection-fd", "file descriptor to read Kakoune buffer text from", "FD");
     options.optopt("m", "mode", "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
     options.optopt("", "output-format", "'json', 'kakoune', 'text' (default: 'text')", "FMT");
     options
@@ -73,7 +77,7 @@ impl Options {
             Some(ref s) if s == "text" => OutputType::Text,
             Some(ref s) if s == "json" => OutputType::Json,
             Some(ref s) if s == "kakoune" => OutputType::Kakoune,
-            Some(ref s) => panic!("unknown output fomrat `{}`", s)
+            Some(ref s) => panic!("unknown output format `{}`", s)
         }
     }
 
@@ -100,9 +104,17 @@ impl Options {
                 })
             },
             InputType::Kakoune => {
+                let selection_fd = self
+                    .matches
+                    .opt_str("kakoune-selection-fd")
+                    .map(|s| s.parse::<unix::io::RawFd>().unwrap())
+                    .expect("--kakoune-selection-fd is required");
+                let mut text = String::new();
+                let mut selection_file: fs::File = unsafe {FromRawFd::from_raw_fd(selection_fd)};
+                selection_file.read_to_string(&mut text)?;
                 Ok  (Request {
                     mode: String::from(self.mode()),
-                    text: env::var("kak_selection").unwrap(),
+                    text,
                     options: types::Options {
                         changes: vec![],
                         cursor_x: env::var("kak_opt_parinfer_cursor_char_column")

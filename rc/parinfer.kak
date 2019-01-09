@@ -40,13 +40,16 @@ Modes:
                 exit 0
             fi
             # VARIABLES USED:
-            # kak_selection,
             # kak_opt_parinfer_cursor_char_column,
             # kak_opt_parinfer_cursor_line,
             # kak_opt_parinfer_previous_text,
             # kak_opt_parinfer_previous_cursor_char_column,
             # kak_opt_parinfer_previous_cursor_line,
-            exec parinfer-rust --mode=$mode --input-format=kakoune --output-format=kakoune
+            parinfer-rust \
+                --mode=$mode \
+                --input-format=kakoune \
+                --output-format=kakoune \
+                --kakoune-selection-fd=$kak_pipe_selection
         }
         evaluate-commands %{
             set-option buffer parinfer_previous_text %val{selection}
