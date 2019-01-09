@@ -31,25 +31,27 @@ Modes:
                 shift
             done
             export mode
+            extra_opts=""
             if [ -z "${kak_opt_parinfer_previous_timestamp}" ]; then
-                export kak_opt_parinfer_previous_text="${kak_selection}"
                 export kak_opt_parinfer_previous_cursor_char_column="${kak_opt_parinfer_cursor_char_column}"
                 export kak_opt_parinfer_previous_cursor_line="${kak_opt_parinfer_cursor_line}"
             elif [ "$mode" = smart ] &&
                  [ "${kak_opt_parinfer_previous_timestamp}" = "$kak_timestamp" ]; then
                 exit 0
+            else
+                extra_opts="--kakoune-previous-text-fd=$kak_pipe_opt_parinfer_previous_text"
             fi
             # VARIABLES USED:
             # kak_opt_parinfer_cursor_char_column,
             # kak_opt_parinfer_cursor_line,
-            # kak_opt_parinfer_previous_text,
             # kak_opt_parinfer_previous_cursor_char_column,
             # kak_opt_parinfer_previous_cursor_line,
             parinfer-rust \
                 --mode=$mode \
                 --input-format=kakoune \
                 --output-format=kakoune \
-                --kakoune-selection-fd=$kak_pipe_selection
+                --kakoune-selection-fd=$kak_pipe_selection \
+                $extra_opts
         }
         evaluate-commands %{
             set-option buffer parinfer_previous_text %val{selection}

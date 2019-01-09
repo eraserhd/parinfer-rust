@@ -29,6 +29,7 @@ fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
     options.optflag("h", "help", "show this help message");
     options.optopt("", "input-format", "'json', 'text' (default: 'text')", "FMT");
+    options.optopt("", "kakoune-previous-text-fd", "file descriptor to read Kakoune previous text from", "FD");
     options.optopt("", "kakoune-selection-fd", "file descriptor to read Kakoune buffer text from", "FD");
     options.optopt("m", "mode", "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
     options.optopt("", "output-format", "'json', 'kakoune', 'text' (default: 'text')", "FMT");
@@ -112,6 +113,18 @@ impl Options {
                 let mut text = String::new();
                 let mut selection_file: fs::File = unsafe {FromRawFd::from_raw_fd(selection_fd)};
                 selection_file.read_to_string(&mut text)?;
+
+                let prev_text = match self.matches.opt_str("kakoune-previous-text-fd") {
+                    Some(s) => {
+                        let fd: unix::io::RawFd = s.parse().unwrap();
+                        let mut prev_text_file: fs::File = unsafe {FromRawFd::from_raw_fd(fd)};
+                        let mut prev_text = String::new();
+                        prev_text_file.read_to_string(&mut prev_text)?;
+                        Some(prev_text)
+                    },
+                    None => None
+                };
+
                 Ok  (Request {
                     mode: String::from(self.mode()),
                     text,
@@ -123,8 +136,7 @@ impl Options {
                         cursor_line: env::var("kak_opt_parinfer_cursor_line")
                             .map(|s| s.parse::<LineNumber>().unwrap() - 1)
                             .ok(),
-                        prev_text: env::var("kak_opt_parinfer_previous_text")
-                            .ok(),
+                        prev_text,
                         prev_cursor_x: env::var("kak_opt_parinfer_previous_cursor_char_column")
                             .map(|s| s.parse::<Column>().unwrap() - 1)
                             .ok(),
