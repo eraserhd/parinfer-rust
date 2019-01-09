@@ -46,7 +46,7 @@ Modes:
             # kak_opt_parinfer_cursor_line,
             # kak_opt_parinfer_previous_cursor_char_column,
             # kak_opt_parinfer_previous_cursor_line,
-            parinfer-rust \
+            exec parinfer-rust \
                 --mode=$mode \
                 --input-format=kakoune \
                 --output-format=kakoune \
