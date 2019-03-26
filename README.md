@@ -49,11 +49,6 @@ Plug 'eraserhd/parinfer-rust', {'do':
 
 ### Kakoune
 
-<a href="https://asciinema.org/a/iMxZ19c4caRQ3rdc17yzYnfYd" target="_blank"><img src="https://asciinema.org/a/iMxZ19c4caRQ3rdc17yzYnfYd.svg" /></a>
-<a href="https://asciinema.org/a/SeGdvzwiimphYaMDL4YNyP84F" target="_blank"><img src="https://asciinema.org/a/SeGdvzwiimphYaMDL4YNyP84F.svg" /></a>
-<a href="https://asciinema.org/a/6U5weRwpisGFsqNwoL4bFLpyB" target="_blank"><img src="https://asciinema.org/a/6U5weRwpisGFsqNwoL4bFLpyB.svg" /></a>
-<a href="https://asciinema.org/a/QrZ06KsfxOBNMD8DUt7u6bbgD" target="_blank"><img src="https://asciinema.org/a/QrZ06KsfxOBNMD8DUt7u6bbgD.svg" /></a>
-
 #### `plug.kak`
 
 Add this to your `kakrc`
