@@ -55,7 +55,7 @@ Add this to your `kakrc`
 ```kak
 plug "eraserhd/parinfer-rust" do %{
     cargo build --release
-    cargo install
+    cargo install --force --path .
 }
 ```
 Re-source your `kakrc` or restart Kakoune. Then run `:plug-install`. `plug.kak` will download, build and install plugin for you.
