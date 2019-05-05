@@ -1,7 +1,9 @@
 # ChangeLog
 ## [Unreleased]
-- Each unicode grapheme counts as one column - composing characters aren't
-  counted separately. (Closes #
+
+## [v0.3.0]
+## Changed
+- Kakoune script now uses modules.
 - Published to NPM, usable from JavaScript that supports WebAssembly with a
   wrapper that works like the original JavaScript parinfer.
 - Result from C wrapper is now in thread-local storage, allowing concurrent
@@ -36,5 +38,6 @@
 #### Fixed
 - `c` commands do not smart-dedent trailing lines
 
-[Unreleased]: https://github.com/eraserhd/parinfer-rust/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/eraserhd/parinfer-rust/compare/v0.3.0...HEAD
+[v0.3.0]: https://github.com/eraserhd/parinfer-rust/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/eraserhd/parinfer-rust/compare/v0.1.0...v0.2.0
