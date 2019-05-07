@@ -1,8 +1,13 @@
 # ChangeLog
 ## [Unreleased]
 
+## [v0.3.1]
+### Changed
+- Kakoune script can't use modules yet.  (Packaged versions of Kakoune do
+  not support them yet.)
+
 ## [v0.3.0]
-## Changed
+### Changed
 - Kakoune script now uses modules.
 - Published to NPM, usable from JavaScript that supports WebAssembly with a
   wrapper that works like the original JavaScript parinfer.
