@@ -1,5 +1,6 @@
 # ChangeLog
 ## [Unreleased]
+- Restore module support since packaged versions of Kakoune now have it.
 
 ## [v0.3.1]
 ### Changed
@@ -44,5 +45,6 @@
 - `c` commands do not smart-dedent trailing lines
 
 [Unreleased]: https://github.com/eraserhd/parinfer-rust/compare/v0.3.0...HEAD
+[v0.3.1]: https://github.com/eraserhd/parinfer-rust/compare/v0.3.0...v0.3.1
 [v0.3.0]: https://github.com/eraserhd/parinfer-rust/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/eraserhd/parinfer-rust/compare/v0.1.0...v0.2.0
