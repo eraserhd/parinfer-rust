@@ -3,7 +3,9 @@ let
   pkgs = import nixpkgs { config = {}; };
   parinfer-rust = pkgs.callPackage ./derivation.nix {};
 in {
-  test = pkgs.runCommandNoCC "parinfer-rust-test" {} ''
-    true
-  '';
+  test = parinfer-rust.overrideAttrs (self: {
+    postBuild = ''
+      RUST_BACKTRACE=1 cargo test
+    '';
+  });
 }
