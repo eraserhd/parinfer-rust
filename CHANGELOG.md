@@ -1,6 +1,9 @@
 # ChangeLog
 ## [Unreleased]
+
+### Kakoune Support
 - Restore module support since packaged versions of Kakoune now have it.
+- Fix filetype detection for removing parinfer hooks
 
 ## [v0.3.1]
 ### Changed
