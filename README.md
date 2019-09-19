@@ -16,7 +16,8 @@ information about how the user is changing the file to decide what to do.
 
 ## Installing
 
-You need to have [rust installed](https://www.rust-lang.org/en-US/install.html).
+You need to have [rust installed](https://www.rust-lang.org/en-US/install.html),
+at least 1.36.
 
 ### Vim and Neovim
 

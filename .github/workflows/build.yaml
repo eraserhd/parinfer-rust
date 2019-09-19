@@ -1,0 +1,30 @@
+name: Build
+
+on: push
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        rust: [stable]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    steps:
+      - name: Setup Rust
+        uses: hecrj/setup-rust-action@master
+        with:
+          rust-version: ${{ matrix.rust }}
+          components: rustfmt, clippy
+      - name: Installing LibClang on Windows
+        shell: pwsh
+        if: matrix.os == 'windows-latest'
+        run: choco install -y llvm
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Build the crate
+        run: |
+          cargo build --release
+          ls -la target/release
+      - name: Run tests
+        if: matrix.os != 'windows-latest'
+        run: cargo test --verbose

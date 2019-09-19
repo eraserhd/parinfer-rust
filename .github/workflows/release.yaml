@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        rust: [stable]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        include:
+          - os: macOS-latest
+            rust: stable
+            artifact_name: libparinfer_rust.dylib
+            release_name: parinfer-rust-darwin.so
+          - os: windows-latest
+            rust: stable
+            artifact_name: parinfer_rust.dll
+            release_name: parinfer-rust-windows.dll
+          - os: ubuntu-latest
+            rust: stable
+            artifact_name: libparinfer_rust.so
+            release_name: parinfer-rust-linux.so
+    steps:
+      - name: Setup Rust
+        uses: hecrj/setup-rust-action@master
+        with:
+          rust-version: ${{ matrix.rust }}
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Installing LibClang on Windows
+        shell: pwsh
+        if: matrix.os == 'windows-latest'
+        run: choco install -y llvm
+      - name: Build the crate for release
+        run: |
+          cargo build --release
+          ls -la target/release
+      - name: Run tests
+        if: matrix.os != 'windows-latest'
+        run: cargo test --verbose
+      - name: Upload libraries to GitHub release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.release_name }}
+          tag: ${{ git.ref }}

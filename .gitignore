@@ -1,4 +1,4 @@
-
+/bin/
 /target/
 /node_modules/
 **/*.rs.bk

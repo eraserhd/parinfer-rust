@@ -1,7 +1,9 @@
-use std;
 use serde;
 use serde_json;
-use std::fmt;
+use std;
+use std::{fmt,
+          mem,
+          rc::Rc};
 
 pub type LineNumber = usize;
 pub type Column = usize;
@@ -16,7 +18,7 @@ pub struct Change {
     pub new_text: String,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
     pub cursor_x: Option<Column>,
@@ -45,7 +47,7 @@ impl Options {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Request {
     pub mode: String,
@@ -53,7 +55,7 @@ pub struct Request {
     pub options: Options,
 }
 
-#[derive(Clone,Serialize)]
+#[derive(Clone,Serialize,Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TabStop<'a> {
     pub ch: &'a str,
@@ -96,7 +98,7 @@ pub struct Paren<'a> {
     pub children: Vec<Paren<'a>>
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Answer<'a> {
     pub text: std::borrow::Cow<'a, str>,
@@ -209,14 +211,14 @@ impl<'a> serde::Deserialize<'a> for ErrorName {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ErrorExtra {
     pub name: ErrorName,
     pub line_no: LineNumber,
     pub x: Column
 }
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Error {
     pub name: ErrorName,
@@ -260,3 +262,44 @@ impl From<serde_json::Error> for Error {
     }
 }
 
+// Introduce the concept of Reference Counting of requests to work with emacs memory module
+#[allow(dead_code)]
+pub type SharedRequest = Rc<Request>;
+
+// Info needed to store a pointer to answer
+const ANSWER_LEN: usize = mem::size_of::<Answer>() / 8;
+pub type RawAnswer = [u64; ANSWER_LEN];
+
+#[allow(dead_code)]
+pub struct WrappedAnswer{
+  request: SharedRequest,
+  raw: RawAnswer
+}
+
+
+impl WrappedAnswer {
+    #[inline]
+    #[allow(dead_code)]
+    pub unsafe fn new(request: SharedRequest, inner: Answer) -> Self {
+        let ptr = (&inner as *const Answer) as *const RawAnswer;
+        // Delay inner cursor's cleanup (until wrapper is dropped).
+        mem::forget(inner);
+        let raw = ptr.read();
+        Self { request, raw }
+    }
+
+    #[inline]
+    #[allow(dead_code)]
+    pub fn inner(&self) -> &Answer {
+        let ptr = (&self.raw as *const RawAnswer) as *const Answer;
+        unsafe { &*ptr }
+    }
+}
+
+impl Drop for WrappedAnswer {
+    #[inline]
+    fn drop(&mut self) {
+        let ptr = (&mut self.raw as *mut RawAnswer) as *mut Answer;
+        unsafe { ptr.read() };
+    }
+}
