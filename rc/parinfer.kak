@@ -1,5 +1,7 @@
 declare-option -docstring %{Whether to automatically update the buffer on changes} bool parinfer_enabled yes
 
+provide-module parinfer %{
+
 declare-option -hidden str parinfer_previous_text
 declare-option -hidden str parinfer_previous_cursor_char_column
 declare-option -hidden str parinfer_previous_cursor_line
@@ -67,12 +69,15 @@ Modes:
     }
 }
 
+}
+
 hook -group parinfer global WinSetOption filetype=(clojure|lisp|scheme) %{
+    require-module parinfer
     parinfer -if-enabled -paren
     hook -group parinfer window NormalKey .* %{ parinfer -if-enabled -smart }
     hook -group parinfer window InsertChar (?!\n).* %{ parinfer -if-enabled -smart }
     hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled -smart }
 }
-hook -group parinfer global WinSetOption filetype=(!clojure|lisp|scheme).* %{
+hook -group parinfer global WinSetOption filetype=(?!clojure)(?!lisp)(?!scheme).* %{
     remove-hooks window parinfer
 }

@@ -2,15 +2,12 @@ version: 2
 jobs:
   build-and-test:
     docker:
-      - image: circleci/rust:latest-node
+      - image: nixorg/nix:circleci
     steps:
       - checkout
       - run:
-          name: Test release build
-          command: cargo build --release
-      - run:
-          name: Running tests
-          command: RUST_BACKTRACE=1 cargo test
+          name: Run release.nix
+          command: nix-build release.nix
 workflows:
   version: 2
   build-and-deploy:
