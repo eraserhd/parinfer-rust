@@ -5,7 +5,7 @@ rustPlatform.buildRustPackage rec {
   version = "0.3.1";
 
   src = ./.;
-  cargoSha256 = "17fkzpvfaxixllr9nxx7dnpqxkiighggryxf30j3lafghyrx987f";
+  cargoSha256 = "0i5wy15w985nxwl4b6rzb06hchzjwph6ygzjkkmigm9diw9jcycn";
 
   postInstall = ''
     mkdir -p $out/share/kak/autoload/plugins
