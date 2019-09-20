@@ -17,6 +17,8 @@ sed -i '/Unreleased/,/-----/{
     s/./-/g
   }' CHANGELOG.adoc
 
+cargo build # To update Cargo.lock from Cargo.toml
+
 git add -A
 git commit -m 'Bump to v'"$version"' for release'
 git tag -m 'Release v'"$version" v$version
