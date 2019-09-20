@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -e
+
+version="$1"
+if [[ ! $version =~ [0-9]+\.[0-9]+\.[0-9]+ ]]; then
+    printf 'script/release: Should be script/release VERSION.\n' >&2
+    exit 1
+fi
+
+sed -i 's/^version = "[0-9\.]*"/version = "'"$version"'"/' Cargo.toml
+sed -i 's/^  version = "[0-9\.]*";/  version = "'"$version"'";/' derivation.nix
+sed -i 's/^  "version": "[0-9\.]*",/  "version": "'"$version"'",/' package.json
+sed -i '/Unreleased/,/-----/{
+    /-----/d
+    s/HEAD\[Unreleased\]/v'"$version"'['"$version"']/p
+    s/./-/g
+  }' CHANGELOG.adoc
+
+git add -A
+git commit -m 'Bump to v'"$version"' for release'
+git tag -m 'Release v'"$version" v$version
+
+sed -i '/======/{
+    a\
+\
+https://github.com/eraserhd/parinfer-rust/compare/v'"$version"'...HEAD[Unreleased]\
+---------------------------------------------------------------------------\
+
+  }' CHANGELOG.adoc
+git add -A
+git commit -m 'Ready for more changes'
