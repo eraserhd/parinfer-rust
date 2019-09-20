@@ -104,6 +104,7 @@ This wouldn't be possible without the work of others:
 * Shaun Lebron - Inventing parinfer and doing the math.
 * Case Nelson - Writing the nvim-parinfer, from which VimL code and some
   inspiration  was stolen.
+* Justin Barclay - Emacs module.
 
 ## License
 
