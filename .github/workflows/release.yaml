@@ -49,4 +49,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/${{ matrix.artifact_name }}
           asset_name: ${{ matrix.release_name }}
-          tag: ${{ git.ref }}
+          tag: ${{ github.ref }}
+          overwrite: true
