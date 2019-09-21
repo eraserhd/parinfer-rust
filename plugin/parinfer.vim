@@ -1,3 +1,5 @@
+let g:parinfer_loaded = v:false
+
 if !exists('g:parinfer_mode')
   let g:parinfer_mode = "smart"
 endif
@@ -209,8 +211,16 @@ function! s:initialize_buffer() abort
   endfor
 endfunction
 
+
 augroup Parinfer
   autocmd FileType clojure,scheme,lisp,racket,hy call <SID>initialize_buffer()
 augroup END
+
+" Handle the case where parinfer was lazy-loaded
+if !g:parinfer_loaded && (&filetype ==? 'clojure' || &filetype ==? 'scheme' || &filetype ==? 'lisp' || &filetype ==? 'racket' || &filetype ==? 'hy')
+  call <SID>initialize_buffer()
+endif
+
+let g:parinfer_loaded = v:true
 
 " vim:set sts=2 sw=2 ai et foldmethod=marker:
