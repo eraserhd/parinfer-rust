@@ -8,6 +8,10 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.0...HEAD[Unreleased]
 https://github.com/eraserhd/parinfer-rust/compare/v0.3.1...v0.4.0[0.4.0]
 ------------------------------------------------------------------------
 
+=== Releases
+
+* GitHub Actions test and release on Linux, Windows, and Mac
+
 === Emacs
 
 * Added support for Emacs!!!
