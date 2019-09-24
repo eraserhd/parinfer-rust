@@ -70,7 +70,9 @@ Re-source your `kakrc` or restart Kakoune. Then run `:plug-install`. `plug.kak` 
     $ cargo build --release
     $ cargo install
 
-This links
+### Emacs
+
+To install parinfer-rust for Emacs follow the instructions at [parinfer-rust-mode.el](https://github.com/justinbarclay/parinfer-rust-mode#installing)
 
 ## Building WebAssembly
 
