@@ -5,20 +5,20 @@ Infer parentheses for Clojure, Lisp and Scheme.
 https://github.com/eraserhd/parinfer-rust
 
 A full-featured, super fast implementation of
-https://shaunlebron.github.io/parinfer/[Shaun Lebron’s parinfer]. This
-repo comes with Vim plugin files that work with Vim8 and Neovim. The
-Rust library can be called from other editors that can load dynamic
-libraries.
+https://shaunlebron.github.io/parinfer/[Shaun Lebron’s parinfer]. This repo
+comes with Vim plugin files that work with Vim8 and Neovim. The Rust library
+can be called from other editors that can load dynamic libraries.
 
-This plugin, unlike others available for Vim, implements ``smart'' mode.
-Rather than switching between ``paren'' mode and ``indent'' mode,
-parinfer uses information about how the user is changing the file to
-decide what to do.
+This plugin, unlike others available for Vim, implements "smart" mode. Rather
+than switching between "paren" mode and "indent" mode, parinfer uses
+information about how the user is changing the file to decide what to do.
 
 == Installing
 
-You need to have https://www.rust-lang.org/en-US/install.html[rust
-installed], at least 1.36.
+Dependencies:
+
+* https://www.rust-lang.org/en-US/install.html[rust] >= 1.36
+* `libclang`, which may be part of a `clang` package, depending on your OS
 
 === Vim and Neovim
 
@@ -115,10 +115,9 @@ $ cargo +nightly web test      # Test the WebAssembly version
 $ vim --clean -u tests/run.vim # Integration tests
 ....
 
-Tests are in a nice, readable format in `+tests/test_*.vim+`. Please add
-tests for any new features (or even old ones!). You can set the
-`+VIM_TO_TEST+` environment variable to Vim’s path to test weird or
-different builds.
+Tests are in a nice, readable format in `+tests/test_*.vim+`. Please add tests
+for any new features (or even old ones!). You can set the `+VIM_TO_TEST+`
+environment variable to Vim’s path to test weird or different builds.
 
 == Contributors
 
