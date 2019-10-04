@@ -18,7 +18,7 @@ information about how the user is changing the file to decide what to do.
 Dependencies:
 
 * https://www.rust-lang.org/en-US/install.html[rust] >= 1.36
-* `libclang`, which may be part of a `clang` package, depending on your OS
+* `clang` and `libclang-dev` packages or equivalent for your OS
 
 === Vim and Neovim
 
