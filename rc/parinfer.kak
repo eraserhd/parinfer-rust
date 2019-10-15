@@ -1,8 +1,8 @@
 define-command -docstring "parinfer-enable-window [<mode>]: enable Parinfer for current window.
 Modes:
-    -indent  Preserve indentation and fix parentheses (default).
+    -indent  Preserve indentation and fix parentheses.
     -paren   Preserve parentheses and fix indentation.
-    -smart   Try to be smart about what to fix." \
+    -smart   Try to be smart about what to fix (default)." \
 parinfer-enable-window -params ..1 %{
     require-module parinfer
     try %{
@@ -17,7 +17,7 @@ parinfer-enable-window -params ..1 %{
         echo -debug %val{error}
     }
     evaluate-commands %sh{
-        mode="${1:-indent}"
+        mode="${1:-smart}"
         printf "%s\n" "remove-hooks window parinfer
                        set-option window parinfer_current_mode '${mode#-}'
                        hook -group parinfer window NormalKey .* %{ try %{ parinfer -if-enabled $mode } catch %{ echo -markup \"{Error}%val{error}\" } }
