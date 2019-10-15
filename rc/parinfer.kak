@@ -12,17 +12,17 @@ parinfer-enable-window -params ..1 %{
         set-option window parinfer_enabled true
     } catch %{
         # set up recovery hooks that will re-enable parinfer when parens are balanced
-        hook -group parinfer-try-paren window NormalIdle .* parinfer-try-paren
+        hook -group parinfer-try-paren window NormalKey .* parinfer-try-paren
         hook -group parinfer-try-paren window InsertIdle .* parinfer-try-paren
-        echo -markup "{Error}parinfer error: %val{error}"
-        echo -debug "parinfer error: %val{error}"
+        echo -debug %val{error}
     }
     evaluate-commands %sh{
         mode="${1:-indent}"
         printf "%s\n" "remove-hooks window parinfer
-                       hook -group parinfer window NormalKey .* %{ parinfer -if-enabled $mode }
-                       hook -group parinfer window InsertChar (?!\n).* %{ parinfer -if-enabled $mode }
-                       hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled $mode }"
+                       set-option window parinfer_current_mode '${mode#-}'
+                       hook -group parinfer window NormalKey .* %{ try %{ parinfer -if-enabled $mode } catch %{ echo -markup \"{Error}%val{error}\" } }
+                       hook -group parinfer window InsertChar (?!\n).* %{ try %{ parinfer -if-enabled $mode } catch %{ echo -markup \"{Error}%val{error}\" } }
+                       hook -group parinfer window InsertDelete .* %{ try %{ parinfer -if-enabled $mode } catch %{ echo -markup \"{Error}%val{error}\" } } "
     }
 }
 
@@ -48,13 +48,13 @@ declare-option -hidden str parinfer_previous_timestamp
 declare-option -hidden int parinfer_cursor_char_column
 declare-option -hidden int parinfer_cursor_line
 
-define-command -hidden -docstring "parinfer [<switches>]: reformat buffer with parinfer-rust.
+define-command -docstring "parinfer [<switches>]: reformat buffer with parinfer-rust.
 Switches:
     -if-enabled  Check 'parinfer_enabled' option before applying changes.
     -indent      Preserve indentation and fix parentheses (default).
     -paren       Preserve parentheses and fix indentation.
     -smart       Try to be smart about what to fix." \
-parinfer -params ..2 %{ try %{
+parinfer -params ..2 %{
     evaluate-commands -draft -save-regs '/"|^@' -no-hooks %{
         set buffer parinfer_cursor_char_column %val{cursor_char_column}
         set buffer parinfer_cursor_line %val{cursor_line}
@@ -71,7 +71,6 @@ parinfer -params ..2 %{ try %{
                 esac
                 shift
             done
-            printf "set-option window parinfer_current_mode '%s'\n" "$mode"
             export mode
             if [ -z "${kak_opt_parinfer_previous_timestamp}" ]; then
                 export kak_opt_parinfer_previous_text="${kak_selection}"
@@ -107,10 +106,7 @@ parinfer -params ..2 %{ try %{
         shift
         echo "select ${line}.${column},${line}.${column} $@"
     }
-} catch %{
-    echo -markup "{Error}%val{error}"
-    echo -debug "parinfer-rust error: %val{error}"
-}}
+}
 
 define-command -hidden -docstring "parinfer-try-paren: try to enable paren mode" \
 parinfer-try-paren %{ try %{
