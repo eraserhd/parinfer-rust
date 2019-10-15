@@ -5,16 +5,28 @@ Modes:
     -smart   Try to be smart about what to fix." \
 parinfer-enable-window -params 1 %{
     require-module parinfer
-    parinfer -if-enabled -paren
+    try %{
+        parinfer -paren
+        # if parinfer -paren fails, we don't set parinfer_enable to true
+        # thus making sure that hooks do not break our code
+        set-option window parinfer_enabled true
+    } catch %{
+        # set up recovery hooks that will re-enable parinfer when parens are balanced
+        hook -group parinfer-try-enable window NormalIdle .* parinfer-try-enable
+        hook -group parinfer-try-enable window InsertIdle .* parinfer-try-enable
+        echo -markup "{Error}parinfer error: %val{error}"
+        echo -debug "parinfer error: %val{error}"
+    }
+    remove-hooks window parinfer
     hook -group parinfer window NormalKey .* %{ parinfer -if-enabled %arg{1} }
     hook -group parinfer window InsertChar (?!\n).* %{ parinfer -if-enabled %arg{1} }
     hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled %arg{1} }
-    set-option window parinfer_enabled true
 }
 
 define-command -docstring "parinfer-disable-window: disable parinfer-rust for current window" \
 parinfer-disable-window %{
     remove-hooks window parinfer
+    remove-hooks window parinfer-try-enable
     set-option window parinfer_enabled false
 }
 
@@ -39,7 +51,7 @@ define-command -hidden parinfer -params .. %{
             mode=indent
             while [ $# -ne 0 ]; do
                 case "$1" in
-                    -if-enabled) [ $kak_opt_parinfer_enabled = true ] || exit 0;;
+                    -if-enabled) [ "$kak_opt_parinfer_enabled" = "true" ] || exit 0;;
                     -smart) mode=smart;;
                     -paren) mode=paren;;
                     -indent) mode=indent;;
@@ -83,6 +95,13 @@ define-command -hidden parinfer -params .. %{
         echo "select ${line}.${column},${line}.${column} $@"
     }
 }
+
+define-command -hidden -docstring "parinfer-try-enable: try to enable paren mode" \
+parinfer-try-enable %{ try %{
+    parinfer -paren
+    set-option window parinfer_enabled true
+    remove-hooks window parinfer-try-enable
+}}
 
 }
 
