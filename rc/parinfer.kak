@@ -12,8 +12,8 @@ parinfer-enable-window -params ..1 %{
         set-option window parinfer_enabled true
     } catch %{
         # set up recovery hooks that will re-enable parinfer when parens are balanced
-        hook -group parinfer-try-enable window NormalIdle .* parinfer-try-enable
-        hook -group parinfer-try-enable window InsertIdle .* parinfer-try-enable
+        hook -group parinfer-try-paren window NormalIdle .* parinfer-try-paren
+        hook -group parinfer-try-paren window InsertIdle .* parinfer-try-paren
         echo -markup "{Error}parinfer error: %val{error}"
         echo -debug "parinfer error: %val{error}"
     }
@@ -26,7 +26,7 @@ parinfer-enable-window -params ..1 %{
 define-command -docstring "parinfer-disable-window: disable Parinfer for current window." \
 parinfer-disable-window %{
     remove-hooks window parinfer
-    remove-hooks window parinfer-try-enable
+    remove-hooks window parinfer-try-paren
     set-option window parinfer_enabled false
 }
 
@@ -108,11 +108,11 @@ parinfer -params ..2 %{
     }
 }
 
-define-command -hidden -docstring "parinfer-try-enable: try to enable paren mode" \
-parinfer-try-enable %{ try %{
+define-command -hidden -docstring "parinfer-try-paren: try to enable paren mode" \
+parinfer-try-paren %{ try %{
     parinfer -paren
     set-option window parinfer_enabled true
-    remove-hooks window parinfer-try-enable
+    remove-hooks window parinfer-try-paren
 }}
 
 }
