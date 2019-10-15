@@ -1,6 +1,27 @@
-declare-option -docstring %{Whether to automatically update the buffer on changes} bool parinfer_enabled yes
+define-command -docstring "parinfer-enable-window <mode>: reformat buffer with parinfer-rust
+Modes:
+    -indent  Preserve indentation and fix parentheses.
+    -paren   Preserve parentheses and fix indentation.
+    -smart   Try to be smart about what to fix." \
+parinfer-enable-window -params 1 %{
+    require-module parinfer
+    parinfer -if-enabled -paren
+    hook -group parinfer window NormalKey .* %{ parinfer -if-enabled %arg{1} }
+    hook -group parinfer window InsertChar (?!\n).* %{ parinfer -if-enabled %arg{1} }
+    hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled %arg{1} }
+    set-option window parinfer_enabled true
+}
+
+define-command -docstring "parinfer-disable-window: disable parinfer-rust for current window" \
+parinfer-disable-window %{
+    remove-hooks window parinfer
+    set-option window parinfer_enabled false
+}
 
 provide-module parinfer %{
+
+declare-option -docstring "Whether to automatically update the buffer on changes" \
+bool parinfer_enabled false
 
 declare-option -hidden str parinfer_previous_text
 declare-option -hidden str parinfer_previous_cursor_char_column
@@ -9,18 +30,12 @@ declare-option -hidden str parinfer_previous_timestamp
 declare-option -hidden int parinfer_cursor_char_column
 declare-option -hidden int parinfer_cursor_line
 
-define-command -params .. \
-    -docstring %{parinfer [<switches>]: reformat buffer with parinfer-rust
-Modes:
-    -indent  Preserve indentation and fix parentheses (default).
-    -paren   Preserve parentheses and fix indentation.
-    -smart   Try to be smart about what to fix.} \
-    parinfer %{
-    eval -draft -save-regs '/"|^@' -no-hooks %{
+define-command -hidden parinfer -params .. %{
+    evaluate-commands -draft -save-regs '/"|^@' -no-hooks %{
         set buffer parinfer_cursor_char_column %val{cursor_char_column}
         set buffer parinfer_cursor_line %val{cursor_line}
-        exec '\%'
-        eval -draft -no-hooks %sh{
+        execute-keys '\%'
+        evaluate-commands -draft -no-hooks %sh{
             mode=indent
             while [ $# -ne 0 ]; do
                 case "$1" in
@@ -71,13 +86,3 @@ Modes:
 
 }
 
-hook -group parinfer global WinSetOption filetype=(clojure|lisp|scheme) %{
-    require-module parinfer
-    parinfer -if-enabled -paren
-    hook -group parinfer window NormalKey .* %{ parinfer -if-enabled -smart }
-    hook -group parinfer window InsertChar (?!\n).* %{ parinfer -if-enabled -smart }
-    hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled -smart }
-}
-hook -group parinfer global WinSetOption filetype=(?!clojure)(?!lisp)(?!scheme).* %{
-    remove-hooks window parinfer
-}
