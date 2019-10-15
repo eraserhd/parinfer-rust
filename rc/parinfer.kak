@@ -1,9 +1,9 @@
-define-command -docstring "parinfer-enable-window <mode>: reformat buffer with parinfer-rust
+define-command -docstring "parinfer-enable-window [<mode>]: enable Parinfer for current window.
 Modes:
-    -indent  Preserve indentation and fix parentheses.
+    -indent  Preserve indentation and fix parentheses (default).
     -paren   Preserve parentheses and fix indentation.
     -smart   Try to be smart about what to fix." \
-parinfer-enable-window -params 1 %{
+parinfer-enable-window -params ..1 %{
     require-module parinfer
     try %{
         parinfer -paren
@@ -23,7 +23,7 @@ parinfer-enable-window -params 1 %{
     hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled %arg{1} }
 }
 
-define-command -docstring "parinfer-disable-window: disable parinfer-rust for current window" \
+define-command -docstring "parinfer-disable-window: disable Parinfer for current window." \
 parinfer-disable-window %{
     remove-hooks window parinfer
     remove-hooks window parinfer-try-enable
@@ -35,6 +35,9 @@ provide-module parinfer %{
 declare-option -docstring "Whether to automatically update the buffer on changes" \
 bool parinfer_enabled false
 
+declare-option -docstring "Currently Parinfer active mode" \
+str parinfer_current_mode
+
 declare-option -hidden str parinfer_previous_text
 declare-option -hidden str parinfer_previous_cursor_char_column
 declare-option -hidden str parinfer_previous_cursor_line
@@ -42,23 +45,32 @@ declare-option -hidden str parinfer_previous_timestamp
 declare-option -hidden int parinfer_cursor_char_column
 declare-option -hidden int parinfer_cursor_line
 
-define-command -hidden parinfer -params .. %{
+define-command -hidden -docstring "parinfer [<switches>]: reformat buffer with parinfer-rust.
+Switches:
+    -if-enabled  Check 'parinfer_enabled' option before applying changes.
+    -indent      Preserve indentation and fix parentheses (default).
+    -paren       Preserve parentheses and fix indentation.
+    -smart       Try to be smart about what to fix." \
+parinfer -params ..2 %{
     evaluate-commands -draft -save-regs '/"|^@' -no-hooks %{
         set buffer parinfer_cursor_char_column %val{cursor_char_column}
         set buffer parinfer_cursor_line %val{cursor_line}
         execute-keys '\%'
         evaluate-commands -draft -no-hooks %sh{
             mode=indent
+            # remove empty argument if passed by %arg{1} in parinfer-enable-window
+            set -- $@
             while [ $# -ne 0 ]; do
                 case "$1" in
                     -if-enabled) [ "$kak_opt_parinfer_enabled" = "true" ] || exit 0;;
                     -smart) mode=smart;;
                     -paren) mode=paren;;
                     -indent) mode=indent;;
-                    -*) printf 'fail "unknown switch %s"' "$1"
+                    *) printf "fail %%{unknown switch '%s'}\n" "$1";;
                 esac
                 shift
             done
+            printf "set-option window parinfer_current_mode '%s'\n" "$mode"
             export mode
             if [ -z "${kak_opt_parinfer_previous_timestamp}" ]; then
                 export kak_opt_parinfer_previous_text="${kak_selection}"
