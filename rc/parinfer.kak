@@ -17,10 +17,13 @@ parinfer-enable-window -params ..1 %{
         echo -markup "{Error}parinfer error: %val{error}"
         echo -debug "parinfer error: %val{error}"
     }
-    remove-hooks window parinfer
-    hook -group parinfer window NormalKey .* %{ parinfer -if-enabled %arg{1} }
-    hook -group parinfer window InsertChar (?!\n).* %{ parinfer -if-enabled %arg{1} }
-    hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled %arg{1} }
+    evaluate-commands %sh{
+        mode="${1:-indent}"
+        printf "%s\n" "remove-hooks window parinfer
+                       hook -group parinfer window NormalKey .* %{ parinfer -if-enabled $mode }
+                       hook -group parinfer window InsertChar (?!\n).* %{ parinfer -if-enabled $mode }
+                       hook -group parinfer window InsertDelete .* %{ parinfer -if-enabled $mode }"
+    }
 }
 
 define-command -docstring "parinfer-disable-window: disable Parinfer for current window." \
@@ -51,15 +54,13 @@ Switches:
     -indent      Preserve indentation and fix parentheses (default).
     -paren       Preserve parentheses and fix indentation.
     -smart       Try to be smart about what to fix." \
-parinfer -params ..2 %{
+parinfer -params ..2 %{ try %{
     evaluate-commands -draft -save-regs '/"|^@' -no-hooks %{
         set buffer parinfer_cursor_char_column %val{cursor_char_column}
         set buffer parinfer_cursor_line %val{cursor_line}
         execute-keys '\%'
         evaluate-commands -draft -no-hooks %sh{
             mode=indent
-            # remove empty argument if passed by %arg{1} in parinfer-enable-window
-            set -- $@
             while [ $# -ne 0 ]; do
                 case "$1" in
                     -if-enabled) [ "$kak_opt_parinfer_enabled" = "true" ] || exit 0;;
@@ -106,7 +107,10 @@ parinfer -params ..2 %{
         shift
         echo "select ${line}.${column},${line}.${column} $@"
     }
-}
+} catch %{
+    echo -markup "{Error}%val{error}"
+    echo -debug "parinfer-rust error: %val{error}"
+}}
 
 define-command -hidden -docstring "parinfer-try-paren: try to enable paren mode" \
 parinfer-try-paren %{ try %{
