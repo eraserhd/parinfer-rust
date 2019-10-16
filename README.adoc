@@ -20,6 +20,15 @@ Dependencies:
 * https://www.rust-lang.org/en-US/install.html[rust] >= 1.36
 * `clang` and `libclang-dev` packages or equivalent for your OS
 
+=== Stand-alone
+
+If you just want to run `parinfer-rust` from the command-line:
+
+....
+$ cargo build --release
+$ cargo install
+....
+
 === Vim and Neovim
 
 ==== `+pathogen+`
