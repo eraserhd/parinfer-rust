@@ -64,6 +64,13 @@ Plug 'eraserhd/parinfer-rust', {'do':
         \  'cargo build --release'}
 ----
 
+If you are a NixOS user, you can use this command instead:
+[source,viml]
+----
+Plug 'eraserhd/parinfer-rust', {'do':
+        \ 'nix-shell --run \"cargo build --release \"'}
+----
+
 === Kakoune
 
 ==== `+plug.kak+`
