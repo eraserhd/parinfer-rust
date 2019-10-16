@@ -64,13 +64,18 @@ Add this to your `+kakrc+`
 [source,kak]
 ----
 plug "eraserhd/parinfer-rust" do %{
-    cargo build --release
     cargo install --force --path .
+} config %{
+    hook global WinSetOption filetype=(clojure|lisp|scheme|racket) %{
+        parinfer-enable-window -smart
+    }
 }
 ----
 
 Re-source your `+kakrc+` or restart Kakoune. Then run `+:plug-install+`.
-`+plug.kak+` will download, build and install plugin for you.
+`+plug.kak+` will download, build and install plugin for you. Optionally
+add `+cargo clean+` line to the `+do+` block to clean plugin from build
+files, thus making it load a bit faster.
 
 ==== Manual
 
@@ -82,6 +87,15 @@ $ make install
 $ cargo build --release
 $ cargo install
 ....
+
+Add this to your `+kakrc+`
+
+[source,kak]
+----
+hook global WinSetOption filetype=(clojure|lisp|scheme|racket) %{
+    parinfer-enable-window -smart
+}
+----
 
 === Emacs
 
