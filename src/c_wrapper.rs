@@ -55,7 +55,7 @@ mod reference_hack {
             dli_sname: ptr::null(),
             dli_saddr: ptr::null_mut()
         };
-        let initialize_ptr: *const c_void = &initialize as *const _ as *const c_void;
+        let initialize_ptr: *const c_void = initialize as *const c_void;
         if dladdr(initialize_ptr, &mut info) == 0 {
             panic!("Could not get parinfer library path.");
         }
