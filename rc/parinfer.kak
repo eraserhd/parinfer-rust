@@ -16,9 +16,11 @@ parinfer-enable-window -params ..1 %{
         hook -group parinfer-try-paren window InsertIdle .* parinfer-try-paren
         echo -debug %val{error}
     }
-    hook -group parinfer window NormalKey .* %{ parinfer-try-mode %arg{1} }
-    hook -group parinfer window InsertChar (?!\n).* %{ parinfer-try-mode %arg{1} }
-    hook -group parinfer window InsertDelete .* %{ parinfer-try-mode %arg{1} }
+    evaluate-commands %sh{
+    printf "%s\n" "hook -group parinfer window NormalKey .* %{ parinfer-try-mode ${1:--smart} }
+                   hook -group parinfer window InsertChar (?!\n).* %{ parinfer-try-mode ${1:--smart} }
+                   hook -group parinfer window InsertDelete .* %{ parinfer-try-mode ${1:--smart} }"
+    }
 }
 
 define-command -docstring "parinfer-disable-window: disable Parinfer for current window." \
@@ -116,7 +118,7 @@ define-command -hidden parinfer-try-paren %{ try %{
 # try apply modification accordingly to mode
 # report if failed
 define-command -hidden parinfer-try-mode -params 1 %{ evaluate-commands %sh{
-    mode="${1:--smart}"
+    mode="$1"
     [ "$kak_opt_parinfer_enabled" = "true" ] && printf "%s\n" "set-option window parinfer_current_mode '${mode#-}'"
     [ "$kak_opt_parinfer_display_errors" = "true" ] && catch='catch %{ echo -markup "{Error}%val{error}" }' || catch='catch %{ echo -debug %val{error} }'
     printf "%s\n" "try %{ parinfer -if-enabled $mode } $catch"
