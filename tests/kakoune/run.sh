@@ -5,13 +5,17 @@ none="00"; red="31"; green="32"; yellow="33"; magenta="35"; bold="01"
 
 # Main ├────────────────────────────────────────────────────────────────────────
 
+: ${PLUGIN_TO_TEST:=$(pwd)/../../rc}
+export PLUGIN_TO_TEST
+
 main() {
   kak_commands='
-        source '"$(pwd)"'/../../rc/parinfer.kak
+        source %sh{printf %s "$PLUGIN_TO_TEST/parinfer.kak"}
         set global autoreload yes
         set global autoinfo ""
-        set global auto_complete ""
+        set global autocomplete ""
         set window filetype clojure
+        parinfer-enable-window -smart
         try %{
             exec -save-regs / %{%s%\(\K[^)]+\)<ret>a<backspace><esc>i<backspace><backspace><c-u><esc><a-;>}
         } catch %{ exec gg }
@@ -25,8 +29,8 @@ main() {
         exec -with-hooks <c-l>
         eval -buffer *debug* write debug
         nop %sh{
-          printf %s\\n "$kak_selections"      > selections
-          printf %s\\n "$kak_selections_desc" > state
+          printf %s\\n "$kak_quoted_selections"      > selections
+          printf %s\\n "$kak_quoted_selections_desc" > state
         }
         write out
         quit!

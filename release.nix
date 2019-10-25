@@ -22,4 +22,20 @@ in {
   vim-tests = runVimTests "vim" "${pkgs.vim}/bin/vim";
 
   neovim-tests = runVimTests "neovim" "${pkgs.neovim}/bin/nvim";
+
+  kakoune-tests = pkgs.stdenv.mkDerivation {
+    name = "parinfer-rust-kakoune-tests";
+    src = ./tests/kakoune;
+    buildInputs = [
+      pkgs.kakoune-unwrapped
+      parinfer-rust
+    ];
+    buildPhase = ''
+      patchShebangs ./run.sh
+      PLUGIN_TO_TEST=${parinfer-rust}/share/kak/autoload/plugins ./run.sh
+    '';
+    installPhase = ''
+      touch $out
+    '';
+  };
 }
