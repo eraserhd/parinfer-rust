@@ -81,7 +81,7 @@ function! s:load_feature(filename)
   endwhile
 endfunction
 
-for feature in glob("tests/*.md", v:false, v:true)
+for feature in glob("tests/vim/*.md", v:false, v:true)
   call s:load_feature(feature)
 endfor
 
