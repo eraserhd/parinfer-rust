@@ -16,7 +16,7 @@ in {
       export VIM_TO_TEST=${pkgs.vim}/bin/vim
       LC_ALL=en_US.UTF-8 \
         LOCALE_ARCHIVE=${pkgs.glibcLocales}/lib/locale/locale-archive \
-        $VIM_TO_TEST --clean -u tests/run.vim
+        $VIM_TO_TEST --clean -u tests/vim/run.vim
     '';
     installPhase = ''
       touch $out

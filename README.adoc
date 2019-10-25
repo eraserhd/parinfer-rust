@@ -140,9 +140,9 @@ $ cargo +nightly web build --release
 You can run tests like so:
 
 ....
-$ cargo test                   # Run the native tests
-$ cargo +nightly web test      # Test the WebAssembly version
-$ vim --clean -u tests/run.vim # Integration tests
+$ cargo test                       # Run the native tests
+$ cargo +nightly web test          # Test the WebAssembly version
+$ vim --clean -u tests/vim/run.vim # Integration tests
 ....
 
 Tests are in a nice, readable format in `+tests/test_*.vim+`. Please add tests
