@@ -1,15 +1,21 @@
 setglobal nocompatible nomore cpo-=C
 
+if exists('$PLUGIN_TO_TEST')
+  set runtimepath+=$PLUGIN_TO_TEST
+else
+  set runtimepath+=.
+endif
+
 let g:parinfer_logfile = bufname('%').'.log'
 
 filetype on
 syntax on
 try
-  source plugin/parinfer.vim
+  runtime plugin/parinfer.vim
 
   " :PlugUpdate and other things might want to reload the plugin.  Ensure we
   " can do that.
-  source plugin/parinfer.vim
+  runtime plugin/parinfer.vim
 catch
   echohl ErrorMsg
   echo "Error loading Vim plugin:" v:exception

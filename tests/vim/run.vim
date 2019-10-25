@@ -5,6 +5,11 @@ if exists('$VIM_TO_TEST')
 else
   let g:vim_to_test = v:progname
 endif
+if exists('$PLUGIN_TO_TEST')
+  set runtimepath+=$PLUGIN_TO_TEST
+else
+  set runtimepath+=.
+endif
 
 let s:features = {}
 let s:current_feature = v:false
@@ -161,7 +166,7 @@ function s:run_all()
 endfunction
 
 try
-  source plugin/parinfer.vim
+  runtime plugin/parinfer.vim
 catch
   echohl ErrorMsg
   echo "Error loading Vim plugin:" v:exception
