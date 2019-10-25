@@ -2,14 +2,14 @@
 let
   pkgs = import nixpkgs { config = {}; };
   parinfer-rust = pkgs.callPackage ./derivation.nix {};
-in {
-  vim-tests = pkgs.stdenv.mkDerivation {
-    name = "parinfer-rust-vim-tests";
+  runVimTests = name: path: pkgs.stdenv.mkDerivation {
+    name = "parinfer-rust-${name}-tests";
     src = ./tests/vim;
     buildPhase = ''
+      printf 'Testing %s\n' '${path}'
       LC_ALL=en_US.UTF-8 \
         LOCALE_ARCHIVE=${pkgs.glibcLocales}/lib/locale/locale-archive \
-        VIM_TO_TEST=${pkgs.vim}/bin/vim \
+        VIM_TO_TEST=${path} \
         PLUGIN_TO_TEST=${parinfer-rust}/share/vim-plugins/parinfer-rust \
         ${pkgs.vim}/bin/vim --clean -u run.vim
     '';
@@ -18,18 +18,8 @@ in {
     '';
   };
 
-  neovim-tests = pkgs.stdenv.mkDerivation {
-    name = "parinfer-rust-neovim-tests";
-    src = ./tests/vim;
-    buildPhase = ''
-      LC_ALL=en_US.UTF-8 \
-        LOCALE_ARCHIVE=${pkgs.glibcLocales}/lib/locale/locale-archive \
-        VIM_TO_TEST=${pkgs.neovim}/bin/nvim \
-        PLUGIN_TO_TEST=${parinfer-rust}/share/vim-plugins/parinfer-rust \
-        ${pkgs.vim}/bin/vim --clean -u run.vim
-    '';
-    installPhase = ''
-      touch $out
-    '';
-  };
+in {
+  vim-tests = runVimTests "vim" "${pkgs.vim}/bin/vim";
+
+  neovim-tests = runVimTests "neovim" "${pkgs.neovim}/bin/nvim";
 }
