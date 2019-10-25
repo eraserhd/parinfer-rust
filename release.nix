@@ -3,12 +3,6 @@ let
   pkgs = import nixpkgs { config = {}; };
   parinfer-rust = pkgs.callPackage ./derivation.nix {};
 in {
-  unit-tests = parinfer-rust.overrideAttrs (self: {
-    postBuild = ''
-      RUST_BACKTRACE=1 cargo test
-    '';
-  });
-
   vim-tests = pkgs.stdenv.mkDerivation {
     name = "parinfer-rust-vim-tests";
     src = ./tests/vim;
