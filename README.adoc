@@ -4,14 +4,12 @@ Infer parentheses for Clojure, Lisp and Scheme.
 
 https://github.com/eraserhd/parinfer-rust
 
-A full-featured, super fast implementation of
-https://shaunlebron.github.io/parinfer/[Shaun Lebron’s parinfer]. This repo
-comes with Vim plugin files that work with Vim8 and Neovim. The Rust library
-can be called from other editors that can load dynamic libraries.
+A full-featured, super fast implementation of https://shaunlebron.github.io/parinfer/[Shaun Lebron’s parinfer].
+This repo has Vim, Neovim, and Kakoune plugins, and an https://github.com/justinbarclay/parinfer-rust-mode[Emacs plugin] is available.
+The Rust library can be called from other editors that can load dynamic libraries.
 
-This plugin, unlike others available for Vim, implements "smart" mode. Rather
-than switching between "paren" mode and "indent" mode, parinfer uses
-information about how the user is changing the file to decide what to do.
+This plugin, unlike others available for Vim, implements "smart" mode.
+Rather than switching between "paren" mode and "indent" mode, parinfer uses information about how the user is changing the file to decide what to do.
 
 == Installing
 
@@ -20,7 +18,7 @@ Dependencies:
 * https://www.rust-lang.org/en-US/install.html[rust] >= 1.36
 * `clang` and `libclang-dev` packages or equivalent for your OS
 
-=== Stand-alone
+=== Stand-alone CLI
 
 If you just want to run `parinfer-rust` from the command-line:
 
