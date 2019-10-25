@@ -96,7 +96,7 @@ function s:run(scenario) abort
     \ 'term_rows': 15,
     \ 'term_cols': 30,
     \ 'term_kill': 'kill' }
-  let l:term = term_start(g:vim_to_test . " -n -u tests/vimrc " . l:filename, l:options)
+  let l:term = term_start(g:vim_to_test . " -n -u tests/vim/vimrc " . l:filename, l:options)
   sleep 2
   call term_wait(l:term, 1000)
   for l:key in split(join(a:scenario["When"], "<Enter>"), '\([^<]\|<[^>]*>\)\zs')
