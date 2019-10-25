@@ -137,17 +137,22 @@ $ cargo +nightly web build --release
 
 == Tests
 
-You can run tests like so:
+The CI server uses [Nix](https://nixos.org/nix/download.html) to make
+reproducible build and test environments.  It's a good idea to run tests with
+it.
 
 ....
-$ cargo test                       # Run the native tests
-$ cargo +nightly web test          # Test the WebAssembly version
-$ vim --clean -u tests/vim/run.vim # Integration tests
+$ cargo test                            # Run the native tests
+$ cargo +nightly web test               # Test the WebAssembly version
+$ vim --clean -u tests/vim/run.vim      # Test against locally-installed vim
+$ nix-build release.nix                 # Run everything that CI does
+$ nix-build release.nix -A vim-tests    # Test against Vim packages by Nix
+$ nix-build release.nix -A neovim-tests # Test against Vim packages by Nix
 ....
 
-Tests are in a nice, readable format in `+tests/test_*.vim+`. Please add tests
-for any new features (or even old ones!). You can set the `+VIM_TO_TEST+`
-environment variable to Vim’s path to test weird or different builds.
+Vim tests are in a nice, readable format in `+tests/vim/test-cases.md+`.
+Please add tests for any new features (or even old ones!).
+You can set the `+VIM_TO_TEST+` environment variable to Vim’s path to test weird or different builds.
 
 == Contributors
 
