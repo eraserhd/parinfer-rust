@@ -1,0 +1,119 @@
+Mac OS Code Signing Issues
+==========================
+Jason Felice
+
+Parinfer will not load on some versions of Vim on Mac OS.  You may see this error:
+
+....
+code signature not valid for use in process using Library Validation: mapped
+file has no cdhash, completely unsigned? Code has to be at least ad-hoc signed
+....
+
+Also see issue #42.
+
+=== Reason
+
+The necessary conditions for this error are:
+
+* Running a binary release of Vim
+* The release is code signed (but not "ad-hoc")
+* It does not have the `com.apple.security.cs.disable-library-validation` entitlement
+
+According to the Apple documentation, this is by design; the application may
+not load libraries unless they are signed by Apple, or by the same team as the
+executable, or the entitlement opts out of the protection.  What I'm trying to
+say here is that I can't even release signed binaries - they still would not
+work.
+
+=== Tested Vim Versions
+
+[options="header"]
+|=======================================================================================
+| Version                 | Checked On   | Signed? | Has Entitlement? | Loads Parinfer?
+| VimR (from .tar.bz2)    | Oct 30, 2019 | Yes     | No               | No
+| Homebrew Vim            | Oct 30, 2019 | No      | N/A              | Yes
+| Homebrew MacVim `mvim`  | Oct 30, 2019 | No      | N/A              | Yes
+| Homebrew MacVim .app    | Oct 30, 2019 | Ad hoc  | No               | Yes
+| MacVim.dmg (Oct 30) <1> | Oct 30, 2019 | Yes     | Yes              | Yes
+| MacVim.dmg (Oct 27)     | Oct 30, 2019 | Yes     | No               | No
+|=======================================================================================
+
+=== Checking Code Signature
+
+The `codesign` tool, which is installed with Apple's command-line tools or
+XCode, can tell you whether a binary is signed or what entitlements it has.
+
+For example:
+
+.A Signed MacVim
+....
+$ codesign -d -v /Volumes/MacVim/MacVim.app/Contents/MacOS/MacVim
+Executable=/Volumes/MacVim/MacVim.app/Contents/MacOS/MacVim
+Identifier=org.vim.MacVim
+Format=app bundle with Mach-O thin (x86_64)
+CodeDirectory v=20500 size=3450 flags=0x10000(runtime) hashes=101+3 location=embedded
+Signature size=8997
+Timestamp=Oct 28, 2019 at 8:02:23 AM
+Info.plist entries=31
+TeamIdentifier=WG3S88DD2E
+Runtime Version=10.15.0
+Sealed Resources version=2 rules=13 files=2033
+Internal requirements count=1 size=176
+....
+
+.An Ad-hoc Signed MacVim
+....
+$ codesign -d -v /usr/local/Cellar/macvim/8.1-161/MacVim.app/Contents/MacOS/MacVim
+Executable=/usr/local/Cellar/macvim/8.1-161/MacVim.app/Contents/MacOS/MacVim
+Identifier=org.vim.MacVim
+Format=app bundle with Mach-O thin (x86_64)
+CodeDirectory v=20100 size=3295 flags=0x2(adhoc) hashes=96+5 location=embedded
+Signature=adhoc
+Info.plist entries=31
+TeamIdentifier=not set
+Sealed Resources version=2 rules=13 files=2033
+Internal requirements count=0 size=12
+....
+
+.An Unsigned `mvim`
+....
+$ codesign -d -v /usr/local/bin/mvim
+/usr/local/bin/mvim: code object is not signed at all
+....
+
+=== Checking Entitlements
+
+.A Signed MacVim with Entitlements
+....
+$ codesign -d --entitlements - /Volumes/MacVim/MacVim.app/Contents/MacOS/Vim
+Executable=/Volumes/MacVim/MacVim.app/Contents/MacOS/Vim
+qq<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.get-task-allow</key>
+    <true/>
+</dict>
+</plist>
+....
+
+.A Signed VimR with No Entitlements
+....
+$ codesign -d --entitlements - ./VimR.app/Contents/MacOS/VimR
+Executable=/private/tmp/VimR.app/Contents/MacOS/VimR
+....
+
+=== Tell Your Vim Packager ...
+
+To add the `com.apple.security.cs.disable-library-validation` entitlement.  Not just
+this plugin, but others like Vimproc need it to function.
+
+=== Notes:
+
+1. The MacVim commit history shows this change was made earlier today, and it
+   seems related to this issue.
+
