@@ -48,7 +48,7 @@ declare-option -hidden str parinfer_previous_timestamp
 declare-option -hidden int parinfer_cursor_char_column
 declare-option -hidden int parinfer_cursor_line
 
-define-command -docstring "parinfer [<switches>]: reformat buffer with parinfer-rust.
+define-command -override -docstring "parinfer [<switches>]: reformat buffer with parinfer-rust.
 Switches:
     -if-enabled  Check 'parinfer_enabled' option before applying changes.
     -indent      Preserve indentation and fix parentheses (default).
@@ -99,12 +99,12 @@ parinfer -params ..2 %{
     evaluate-commands %sh{
         line=$kak_opt_parinfer_cursor_line
         column=$kak_opt_parinfer_cursor_char_column
-        set -- $kak_selections_desc
+        set -- $kak_selections_display_column_desc
         case "$1" in
             *,${line}.${column}) exit;;
         esac
         shift
-        echo "select ${line}.${column},${line}.${column} $@"
+        echo "select -display-column ${line}.${column},${line}.${column} $@"
     }
 }
 
