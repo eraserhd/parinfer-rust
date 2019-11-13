@@ -1,5 +1,6 @@
 use parinfer::chomp_cr;
 use types::*;
+use std::env;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Coord {
@@ -84,7 +85,8 @@ fn delete_script(fixes: &Fixes) -> String {
         String::new()
     } else {
         format!(
-            "select -display-column {}\nexec '\\<a-d>'\n",
+            "select {} {}\nexec '\\<a-d>'\n",
+            env::var("kak_opt_parinfer_select_switches").unwrap(),
             fixes
                 .deletions
                 .iter()
@@ -107,9 +109,10 @@ fn insert_script(fixes: &Fixes) -> String {
         String::new()
     } else {
         format!(
-            "select -display-column {}
+            "select {} {}
              set-register '\"' {}
              exec '\\P'",
+            env::var("kak_opt_parinfer_select_switches").unwrap(),
             fixes
                 .insertions
                 .iter()

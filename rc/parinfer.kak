@@ -48,6 +48,15 @@ declare-option -hidden str parinfer_previous_timestamp
 declare-option -hidden int parinfer_cursor_char_column
 declare-option -hidden int parinfer_cursor_line
 
+declare-option -hidden str parinfer_select_switches ''
+evaluate-commands -draft %{
+    try %{
+        select -display-column 1.1,1.1
+        set-option global parinfer_select_switches '-display-column'
+    } catch %{
+    }
+}
+
 define-command -override -docstring "parinfer [<switches>]: reformat buffer with parinfer-rust.
 Switches:
     -if-enabled  Check 'parinfer_enabled' option before applying changes.
@@ -87,6 +96,7 @@ parinfer -params ..2 %{
             # kak_opt_parinfer_previous_text,
             # kak_opt_parinfer_previous_cursor_char_column,
             # kak_opt_parinfer_previous_cursor_line,
+            # kak_opt_parinfer_select_switches
             exec parinfer-rust --mode=$mode --input-format=kakoune --output-format=kakoune
         }
         evaluate-commands %{
@@ -104,7 +114,7 @@ parinfer -params ..2 %{
             *,${line}.${column}) exit;;
         esac
         shift
-        echo "select -display-column ${line}.${column},${line}.${column} $@"
+        echo "select ${kak_opt_parinfer_select_switches} ${line}.${column},${line}.${column} $@"
     }
 }
 
