@@ -4,13 +4,15 @@ ChangeLog
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.0...HEAD[Unreleased]
 ---------------------------------------------------------------------------
 
+=== Vim
+
 * Add support for loading with Vim/Neovim `packadd`
 
 === Kakoune
 
-* Use `-display-column` option if available, so that Unicode characters do
-  not "lock up" the cursor.  Requires a Kakoune from Nov 12, 2019 or later.
-  Closes #55.
+* Prevent Unicode characters from "locking up" the cursor.  Closes #55.
+  (This requires a version of Kakoune dated Nov 12, 2019 or later, with the
+  `-display-column` option to `:select`.)
 
 https://github.com/eraserhd/parinfer-rust/compare/v0.3.1...v0.4.0[0.4.0]
 ------------------------------------------------------------------------
