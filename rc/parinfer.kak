@@ -47,15 +47,7 @@ declare-option -hidden str parinfer_previous_cursor_line
 declare-option -hidden str parinfer_previous_timestamp
 declare-option -hidden int parinfer_cursor_char_column
 declare-option -hidden int parinfer_cursor_line
-
-declare-option -hidden str parinfer_select_switches ''
-evaluate-commands -draft %{
-    try %{
-        select -display-column 1.1,1.1
-        set-option global parinfer_select_switches '-display-column'
-    } catch %{
-    }
-}
+declare-option -hidden str parinfer_select_switches 'unknown'
 
 define-command -override -docstring "parinfer [<switches>]: reformat buffer with parinfer-rust.
 Switches:
@@ -73,10 +65,11 @@ parinfer -params ..2 %{
             while [ $# -ne 0 ]; do
                 case "$1" in
                     -if-enabled) [ "$kak_opt_parinfer_enabled" = "true" ] || exit 0;;
-                    -smart) mode=smart;;
-                    -paren) mode=paren;;
+                    -smart)  mode=smart;;
+                    -paren)  mode=paren;;
                     -indent) mode=indent;;
-                    *) printf "fail %%{unknown switch '%s'}\n" "$1";;
+                    *)       printf "fail %%{unknown switch '%s'}\n" "$1"
+                             exit;;
                 esac
                 shift
             done
@@ -88,6 +81,14 @@ parinfer -params ..2 %{
             elif [ "$mode" = smart ] &&
                  [ "${kak_opt_parinfer_previous_timestamp}" = "$kak_timestamp" ]; then
                 exit 0
+            fi
+            if [ "${kak_opt_parinfer_select_switches}" = unknown ]; then
+                if [ -n "${kak_selections_display_column_desc}" ]; then
+                    export kak_opt_parinfer_select_switches='-display-column'
+                else
+                    export kak_opt_parinfer_select_switches=''
+                fi
+                printf 'set-option global parinfer_select_switches "%s"\n' "$kak_opt_parinfer_select_switches"
             fi
             # VARIABLES USED:
             # kak_selection,
