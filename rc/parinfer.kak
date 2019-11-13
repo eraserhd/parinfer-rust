@@ -110,7 +110,11 @@ parinfer -params ..2 %{
     evaluate-commands %sh{
         line=$kak_opt_parinfer_cursor_line
         column=$kak_opt_parinfer_cursor_char_column
-        set -- $kak_selections_display_column_desc
+        if [ -n "$kak_selections_display_column_desc" ]; then
+            set -- $kak_selections_display_column_desc
+        else
+            set -- $kak_selections_desc
+        fi
         case "$1" in
             *,${line}.${column}) exit;;
         esac
