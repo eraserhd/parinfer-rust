@@ -84,7 +84,7 @@ fn delete_script(fixes: &Fixes) -> String {
         String::new()
     } else {
         format!(
-            "select {}\nexec '\\<a-d>'\n",
+            "select -display-column {}\nexec '\\<a-d>'\n",
             fixes
                 .deletions
                 .iter()
@@ -107,7 +107,7 @@ fn insert_script(fixes: &Fixes) -> String {
         String::new()
     } else {
         format!(
-            "select {}
+            "select -display-column {}
              set-register '\"' {}
              exec '\\P'",
             fixes
