@@ -212,11 +212,11 @@ endfunction
 
 
 augroup Parinfer
-  autocmd FileType clojure,scheme,lisp,racket,hy call <SID>initialize_buffer()
+  autocmd FileType clojure,scheme,lisp,racket,hy,fennel call <SID>initialize_buffer()
 augroup END
 
 " Handle the case where parinfer was lazy-loaded
-if (&filetype ==? 'clojure' || &filetype ==? 'scheme' || &filetype ==? 'lisp' || &filetype ==? 'racket' || &filetype ==? 'hy')
+if (&filetype ==? 'clojure' || &filetype ==? 'scheme' || &filetype ==? 'lisp' || &filetype ==? 'racket' || &filetype ==? 'hy' || &filetype ==? 'fennel')
   call <SID>initialize_buffer()
 endif
 

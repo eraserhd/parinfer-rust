@@ -7,6 +7,7 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.0...HEAD[Unreleased]
 === Vim
 
 * Add support for loading with Vim/Neovim `packadd`
+* Add support for [Fennel](https://fennel-lang.org)
 
 === Kakoune
 
