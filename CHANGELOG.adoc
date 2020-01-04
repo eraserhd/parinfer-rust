@@ -4,6 +4,10 @@ ChangeLog
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.0...HEAD[Unreleased]
 ---------------------------------------------------------------------------
 
+=== Fixed
+
+* Test error "Could not get parinfer library path" (#57).
+
 === Vim
 
 * Add support for loading with Vim/Neovim `packadd`
