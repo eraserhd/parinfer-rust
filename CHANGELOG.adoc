@@ -4,6 +4,10 @@ ChangeLog
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.1...HEAD[Unreleased]
 ---------------------------------------------------------------------------
 
+=== Fixed
+
+* Errors in build and release actions.
+
 
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.0...v0.4.1[0.4.1]
 ------------------------------------------------------------------------
