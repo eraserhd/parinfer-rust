@@ -3,7 +3,7 @@
   "description": "Rust (WebAssembly) port of Parinfer.",
   "homepage": "https://github.com/eraserhd/parinfer-rust",
   "license": "ISC",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "author": {
     "name": "Jason Felice",
     "email": "jason.m.felice@gmail.com"

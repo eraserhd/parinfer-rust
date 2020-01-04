@@ -337,7 +337,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "parinfer_rust"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "emacs 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "getopts 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",

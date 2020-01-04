@@ -2,7 +2,7 @@
 
 rustPlatform.buildRustPackage rec {
   name = "parinfer-rust-${version}";
-  version = "0.4.1";
+  version = "0.4.2";
 
   src = ./.;
   cargoSha256 = "0i5wy15w985nxwl4b6rzb06hchzjwph6ygzjkkmigm9diw9jcycn";
