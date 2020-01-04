@@ -37,9 +37,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: choco install -y llvm
       - name: Build the crate for release
-        run: |
-          cargo build --release
-          ls -la target/release
+        run: cargo build --release
       - name: Run tests
         if: matrix.os != 'windows-latest'
         run: cargo test --verbose

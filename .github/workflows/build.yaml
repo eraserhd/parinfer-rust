@@ -22,9 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Build the crate
-        run: |
-          cargo build --release
-          ls -la target/release
+        run: cargo build --release
       - name: Run tests
         if: matrix.os != 'windows-latest'
         run: cargo test --verbose
