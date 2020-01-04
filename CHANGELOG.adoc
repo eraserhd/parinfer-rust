@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...HEAD[Unreleased]
+---------------------------------------------------------------------------
+
+
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.1...v0.4.2[0.4.2]
 ------------------------------------------------------------------------
 
