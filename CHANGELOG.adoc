@@ -1,8 +1,8 @@
 ChangeLog
 =========
 
-https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...HEAD[Unreleased]
----------------------------------------------------------------------------
+https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...v0.4.3[0.4.3]
+------------------------------------------------------------------------
 
 === Fixed
 
