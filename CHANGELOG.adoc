@@ -8,6 +8,9 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...HEAD[Unreleased]
 
 * Sometimes dlerror() is null on second invocation, causing SEGV instead
   of an informative panic.
+* Fix for rust+glibc 2.30 test failures: self-reference code no longer
+  works in test because glibc 2.30 refuses to load position-independent
+  code or no-library code, so it is disabled.
 
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.1...v0.4.2[0.4.2]
 ------------------------------------------------------------------------

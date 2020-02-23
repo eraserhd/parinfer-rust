@@ -25,6 +25,9 @@ mod c_wrapper;
 pub use c_wrapper::run_parinfer;
 
 #[cfg(not(target_arch = "wasm32"))]
+pub use c_wrapper::INITIALIZED;
+
+#[cfg(not(target_arch = "wasm32"))]
 mod emacs_wrapper;
 
 #[cfg(not(target_arch = "wasm32"))]

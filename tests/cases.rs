@@ -200,6 +200,7 @@ struct Source {
 #[cfg(not(target_arch = "wasm32"))]
 fn run(input: &str) -> String {
     unsafe {
+        parinfer_rust::INITIALIZED = true;
         let c_input = CString::new(input).unwrap();
         String::from(CStr::from_ptr(parinfer_rust::run_parinfer(c_input.as_ptr())).to_str().unwrap())
     }
