@@ -68,13 +68,14 @@ mod reference_hack {
         if handle == ptr::null_mut() {
             let handle = dlopen(info.dli_fname, second_attempt_flags());
             if handle == ptr::null_mut() {
-                if dlerror() == ptr::null_mut() {
+                let error = dlerror();
+                if error == ptr::null_mut() {
                     panic!("Could not reference parinfer_rust library {:?}.",
                            CStr::from_ptr(info.dli_fname));
                 } else {
                     panic!("Could not reference parinfer_rust library {:?}: {:?}.",
                            CStr::from_ptr(info.dli_fname),
-                           CStr::from_ptr(dlerror()));
+                           CStr::from_ptr(error));
                 }
             }
         }

@@ -4,6 +4,10 @@ ChangeLog
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...HEAD[Unreleased]
 ---------------------------------------------------------------------------
 
+=== Fixed
+
+* Sometimes dlerror() is null on second invocation, causing SEGV instead
+  of an informative panic.
 
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.1...v0.4.2[0.4.2]
 ------------------------------------------------------------------------
