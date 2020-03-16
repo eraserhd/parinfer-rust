@@ -115,34 +115,38 @@ hook global WinSetOption filetype=(clojure|lisp|scheme|racket) %{
 
 [source,nix]
 ----
-environment.systemPackages = let
-  myKakoune = pkgs.wrapKakoune pkgs.kakoune-unwrapped {
-    configure = {
-      plugins = with self.kakounePlugins; [
-        parinfer-rust
-      ];
-    };
-  };
-in [ myKakoune ];
-----
-
-Alternately, you can add your plugins as an overlay:
-
-[source,nix]
-----
-nixpkgs.overlays = [
-  (self: super: {
-    kakoune = super.wrapKakoune self.kakoune-unwrapped {
+{
+  environment.systemPackages = let
+    myKakoune = pkgs.wrapKakoune pkgs.kakoune-unwrapped {
       configure = {
         plugins = with self.kakounePlugins; [
           parinfer-rust
         ];
       };
     };
-  })
-];
+  in [ myKakoune ];
+}
+----
 
-environment.systemPackages = [ pkgs.kakoune ];
+Alternately, you can add your plugins as an overlay:
+
+[source,nix]
+----
+{
+  nixpkgs.overlays = [
+    (self: super: {
+      kakoune = super.wrapKakoune self.kakoune-unwrapped {
+        configure = {
+          plugins = with self.kakounePlugins; [
+            parinfer-rust
+          ];
+        };
+      };
+    })
+  ];
+
+  environment.systemPackages = [ pkgs.kakoune ];
+}
 ----
 
 === Emacs
