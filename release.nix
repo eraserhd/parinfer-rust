@@ -1,7 +1,12 @@
 { nixpkgs ? (import ./nixpkgs.nix), ... }:
 let
-  pkgs = import nixpkgs { config = {}; };
-  parinfer-rust = pkgs.callPackage ./derivation.nix {};
+  pkgs = import nixpkgs {
+    config = {};
+    overlays = [
+      (import ./overlay.nix)
+    ];
+  };
+  parinfer-rust = pkgs.parinfer-rust;
   runVimTests = name: path: pkgs.stdenv.mkDerivation {
     name = "parinfer-rust-${name}-tests";
     src = ./tests/vim;
