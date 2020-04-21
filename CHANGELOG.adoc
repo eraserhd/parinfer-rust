@@ -35,6 +35,7 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.0...v0.4.1[0.4.1]
 
 * Add support for loading with Vim/Neovim `packadd`
 * Add support for [Fennel](https://fennel-lang.org)
+* Add support for [Janet](https://janet-lang.org)
 
 === Kakoune
 
