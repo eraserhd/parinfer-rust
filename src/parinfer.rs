@@ -13,7 +13,6 @@ const BLANK_SPACE: &'static str = " ";
 const DOUBLE_SPACE: &'static str = "  ";
 const DOUBLE_QUOTE: &'static str = "\"";
 const NEWLINE: &'static str = "\n";
-const SEMICOLON: &'static str = ";";
 const TAB: &'static str = "\t";
 
 fn match_paren(paren: &str) -> Option<&'static str> {
@@ -188,6 +187,8 @@ struct State<'a> {
     partial_result: bool,
     force_balance: bool,
 
+    comment_char: String,
+
     max_indent: Option<Column>,
     indent_delta: i64,
 
@@ -266,6 +267,8 @@ fn get_initial_result<'a>(
         success: false,
         partial_result: false,
         force_balance: false,
+
+        comment_char: options.comment_char.to_string(),
 
         max_indent: None,
         indent_delta: 0,
@@ -777,7 +780,7 @@ fn on_tab<'a>(result: &mut State<'a>) {
     }
 }
 
-fn on_semicolon<'a>(result: &mut State<'a>) {
+fn on_comment_char<'a>(result: &mut State<'a>) {
     if result.is_in_code {
         result.is_in_comment = true;
         result.comment_x = Some(result.x);
@@ -835,8 +838,8 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
         on_close_paren(result)?;
     } else if ch == DOUBLE_QUOTE {
         on_quote(result);
-    } else if ch == SEMICOLON {
-        on_semicolon(result);
+    } else if ch == result.comment_char {
+        on_comment_char(result);
     } else if ch == BACKSLASH {
         on_backslash(result);
     } else if ch == TAB {
@@ -1517,7 +1520,7 @@ fn on_comment_line<'a>(result: &mut State<'a>) {
 fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
     if is_close_paren(result.ch) {
         on_leading_close_paren(result)?;
-    } else if result.ch == SEMICOLON {
+    } else if result.ch == result.comment_char {
         // comments don't count as indentation points
         on_comment_line(result);
         result.tracking_indent = false;

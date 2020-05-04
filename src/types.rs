@@ -35,6 +35,8 @@ pub struct Options {
     pub force_balance: bool,
     #[serde(default = "Options::default_false")]
     pub return_parens: bool,
+    #[serde(default = "Options::default_comment")]
+    pub comment_char: char,
 }
 
 impl Options {
@@ -44,6 +46,10 @@ impl Options {
 
     fn default_false() -> bool {
         false
+    }
+
+    fn default_comment() -> char {
+        ';'
     }
 }
 
