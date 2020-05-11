@@ -10,7 +10,7 @@ endif
 if !exists('g:parinfer_comment_char')
   let g:parinfer_comment_char = ";"
 if !exists('g:parinfer_long_strings')
-  let g:parinfer_long_strings = 0;
+  let g:parinfer_long_strings = 0
 endif
 
 if !exists('g:parinfer_dylib_path')
