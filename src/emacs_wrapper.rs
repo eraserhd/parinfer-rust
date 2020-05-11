@@ -123,6 +123,7 @@ fn make_option() -> Result<Options> {
     force_balance: false,
     return_parens: false,
     comment_char: ';',
+    long_strings: false,
   })
 }
 
@@ -153,6 +154,7 @@ fn new_options(
     force_balance: false,
     return_parens: false,
     comment_char: ';',
+    long_strings: false,
   })
 }
 
