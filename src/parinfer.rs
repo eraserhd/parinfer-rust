@@ -903,6 +903,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
 
     if result.is_in_str && ch != TILDE {
         result.str_started = true;
+        result.quote_close_delim.clear();
     }
 
     ch = result.ch;
