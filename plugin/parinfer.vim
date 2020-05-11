@@ -142,7 +142,7 @@ function! s:process_buffer() abort
   endif
   if !exists('b:parinfer_comment_char')
     let b:parinfer_comment_char = g:parinfer_comment_char
-  end
+  endif
   if b:parinfer_last_changedtick != b:changedtick
     let l:cursor = s:get_cursor_position()
     let l:orig_lines = getline(1,'$')
