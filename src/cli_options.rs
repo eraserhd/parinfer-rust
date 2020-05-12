@@ -28,6 +28,7 @@ fn options() -> getopts::Options {
     options.optopt("", "input-format", "'json', 'text' (default: 'text')", "FMT");
     options.optopt("m", "mode", "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
     options.optopt("", "output-format", "'json', 'kakoune', 'text' (default: 'text')", "FMT");
+    options.optopt("", "comment-char", "(default: ';')", "CC");
     options
 }
 
@@ -77,6 +78,14 @@ impl Options {
         }
     }
 
+    fn comment_char(&self) -> char {
+        match self.matches.opt_str("comment-char") {
+            None => ';',
+            Some(ref s) if s.chars().count() == 1 =>  s.chars().next().unwrap(),
+            Some(ref _s) => panic!("comment character must be a single character")
+        }
+    }
+
     pub fn request(&self) -> io::Result<Request> {
         match self.input_type() {
             InputType::Text => {
@@ -94,6 +103,7 @@ impl Options {
                         prev_cursor_line: None,
                         force_balance: false,
                         return_parens: false,
+                        comment_char: char::from(self.comment_char()),
                         partial_result: false,
                         selection_start_line: None
                     }
@@ -121,6 +131,7 @@ impl Options {
                             .ok(),
                         force_balance: false,
                         return_parens: false,
+                        comment_char: char::from(self.comment_char()),
                         partial_result: false,
                         selection_start_line: None
                     }

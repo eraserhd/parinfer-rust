@@ -122,6 +122,7 @@ fn make_option() -> Result<Options> {
     partial_result: false,
     force_balance: false,
     return_parens: false,
+    comment_char: ';',
   })
 }
 
@@ -151,6 +152,7 @@ fn new_options(
     partial_result: false,
     force_balance: false,
     return_parens: false,
+    comment_char: ';',
   })
 }
 
