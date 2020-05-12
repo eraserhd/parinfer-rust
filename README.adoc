@@ -200,6 +200,7 @@ This wouldn’t be possible without the work of others:
 * Case Nelson - Writing the nvim-parinfer, from which VimL code and some
   inspiration was stolen.
 * Justin Barclay - Emacs module.
+* Michael Camilleri - User-defined comments.
 
 == License
 
