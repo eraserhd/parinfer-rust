@@ -9,6 +9,7 @@ if !exists('g:parinfer_force_balance')
 endif
 if !exists('g:parinfer_comment_char')
   let g:parinfer_comment_char = ";"
+endif
 if !exists('g:parinfer_janet_long_strings')
   let g:parinfer_janet_long_strings = 0
 endif
@@ -147,6 +148,7 @@ function! s:process_buffer() abort
   endif
   if !exists('b:parinfer_comment_char')
     let b:parinfer_comment_char = g:parinfer_comment_char
+  endif
   if !exists('b:parinfer_janet_long_strings')
     let b:parinfer_janet_long_strings = g:parinfer_janet_long_strings
   endif
