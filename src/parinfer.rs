@@ -636,6 +636,15 @@ fn is_valid_quote<'a>(delim: &'a str, ch: &'a str) -> bool {
     }
 }
 
+#[cfg(test)]
+#[test]
+fn is_valid_quote_works() {
+    assert!(is_valid_quote("", "`"));
+    assert!(is_valid_quote("`", "`"));
+    assert!(!is_valid_quote("\"", "`"));
+}
+
+
 // {{{1 Advanced operations on characters
 
 fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {

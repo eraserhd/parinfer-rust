@@ -143,7 +143,10 @@ struct Options {
     prev_cursor_x: Option<Column>,
     #[serde(skip_serializing_if = "Option::is_none")]
     prev_cursor_line: Option<LineNumber>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    long_strings: Option<bool>,
 }
+
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -273,6 +276,7 @@ pub fn composed_unicode_graphemes_count_as_a_single_character() {
             cursor_x: None,
             cursor_line: None,
             changes: None,
+            long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -313,6 +317,7 @@ pub fn graphemes_in_changes_are_counted_correctly() {
                     new_text: String::from("xyååå"),
                 }
             ]),
+            long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -353,12 +358,47 @@ pub fn wide_characters() {
                     new_text: String::from("ｗｏｒｌｄ"),
                 }
             ]),
+            long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
     };
     let input = json!({
         "mode": "smart",
+        "text": &case.text,
+        "options": &case.options
+    }).to_string();
+    let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
+    case.check2(answer);
+}
+
+#[test]
+pub fn long_strings() {
+    let case = Case {
+        text: String::from("(def foo {:bar `Not a closing parenthesis )`})"),
+        result: CaseResult {
+            text: String::from("(def foo {:bar `Not a closing parenthesis )`})"),
+            success: true,
+            error: None,
+            cursor_x: None,
+            cursor_line: None,
+            tab_stops: None,
+            paren_trails: None
+        },
+        source: Source {
+            line_no: 0
+        },
+        options: Options {
+            cursor_x: None,
+            cursor_line: None,
+            changes: None,
+            long_strings: Some(true),
+            prev_cursor_x: None,
+            prev_cursor_line: None
+        }
+    };
+    let input = json!({
+        "mode": "paren",
         "text": &case.text,
         "options": &case.options
     }).to_string();
