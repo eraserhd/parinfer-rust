@@ -11,6 +11,7 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
   `g:parinfer_comment_char` and `b:parinfer_comment_char` respectively).
   By default, the global character is `;` and the character for Janet
   buffers is `#`.
+* Add support for Janet's long strings.
 
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...v0.4.3[0.4.3]
 ------------------------------------------------------------------------
