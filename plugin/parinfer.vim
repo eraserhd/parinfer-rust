@@ -9,8 +9,8 @@ if !exists('g:parinfer_force_balance')
 endif
 if !exists('g:parinfer_comment_char')
   let g:parinfer_comment_char = ";"
-if !exists('g:parinfer_long_strings')
-  let g:parinfer_long_strings = 0
+if !exists('g:parinfer_janet_long_strings')
+  let g:parinfer_janet_long_strings = 0
 endif
 
 if !exists('g:parinfer_dylib_path')
@@ -38,7 +38,7 @@ command! ParinferOff let g:parinfer_enabled = 0
 au BufNewFile,BufRead *.janet let b:parinfer_comment_char = "#"
 
 " Long strings settings
-au BufNewFile,BufRead *.janet let b:parinfer_long_strings = 1
+au BufNewFile,BufRead *.janet let b:parinfer_janet_long_strings = 1
 
 " Logging {{{1
 
@@ -147,8 +147,8 @@ function! s:process_buffer() abort
   endif
   if !exists('b:parinfer_comment_char')
     let b:parinfer_comment_char = g:parinfer_comment_char
-  if !exists('b:parinfer_long_strings')
-    let b:parinfer_long_strings = g:parinfer_long_strings
+  if !exists('b:parinfer_janet_long_strings')
+    let b:parinfer_janet_long_strings = g:parinfer_janet_long_strings
   endif
   if b:parinfer_last_changedtick != b:changedtick
     let l:cursor = s:get_cursor_position()
@@ -160,7 +160,7 @@ function! s:process_buffer() abort
                                  \ "cursorX": l:cursor[2],
                                  \ "cursorLine": l:cursor[1],
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
-                                 \ "longStrings": b:parinfer_long_strings ? v:true : v:false,
+                                 \ "janetLongStrings": b:parinfer_janet_long_strings ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1],
                                  \ "prevText": b:parinfer_previous_text } }

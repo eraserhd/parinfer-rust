@@ -181,7 +181,7 @@ struct State<'a> {
     is_in_comment: bool,
     comment_x: Option<Column>,
 
-    long_strings_enabled: bool,
+    janet_long_strings_enabled: bool,
     str_started: bool,
     quote_open_delim: String,
     quote_close_delim: String,
@@ -267,7 +267,7 @@ fn get_initial_result<'a>(
         is_in_comment: false,
         comment_x: None,
 
-        long_strings_enabled: options.long_strings,
+        janet_long_strings_enabled: options.janet_long_strings,
         str_started: false,
         quote_open_delim: String::with_capacity(5),
         quote_close_delim: String::with_capacity(5),
@@ -838,7 +838,7 @@ fn on_quote<'a>(result: &mut State<'a>) {
 }
 
 fn on_lquote<'a>(result: &mut State<'a>) {
-    if !result.long_strings_enabled {
+    if !result.janet_long_strings_enabled {
         return;
     }
 

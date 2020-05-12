@@ -38,7 +38,7 @@ pub struct Options {
     #[serde(default = "Options::default_comment")]
     pub comment_char: char,
     #[serde(default = "Options::default_false")]
-    pub long_strings: bool,
+    pub janet_long_strings: bool,
 }
 
 impl Options {

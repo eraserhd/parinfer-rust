@@ -144,7 +144,7 @@ struct Options {
     #[serde(skip_serializing_if = "Option::is_none")]
     prev_cursor_line: Option<LineNumber>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    long_strings: Option<bool>,
+    janet_long_strings: Option<bool>,
 }
 
 
@@ -276,7 +276,7 @@ pub fn composed_unicode_graphemes_count_as_a_single_character() {
             cursor_x: None,
             cursor_line: None,
             changes: None,
-            long_strings: None,
+            janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -317,7 +317,7 @@ pub fn graphemes_in_changes_are_counted_correctly() {
                     new_text: String::from("xyååå"),
                 }
             ]),
-            long_strings: None,
+            janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -358,7 +358,7 @@ pub fn wide_characters() {
                     new_text: String::from("ｗｏｒｌｄ"),
                 }
             ]),
-            long_strings: None,
+            janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -373,7 +373,7 @@ pub fn wide_characters() {
 }
 
 #[test]
-pub fn long_strings() {
+pub fn janet_long_strings() {
     let case = Case {
         text: String::from("(def foo {:bar `Not a closing parenthesis )`})"),
         result: CaseResult {
@@ -392,7 +392,7 @@ pub fn long_strings() {
             cursor_x: None,
             cursor_line: None,
             changes: None,
-            long_strings: Some(true),
+            janet_long_strings: Some(true),
             prev_cursor_x: None,
             prev_cursor_line: None
         }
