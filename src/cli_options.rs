@@ -105,7 +105,8 @@ impl Options {
                         return_parens: false,
                         comment_char: char::from(self.comment_char()),
                         partial_result: false,
-                        selection_start_line: None
+                        selection_start_line: None,
+                        janet_long_strings: false
                     }
                 })
             },
@@ -133,7 +134,8 @@ impl Options {
                         return_parens: false,
                         comment_char: char::from(self.comment_char()),
                         partial_result: false,
-                        selection_start_line: None
+                        selection_start_line: None,
+                        janet_long_strings: false
                     }
                 })
             },
