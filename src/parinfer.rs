@@ -579,6 +579,21 @@ fn peek_works() {
     assert_eq!(peek(&empty, 1), None);
 }
 
+fn delta_to_column(delta: Delta) -> Column {
+    if delta >= 0 {
+      delta as Column
+    } else {
+      0 as Column
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn delta_to_column_works(){
+    assert_eq!(delta_to_column(1), 1);
+    assert_eq!(delta_to_column(0), 0);
+    assert_eq!(delta_to_column(-1), 0);
+}
 // {{{1 Questions about characters
 
 fn is_open_paren(paren: &str) -> bool {
@@ -1429,7 +1444,7 @@ fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
 
 fn add_indent<'a>(result: &mut State<'a>, delta: Delta) {
     let orig_indent = result.x;
-    let new_indent = (orig_indent as Delta + delta) as Column;
+    let new_indent = delta_to_column(orig_indent as Delta + delta);
     let indent_str = repeat_string(BLANK_SPACE, new_indent);
     let line_no = result.line_no;
     replace_within_line(result, line_no, 0, orig_indent, &indent_str);
