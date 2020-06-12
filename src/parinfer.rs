@@ -12,6 +12,7 @@ const BACKSLASH: &'static str = "\\";
 const BLANK_SPACE: &'static str = " ";
 const DOUBLE_SPACE: &'static str = "  ";
 const DOUBLE_QUOTE: &'static str = "\"";
+const VERTICAL_LINE: &'static str = "|";
 const NEWLINE: &'static str = "\n";
 const TAB: &'static str = "\t";
 const TILDE: &'static str = "`";
@@ -897,6 +898,8 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     } else if is_close_paren(ch) {
         on_close_paren(result)?;
     } else if ch == DOUBLE_QUOTE {
+        on_quote(result);
+    } else if ch == VERTICAL_LINE {
         on_quote(result);
     } else if ch == TILDE {
         on_lquote(result);
