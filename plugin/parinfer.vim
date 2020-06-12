@@ -10,6 +10,9 @@ endif
 if !exists('g:parinfer_comment_char')
   let g:parinfer_comment_char = ";"
 endif
+if !exists('g:parinfer_lisp_vline_symbols')
+  let g:parinfer_lisp_vline_symbols = 0
+endif
 if !exists('g:parinfer_janet_long_strings')
   let g:parinfer_janet_long_strings = 0
 endif
@@ -34,6 +37,10 @@ endif
 
 command! ParinferOn let g:parinfer_enabled = 1
 command! ParinferOff let g:parinfer_enabled = 0
+
+" Common Lisp and Scheme: ignore parens in symbols enclosed by ||
+au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_vline_symbols = 1
+au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_vline_symbols = 1
 
 " Comment settings
 au BufNewFile,BufRead *.janet let b:parinfer_comment_char = "#"
@@ -149,6 +156,9 @@ function! s:process_buffer() abort
   if !exists('b:parinfer_comment_char')
     let b:parinfer_comment_char = g:parinfer_comment_char
   endif
+  if !exists('b:parinfer_lisp_vline_symbols')
+    let b:parinfer_lisp_vline_symbols = g:parinfer_lisp_vline_symbols
+  endif
   if !exists('b:parinfer_janet_long_strings')
     let b:parinfer_janet_long_strings = g:parinfer_janet_long_strings
   endif
@@ -162,6 +172,7 @@ function! s:process_buffer() abort
                                  \ "cursorX": l:cursor[2],
                                  \ "cursorLine": l:cursor[1],
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
+                                 \ "lispVLineSymbols": b:parinfer_lisp_vline_symbols ? v:true : v:false,
                                  \ "janetLongStrings": b:parinfer_janet_long_strings ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1],

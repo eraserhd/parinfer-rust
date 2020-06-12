@@ -106,6 +106,7 @@ impl Options {
                         comment_char: char::from(self.comment_char()),
                         partial_result: false,
                         selection_start_line: None,
+                        lisp_vline_symbols: false,
                         janet_long_strings: false
                     }
                 })
@@ -135,6 +136,7 @@ impl Options {
                         comment_char: char::from(self.comment_char()),
                         partial_result: false,
                         selection_start_line: None,
+                        lisp_vline_symbols: false,
                         janet_long_strings: false
                     }
                 })
