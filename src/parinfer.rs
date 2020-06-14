@@ -15,7 +15,7 @@ const DOUBLE_QUOTE: &'static str = "\"";
 const VERTICAL_LINE: &'static str = "|";
 const NEWLINE: &'static str = "\n";
 const TAB: &'static str = "\t";
-const TILDE: &'static str = "`";
+const GRAVE: &'static str = "`";
 
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
@@ -907,7 +907,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
         if result.lisp_vline_symbols_enabled {
             on_quote(result);
         }
-    } else if ch == TILDE {
+    } else if ch == GRAVE {
         on_lquote(result);
     } else if ch == result.comment_char {
         on_comment_char(result);
@@ -919,7 +919,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
         on_newline(result);
     }
 
-    if result.is_in_str && ch != TILDE {
+    if result.is_in_str && ch != GRAVE {
         result.str_started = true;
         result.quote_close_delim.clear();
     }
