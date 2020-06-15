@@ -139,6 +139,22 @@ enum TrackingArgTabStop {
 }
 
 #[derive(PartialEq, Eq)]
+enum Now {
+    Normal,
+    Escaping,
+    Escaped,
+}
+
+impl<'a> State<'a> {
+    fn is_escaping(&'a self) -> bool {
+        match self.escape { Now::Escaping => true, _ => false }
+    }
+    fn is_escaped(&'a self) -> bool {
+        match self.escape { Now::Escaped => true, _ => false }
+    }
+}
+
+#[derive(PartialEq, Eq)]
 enum In<'a> {
     Code,
     Comment { x: usize },
@@ -197,8 +213,7 @@ struct State<'a> {
     changes: HashMap<(LineNumber, Column), TransformedChange>,
 
     context: In<'a>,
-    is_escaping: bool,
-    is_escaped: bool,
+    escape: Now,
 
     lisp_vline_symbols_enabled: bool,
     janet_long_strings_enabled: bool,
@@ -278,8 +293,7 @@ fn get_initial_result<'a>(
         changes: transform_changes(&options.changes),
 
         context: In::Code,
-        is_escaping: false,
-        is_escaped: false,
+        escape: Now::Normal,
 
         lisp_vline_symbols_enabled: options.lisp_vline_symbols,
         janet_long_strings_enabled: options.janet_long_strings,
@@ -628,12 +642,12 @@ fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren<'a>>, ch: &'a str) -> bool {
 }
 
 fn is_whitespace<'a>(result: &State<'a>) -> bool {
-    !result.is_escaped && (result.ch == BLANK_SPACE || result.ch == DOUBLE_SPACE)
+    !result.is_escaped() && (result.ch == BLANK_SPACE || result.ch == DOUBLE_SPACE)
 }
 
 fn is_closable<'a>(result: &State<'a>) -> bool {
     let ch = result.ch;
-    let closer = is_close_paren(ch) && !result.is_escaped;
+    let closer = is_close_paren(ch) && !result.is_escaped();
     return result.is_in_code() && !is_whitespace(result) && ch != "" && !closer;
 }
 
@@ -849,12 +863,11 @@ fn in_janet_long_string_on_else<'a>(result: &mut State<'a>, open_delim_len: usiz
 }
 
 fn on_backslash<'a>(result: &mut State<'a>) {
-    result.is_escaping = true;
+    result.escape = Now::Escaping;
 }
 
 fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
-    result.is_escaping = false;
-    result.is_escaped = true;
+    result.escape = Now::Escaped;
 
     if result.ch == NEWLINE {
         if result.is_in_code() {
@@ -869,9 +882,11 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
 
 fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     let mut ch = result.ch;
-    result.is_escaped = false;
+    if result.is_escaped() {
+        result.escape = Now::Normal;
+    }
 
-    if result.is_escaping {
+    if result.is_escaping() {
         after_backslash(result)?;
     } else if ch == BACKSLASH {
         on_backslash(result);
