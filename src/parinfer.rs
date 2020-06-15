@@ -182,6 +182,8 @@ struct State<'a> {
     is_in_comment: bool,
     comment_x: Option<Column>,
 
+    lisp_vline_symbols_enabled: bool,
+
     janet_long_strings_enabled: bool,
     str_started: bool,
     quote_open_delim: String,
@@ -267,6 +269,8 @@ fn get_initial_result<'a>(
         is_in_str: false,
         is_in_comment: false,
         comment_x: None,
+
+        lisp_vline_symbols_enabled: options.lisp_vline_symbols,
 
         janet_long_strings_enabled: options.janet_long_strings,
         str_started: false,
@@ -900,7 +904,9 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     } else if ch == DOUBLE_QUOTE {
         on_quote(result);
     } else if ch == VERTICAL_LINE {
-        on_quote(result);
+        if result.lisp_vline_symbols_enabled {
+            on_quote(result);
+        }
     } else if ch == TILDE {
         on_lquote(result);
     } else if ch == result.comment_char {

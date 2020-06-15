@@ -172,7 +172,7 @@ function! s:process_buffer() abort
                                  \ "cursorX": l:cursor[2],
                                  \ "cursorLine": l:cursor[1],
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
-                                 \ "lispVLineSymbols": b:parinfer_lisp_vline_symbols ? v:true : v:false,
+                                 \ "lispVlineSymbols": b:parinfer_lisp_vline_symbols ? v:true : v:false,
                                  \ "janetLongStrings": b:parinfer_janet_long_strings ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1],
