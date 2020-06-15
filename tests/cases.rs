@@ -146,6 +146,8 @@ struct Options {
     #[serde(skip_serializing_if = "Option::is_none")]
     lisp_vline_symbols: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    lisp_block_comment: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     janet_long_strings: Option<bool>,
 }
 
@@ -279,6 +281,7 @@ pub fn composed_unicode_graphemes_count_as_a_single_character() {
             cursor_line: None,
             changes: None,
             lisp_vline_symbols: None,
+            lisp_block_comment: None,
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -321,6 +324,7 @@ pub fn graphemes_in_changes_are_counted_correctly() {
                 }
             ]),
             lisp_vline_symbols: None,
+            lisp_block_comment: None,
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -363,6 +367,7 @@ pub fn wide_characters() {
                 }
             ]),
             lisp_vline_symbols: None,
+            lisp_block_comment: None,
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -398,6 +403,43 @@ pub fn lisp_vline_symbols() {
             cursor_line: None,
             changes: None,
             lisp_vline_symbols: Some(true),
+            lisp_block_comment: None,
+            janet_long_strings: None,
+            prev_cursor_x: None,
+            prev_cursor_line: None
+        }
+    };
+    let input = json!({
+        "mode": "paren",
+        "text": &case.text,
+        "options": &case.options
+    }).to_string();
+    let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
+    case.check2(answer);
+}
+
+#[test]
+pub fn lisp_block_comment() {
+    let case = Case {
+        text: String::from("'(#| this #| is |# nested ) comment |# passed through)"),
+        result: CaseResult {
+            text: String::from("'(#| this #| is |# nested ) comment |# passed through)"),
+            success: true,
+            error: None,
+            cursor_x: None,
+            cursor_line: None,
+            tab_stops: None,
+            paren_trails: None
+        },
+        source: Source {
+            line_no: 0
+        },
+        options: Options {
+            cursor_x: None,
+            cursor_line: None,
+            changes: None,
+            lisp_vline_symbols: None,
+            lisp_block_comment: Some(true),
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -433,6 +475,7 @@ pub fn janet_long_strings() {
             cursor_line: None,
             changes: None,
             lisp_vline_symbols: None,
+            lisp_block_comment: None,
             janet_long_strings: Some(true),
             prev_cursor_x: None,
             prev_cursor_line: None

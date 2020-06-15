@@ -40,6 +40,8 @@ pub struct Options {
     #[serde(default = "Options::default_false")]
     pub lisp_vline_symbols: bool,
     #[serde(default = "Options::default_false")]
+    pub lisp_block_comment: bool,
+    #[serde(default = "Options::default_false")]
     pub janet_long_strings: bool,
 }
 

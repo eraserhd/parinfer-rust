@@ -13,6 +13,7 @@ const BLANK_SPACE: &'static str = " ";
 const DOUBLE_SPACE: &'static str = "  ";
 const DOUBLE_QUOTE: &'static str = "\"";
 const VERTICAL_LINE: &'static str = "|";
+const NUMBER_SIGN: &'static str = "#";
 const NEWLINE: &'static str = "\n";
 const TAB: &'static str = "\t";
 const GRAVE: &'static str = "`";
@@ -159,6 +160,10 @@ enum In<'a> {
     Code,
     Comment { x: usize },
     String { delim: &'a str },
+    LispReaderSyntax,
+    LispBlockCommentPre { depth: usize },
+    LispBlockComment { depth: usize },
+    LispBlockCommentPost { depth: usize },
     JanetLongStringPre { open_delim_len: usize },
     JanetLongString { open_delim_len: usize, close_delim_len: usize },
 }
@@ -216,6 +221,8 @@ struct State<'a> {
     escape: Now,
 
     lisp_vline_symbols_enabled: bool,
+    lisp_reader_syntax_enabled: bool,
+    lisp_block_comment_enabled: bool,
     janet_long_strings_enabled: bool,
 
     quote_danger: bool,
@@ -256,6 +263,8 @@ fn get_initial_result<'a>(
     mode: Mode,
     smart: bool,
 ) -> State<'a> {
+    let lisp_reader_syntax_enabled = options.lisp_block_comment;
+
     State {
         mode: mode,
         smart: smart,
@@ -296,6 +305,8 @@ fn get_initial_result<'a>(
         escape: Now::Normal,
 
         lisp_vline_symbols_enabled: options.lisp_vline_symbols,
+        lisp_reader_syntax_enabled,
+        lisp_block_comment_enabled: options.lisp_block_comment,
         janet_long_strings_enabled: options.janet_long_strings,
 
         quote_danger: false,
@@ -838,6 +849,41 @@ fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
     }
 }
 
+fn in_code_on_nsign<'a>(result: &mut State<'a>) {
+    result.context = In::LispReaderSyntax;
+}
+
+fn in_lisp_reader_syntax_on_vline<'a>(result: &mut State<'a>) {
+    result.context = In::LispBlockComment { depth: 1 };
+}
+fn in_lisp_reader_syntax_on_else<'a>(result: &mut State<'a>) {
+    result.context = In::Code;
+}
+
+fn in_lisp_block_comment_pre_on_vline<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockComment { depth: depth + 1 };
+}
+fn in_lisp_block_comment_pre_on_else<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockComment { depth };
+}
+fn in_lisp_block_comment_on_nsign<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockCommentPre { depth };
+}
+fn in_lisp_block_comment_on_vline<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockCommentPost { depth };
+}
+fn in_lisp_block_comment_post_on_nsign<'a>(result: &mut State<'a>, depth: usize) {
+    let depth = depth - 1;
+    if depth > 0 {
+        result.context = In::LispBlockComment { depth };
+    } else {
+        result.context = In::Code;
+    }
+}
+fn in_lisp_block_comment_post_on_else<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockComment { depth };
+}
+
 fn in_code_on_grave<'a>(result: &mut State<'a>) {
     result.context = In::JanetLongStringPre { open_delim_len: 1 };
     cache_error_pos(result, ErrorName::UnclosedQuote);
@@ -903,6 +949,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
                         ")" | "]" | "}" => in_code_on_close_paren(result)?,
                         DOUBLE_QUOTE => in_code_on_quote(result),
                         VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
+                        NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
                         GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
                         TAB => in_code_on_tab(result),
                         _ => (),
@@ -922,6 +969,31 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
                     DOUBLE_QUOTE => in_string_on_quote(result, delim),
                     VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
                     _ => (),
+                }
+            },
+            In::LispReaderSyntax => {
+                match ch {
+                    VERTICAL_LINE if result.lisp_block_comment_enabled => in_lisp_reader_syntax_on_vline(result),
+                    _ => in_lisp_reader_syntax_on_else(result),
+                }
+            },
+            In::LispBlockCommentPre { depth } => {
+                match ch {
+                    VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
+                    _ => in_lisp_block_comment_pre_on_else(result, depth),
+                }
+            },
+            In::LispBlockComment { depth } => {
+                match ch {
+                    NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
+                    VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
+                    _ => (),
+                }
+            },
+            In::LispBlockCommentPost { depth } => {
+                match ch {
+                    NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
+                    _ => in_lisp_block_comment_post_on_else(result, depth),
                 }
             },
             In::JanetLongStringPre { open_delim_len } => {
