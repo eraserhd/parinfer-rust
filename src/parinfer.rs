@@ -637,24 +637,6 @@ fn is_closable<'a>(result: &State<'a>) -> bool {
     return result.is_in_code() && !is_whitespace(result) && ch != "" && !closer;
 }
 
-fn is_valid_quote<'a>(delim: &'a str, ch: &'a str) -> bool {
-    if delim.is_empty() {
-        return true;
-    } else if delim.contains(ch) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-#[cfg(test)]
-#[test]
-fn is_valid_quote_works() {
-    assert!(is_valid_quote("", "`"));
-    assert!(is_valid_quote("`", "`"));
-    assert!(!is_valid_quote("\"", "`"));
-}
-
 
 // {{{1 Advanced operations on characters
 
@@ -837,7 +819,7 @@ fn in_comment_on_quote<'a>(result: &mut State<'a>) {
     }
 }
 fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
-    if is_valid_quote(delim, result.ch) {
+    if delim == result.ch {
         result.context = In::Code;
     }
 }
