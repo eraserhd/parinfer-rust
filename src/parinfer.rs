@@ -158,7 +158,7 @@ impl<'a> State<'a> {
 #[derive(PartialEq, Eq)]
 enum In<'a> {
     Code,
-    Comment { x: usize },
+    Comment,
     String { delim: &'a str },
     LispReaderSyntax,
     LispBlockCommentPre { depth: usize },
@@ -173,7 +173,7 @@ impl<'a> State<'a> {
         match self.context { In::Code => true, _ => false }
     }
     fn is_in_comment(&'a self) -> bool {
-        match self.context { In::Comment {..} => true, _ => false }
+        match self.context { In::Comment => true, _ => false }
     }
     fn is_in_str(&'a self) -> bool {
         match self.context { In::String {..} => true, _ => false }
@@ -218,6 +218,7 @@ struct State<'a> {
     changes: HashMap<(LineNumber, Column), TransformedChange>,
 
     context: In<'a>,
+    comment_x: Option<Column>,
     escape: Now,
 
     lisp_vline_symbols_enabled: bool,
@@ -302,6 +303,7 @@ fn get_initial_result<'a>(
         changes: transform_changes(&options.changes),
 
         context: In::Code,
+        comment_x: None,
         escape: Now::Normal,
 
         lisp_vline_symbols_enabled: options.lisp_vline_symbols,
@@ -539,6 +541,7 @@ fn init_line<'a>(result: &mut State<'a>) {
 
     // reset line-specific state
     result.indent_x = None;
+    result.comment_x = None;
     result.indent_delta = 0;
 
     result
@@ -822,7 +825,8 @@ fn in_code_on_tab<'a>(result: &mut State<'a>) {
 }
 
 fn in_code_on_comment_char<'a>(result: &mut State<'a>) {
-    result.context = In::Comment { x: result.x };
+    result.context = In::Comment;
+    result.comment_x = Some(result.x);
     result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
 }
 
@@ -942,7 +946,7 @@ fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
                 }
             }
         },
-        In::Comment {..} => {
+        In::Comment => {
             match ch {
                 DOUBLE_QUOTE => in_comment_on_quote(result),
                 VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
@@ -1068,11 +1072,7 @@ fn is_cursor_in_comment<'a>(
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
 ) -> bool {
-    if let In::Comment { x } = result.context {
-        is_cursor_right_of(cursor_x, cursor_line, Some(x), result.line_no)
-    } else {
-        false
-    }
+    is_cursor_right_of(cursor_x, cursor_line, result.comment_x, result.line_no)
 }
 
 fn handle_change_delta<'a>(result: &mut State<'a>) {
