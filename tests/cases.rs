@@ -419,6 +419,42 @@ pub fn lisp_vline_symbols() {
 }
 
 #[test]
+pub fn lisp_sharp_syntax_backtrack() {
+    let case = Case {
+        text: String::from("(let ((x #(1 2 3))) x)"),
+        result: CaseResult {
+            text: String::from("(let ((x #(1 2 3))) x)"),
+            success: true,
+            error: None,
+            cursor_x: None,
+            cursor_line: None,
+            tab_stops: None,
+            paren_trails: None
+        },
+        source: Source {
+            line_no: 0
+        },
+        options: Options {
+            cursor_x: None,
+            cursor_line: None,
+            changes: None,
+            lisp_vline_symbols: None,
+            lisp_block_comment: Some(true),
+            janet_long_strings: None,
+            prev_cursor_x: None,
+            prev_cursor_line: None
+        }
+    };
+    let input = json!({
+        "mode": "paren",
+        "text": &case.text,
+        "options": &case.options
+    }).to_string();
+    let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
+    case.check2(answer);
+}
+
+#[test]
 pub fn lisp_block_comment() {
     let case = Case {
         text: String::from("'(#| this #| is |# nested ) comment |# passed through)"),

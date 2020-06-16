@@ -856,9 +856,6 @@ fn in_code_on_nsign<'a>(result: &mut State<'a>) {
 fn in_lisp_reader_syntax_on_vline<'a>(result: &mut State<'a>) {
     result.context = In::LispBlockComment { depth: 1 };
 }
-fn in_lisp_reader_syntax_on_else<'a>(result: &mut State<'a>) {
-    result.context = In::Code;
-}
 
 fn in_lisp_block_comment_pre_on_vline<'a>(result: &mut State<'a>, depth: usize) {
     result.context = In::LispBlockComment { depth: depth + 1 };
@@ -926,6 +923,86 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
 
 // {{{1 Character dispatch
 
+fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
+    let ch = result.ch;
+    match result.context {
+        In::Code => {
+            if ch == result.comment_char {
+                in_code_on_comment_char(result)
+            } else {
+                match ch {
+                    "(" | "[" | "{" => in_code_on_open_paren(result),
+                    ")" | "]" | "}" => in_code_on_close_paren(result)?,
+                    DOUBLE_QUOTE => in_code_on_quote(result),
+                    VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
+                    NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
+                    GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
+                    TAB => in_code_on_tab(result),
+                    _ => (),
+                }
+            }
+        },
+        In::Comment {..} => {
+            match ch {
+                DOUBLE_QUOTE => in_comment_on_quote(result),
+                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
+                GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
+                _ => (),
+            }
+        },
+        In::String { delim } => {
+            match ch {
+                DOUBLE_QUOTE => in_string_on_quote(result, delim),
+                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
+                _ => (),
+            }
+        },
+        In::LispReaderSyntax => {
+            match ch {
+                VERTICAL_LINE if result.lisp_block_comment_enabled => in_lisp_reader_syntax_on_vline(result),
+                _ => {
+                    // Backtrack!
+                    result.context = In::Code;
+                    on_context(result)?
+                },
+            }
+        },
+        In::LispBlockCommentPre { depth } => {
+            match ch {
+                VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
+                _ => in_lisp_block_comment_pre_on_else(result, depth),
+            }
+        },
+        In::LispBlockComment { depth } => {
+            match ch {
+                NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
+                VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
+                _ => (),
+            }
+        },
+        In::LispBlockCommentPost { depth } => {
+            match ch {
+                NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
+                _ => in_lisp_block_comment_post_on_else(result, depth),
+            }
+        },
+        In::JanetLongStringPre { open_delim_len } => {
+            match ch {
+                GRAVE => in_janet_long_string_pre_on_grave(result, open_delim_len),
+                _ => in_janet_long_string_pre_on_else(result, open_delim_len),
+            }
+        },
+        In::JanetLongString { open_delim_len, close_delim_len } => {
+            match ch {
+                GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
+                _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
+            }
+        },
+    }
+
+    Ok(())
+}
+
 fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     let mut ch = result.ch;
     if result.is_escaped() {
@@ -939,76 +1016,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
     } else if ch == NEWLINE {
         on_newline(result);
     } else {
-        match result.context {
-            In::Code => {
-                if ch == result.comment_char {
-                    in_code_on_comment_char(result);
-                } else {
-                    match ch {
-                        "(" | "[" | "{" => in_code_on_open_paren(result),
-                        ")" | "]" | "}" => in_code_on_close_paren(result)?,
-                        DOUBLE_QUOTE => in_code_on_quote(result),
-                        VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
-                        NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
-                        GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
-                        TAB => in_code_on_tab(result),
-                        _ => (),
-                    }
-                }
-            },
-            In::Comment {..} => {
-                match ch {
-                    DOUBLE_QUOTE => in_comment_on_quote(result),
-                    VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
-                    GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
-                    _ => (),
-                }
-            },
-            In::String { delim } => {
-                match ch {
-                    DOUBLE_QUOTE => in_string_on_quote(result, delim),
-                    VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
-                    _ => (),
-                }
-            },
-            In::LispReaderSyntax => {
-                match ch {
-                    VERTICAL_LINE if result.lisp_block_comment_enabled => in_lisp_reader_syntax_on_vline(result),
-                    _ => in_lisp_reader_syntax_on_else(result),
-                }
-            },
-            In::LispBlockCommentPre { depth } => {
-                match ch {
-                    VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
-                    _ => in_lisp_block_comment_pre_on_else(result, depth),
-                }
-            },
-            In::LispBlockComment { depth } => {
-                match ch {
-                    NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
-                    VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
-                    _ => (),
-                }
-            },
-            In::LispBlockCommentPost { depth } => {
-                match ch {
-                    NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
-                    _ => in_lisp_block_comment_post_on_else(result, depth),
-                }
-            },
-            In::JanetLongStringPre { open_delim_len } => {
-                match ch {
-                    GRAVE => in_janet_long_string_pre_on_grave(result, open_delim_len),
-                    _ => in_janet_long_string_pre_on_else(result, open_delim_len),
-                }
-            },
-            In::JanetLongString { open_delim_len, close_delim_len } => {
-                match ch {
-                    GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
-                    _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
-                }
-            },
-        }
+        on_context(result)?;
     }
 
     ch = result.ch;
