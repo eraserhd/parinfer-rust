@@ -178,6 +178,9 @@ impl<'a> State<'a> {
     fn is_in_str(&'a self) -> bool {
         match self.context { In::String {..} => true, _ => false }
     }
+    fn is_in_lisp_block_comment(&'a self) -> bool {
+        match self.context { In::LispBlockComment {..} => true, _ => false }
+    }
 }
 
 struct State<'a> {
@@ -553,7 +556,7 @@ fn init_line<'a>(result: &mut State<'a>) {
     result.error_pos_cache.remove(&ErrorName::LeadingCloseParen);
 
     result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
-    result.tracking_indent = !result.is_in_str();
+    result.tracking_indent = !result.is_in_str() && !result.is_in_lisp_block_comment();
 }
 
 fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
@@ -1515,7 +1518,7 @@ fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
-    if result.is_in_str() {
+    if result.is_in_str() || result.is_in_lisp_block_comment() {
         invalidate_paren_trail(result);
     } else if result.mode == Mode::Indent {
         clamp_paren_trail_to_cursor(result);
@@ -1806,7 +1809,7 @@ fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
     if result.quote_danger {
         error(result, ErrorName::QuoteDanger)?;
     }
-    if result.is_in_str() {
+    if result.is_in_str() || result.is_in_lisp_block_comment() {
         error(result, ErrorName::UnclosedQuote)?;
     }
 
