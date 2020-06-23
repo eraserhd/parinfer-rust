@@ -13,9 +13,10 @@ const BLANK_SPACE: &'static str = " ";
 const DOUBLE_SPACE: &'static str = "  ";
 const DOUBLE_QUOTE: &'static str = "\"";
 const VERTICAL_LINE: &'static str = "|";
+const NUMBER_SIGN: &'static str = "#";
 const NEWLINE: &'static str = "\n";
 const TAB: &'static str = "\t";
-const TILDE: &'static str = "`";
+const GRAVE: &'static str = "`";
 
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
@@ -138,6 +139,59 @@ enum TrackingArgTabStop {
     Arg,
 }
 
+#[derive(PartialEq, Eq)]
+enum Now {
+    Normal,
+    Escaping,
+    Escaped,
+}
+
+impl<'a> State<'a> {
+    fn is_escaping(&'a self) -> bool {
+        match self.escape { Now::Escaping => true, _ => false }
+    }
+    fn is_escaped(&'a self) -> bool {
+        match self.escape { Now::Escaped => true, _ => false }
+    }
+}
+
+#[derive(PartialEq, Eq)]
+enum In<'a> {
+    Code,
+    Comment,
+    String { delim: &'a str },
+    LispReaderSyntax,
+    LispBlockCommentPre { depth: usize },
+    LispBlockComment { depth: usize },
+    LispBlockCommentPost { depth: usize },
+    JanetLongStringPre { open_delim_len: usize },
+    JanetLongString { open_delim_len: usize, close_delim_len: usize },
+}
+
+impl<'a> State<'a> {
+    fn is_in_code(&'a self) -> bool {
+        match self.context {
+            In::Code => true,
+            In::LispReaderSyntax => true,
+            _ => false
+        }
+    }
+    fn is_in_comment(&'a self) -> bool {
+        match self.context { In::Comment => true, _ => false }
+    }
+    fn is_in_stringish(&'a self) -> bool {
+        match self.context {
+            In::String {..} => true,
+            In::LispBlockCommentPre {..} => true,
+            In::LispBlockComment {..} => true,
+            In::LispBlockCommentPost {..} => true,
+            In::JanetLongStringPre {..} => true,
+            In::JanetLongString {..} => true,
+            _ => false
+        }
+    }
+}
+
 struct State<'a> {
     mode: Mode,
     smart: bool,
@@ -175,19 +229,14 @@ struct State<'a> {
 
     changes: HashMap<(LineNumber, Column), TransformedChange>,
 
-    is_in_code: bool,
-    is_escaping: bool,
-    is_escaped: bool,
-    is_in_str: bool,
-    is_in_comment: bool,
+    context: In<'a>,
     comment_x: Option<Column>,
+    escape: Now,
 
     lisp_vline_symbols_enabled: bool,
-
+    lisp_reader_syntax_enabled: bool,
+    lisp_block_comment_enabled: bool,
     janet_long_strings_enabled: bool,
-    str_started: bool,
-    quote_open_delim: String,
-    quote_close_delim: String,
 
     quote_danger: bool,
     tracking_indent: bool,
@@ -227,6 +276,8 @@ fn get_initial_result<'a>(
     mode: Mode,
     smart: bool,
 ) -> State<'a> {
+    let lisp_reader_syntax_enabled = options.lisp_block_comment;
+
     State {
         mode: mode,
         smart: smart,
@@ -263,19 +314,14 @@ fn get_initial_result<'a>(
 
         changes: transform_changes(&options.changes),
 
-        is_in_code: true,
-        is_escaping: false,
-        is_escaped: false,
-        is_in_str: false,
-        is_in_comment: false,
+        context: In::Code,
         comment_x: None,
+        escape: Now::Normal,
 
         lisp_vline_symbols_enabled: options.lisp_vline_symbols,
-
+        lisp_reader_syntax_enabled,
+        lisp_block_comment_enabled: options.lisp_block_comment,
         janet_long_strings_enabled: options.janet_long_strings,
-        str_started: false,
-        quote_open_delim: String::with_capacity(5),
-        quote_close_delim: String::with_capacity(5),
 
         quote_danger: false,
         tracking_indent: false,
@@ -519,7 +565,7 @@ fn init_line<'a>(result: &mut State<'a>) {
     result.error_pos_cache.remove(&ErrorName::LeadingCloseParen);
 
     result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
-    result.tracking_indent = !result.is_in_str;
+    result.tracking_indent = !result.is_in_stringish();
 }
 
 fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
@@ -622,31 +668,13 @@ fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren<'a>>, ch: &'a str) -> bool {
 }
 
 fn is_whitespace<'a>(result: &State<'a>) -> bool {
-    !result.is_escaped && (result.ch == BLANK_SPACE || result.ch == DOUBLE_SPACE)
+    !result.is_escaped() && (result.ch == BLANK_SPACE || result.ch == DOUBLE_SPACE)
 }
 
 fn is_closable<'a>(result: &State<'a>) -> bool {
     let ch = result.ch;
-    let closer = is_close_paren(ch) && !result.is_escaped;
-    return result.is_in_code && !is_whitespace(result) && ch != "" && !closer;
-}
-
-fn is_valid_quote<'a>(delim: &'a str, ch: &'a str) -> bool {
-    if delim.is_empty() {
-        return true;
-    } else if delim.contains(ch) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-#[cfg(test)]
-#[test]
-fn is_valid_quote_works() {
-    assert!(is_valid_quote("", "`"));
-    assert!(is_valid_quote("`", "`"));
-    assert!(!is_valid_quote("\"", "`"));
+    let closer = is_close_paren(ch) && !result.is_escaped();
+    return result.is_in_code() && !is_whitespace(result) && ch != "" && !closer;
 }
 
 
@@ -689,7 +717,7 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
 
 fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
     if state == TrackingArgTabStop::Space {
-        if result.is_in_code && is_whitespace(result) {
+        if result.is_in_code() && is_whitespace(result) {
             result.tracking_arg_tab_stop = TrackingArgTabStop::Arg;
         }
     } else if state == TrackingArgTabStop::Arg {
@@ -703,38 +731,35 @@ fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
 
 // {{{1 Literal character events
 
-fn on_open_paren<'a>(result: &mut State<'a>) {
-    if result.is_in_code {
-        let opener = Paren {
-            input_line_no: result.input_line_no,
-            input_x: result.input_x,
+fn in_code_on_open_paren<'a>(result: &mut State<'a>) {
+    let opener = Paren {
+        input_line_no: result.input_line_no,
+        input_x: result.input_x,
 
-            line_no: result.line_no,
-            x: result.x,
-            ch: result.ch,
-            indent_delta: result.indent_delta,
-            max_child_indent: None,
+        line_no: result.line_no,
+        x: result.x,
+        ch: result.ch,
+        indent_delta: result.indent_delta,
+        max_child_indent: None,
 
-            arg_x: None,
+        arg_x: None,
 
-            closer: None,
-            children: vec![]
-        };
+        closer: None,
+        children: vec![]
+    };
 
-        if result.return_parens {
-            if let Some(parent) = result.paren_stack.last_mut() {
-                parent.children.push(opener.clone());
-            } else {
-                result.parens.push(opener.clone());
-            }
+    if result.return_parens {
+        if let Some(parent) = result.paren_stack.last_mut() {
+            parent.children.push(opener.clone());
+        } else {
+            result.parens.push(opener.clone());
         }
-
-        result.paren_stack.push(opener);
-        result.tracking_arg_tab_stop = TrackingArgTabStop::Space;
     }
+    result.paren_stack.push(opener);
+    result.tracking_arg_tab_stop = TrackingArgTabStop::Space;
 }
 
-fn on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn in_code_on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     let mut opener = (*peek(&result.paren_stack, 0).unwrap()).clone();
     if result.return_parens {
         set_closer(&mut opener, result.line_no, result.x, result.ch);
@@ -762,7 +787,7 @@ fn on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn in_code_on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     match result.mode {
         Mode::Paren => {
             let in_leading_paren_trail = result.paren_trail.line_no == Some(result.line_no)
@@ -797,91 +822,114 @@ fn on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn on_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
-    if result.is_in_code {
-        if is_valid_close_paren(&result.paren_stack, result.ch) {
-            on_matched_close_paren(result)?;
-        } else {
-            on_unmatched_close_paren(result)?;
-        }
+fn in_code_on_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+    if is_valid_close_paren(&result.paren_stack, result.ch) {
+        in_code_on_matched_close_paren(result)?;
+    } else {
+        in_code_on_unmatched_close_paren(result)?;
     }
 
     Ok(())
 }
 
-fn on_tab<'a>(result: &mut State<'a>) {
-    if result.is_in_code {
-        result.ch = DOUBLE_SPACE;
-    }
+fn in_code_on_tab<'a>(result: &mut State<'a>) {
+    result.ch = DOUBLE_SPACE;
 }
 
-fn on_comment_char<'a>(result: &mut State<'a>) {
-    if result.is_in_code {
-        result.is_in_comment = true;
-        result.comment_x = Some(result.x);
-        result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
-    }
+fn in_code_on_comment_char<'a>(result: &mut State<'a>) {
+    result.context = In::Comment;
+    result.comment_x = Some(result.x);
+    result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
 }
 
 fn on_newline<'a>(result: &mut State<'a>) {
-    result.is_in_comment = false;
+    if result.is_in_comment() {
+        result.context = In::Code;
+    }
     result.ch = "";
 }
 
-fn on_quote<'a>(result: &mut State<'a>) {
-    if result.is_in_str && is_valid_quote(&result.quote_open_delim, result.ch) {
-        result.is_in_str = false;
-    } else if result.is_in_comment {
-        result.quote_danger = !result.quote_danger;
-        if result.quote_danger {
-            cache_error_pos(result, ErrorName::QuoteDanger);
-        }
-    } else {
-        result.is_in_str = true;
-        cache_error_pos(result, ErrorName::UnclosedQuote);
+fn in_code_on_quote<'a>(result: &mut State<'a>) {
+    result.context = In::String { delim: result.ch };
+    cache_error_pos(result, ErrorName::UnclosedQuote);
+}
+fn in_comment_on_quote<'a>(result: &mut State<'a>) {
+    result.quote_danger = !result.quote_danger;
+    if result.quote_danger {
+        cache_error_pos(result, ErrorName::QuoteDanger);
+    }
+}
+fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
+    if delim == result.ch {
+        result.context = In::Code;
     }
 }
 
-fn on_lquote<'a>(result: &mut State<'a>) {
-    if !result.janet_long_strings_enabled {
-        return;
-    }
+fn in_code_on_nsign<'a>(result: &mut State<'a>) {
+    result.context = In::LispReaderSyntax;
+}
 
-    if result.is_in_str && is_valid_quote(&result.quote_open_delim, result.ch) {
-        if result.str_started {
-            result.quote_close_delim.push_str(result.ch);
-            if result.quote_open_delim.len() == result.quote_close_delim.len() {
-                result.is_in_str = false;
-                result.str_started = false;
-                result.quote_open_delim.clear();
-                result.quote_close_delim.clear();
-            }
-        } else {
-            result.quote_open_delim.push_str(result.ch);
-        }
-    } else if result.is_in_comment {
-        result.quote_danger = !result.quote_danger;
-        if result.quote_danger {
-            cache_error_pos(result, ErrorName::QuoteDanger);
-        }
+fn in_lisp_reader_syntax_on_vline<'a>(result: &mut State<'a>) {
+    result.context = In::LispBlockComment { depth: 1 };
+}
+
+fn in_lisp_block_comment_pre_on_vline<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockComment { depth: depth + 1 };
+}
+fn in_lisp_block_comment_pre_on_else<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockComment { depth };
+}
+fn in_lisp_block_comment_on_nsign<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockCommentPre { depth };
+}
+fn in_lisp_block_comment_on_vline<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockCommentPost { depth };
+}
+fn in_lisp_block_comment_post_on_nsign<'a>(result: &mut State<'a>, depth: usize) {
+    let depth = depth - 1;
+    if depth > 0 {
+        result.context = In::LispBlockComment { depth };
     } else {
-        result.is_in_str = true;
-        result.str_started = false;
-        result.quote_open_delim.push_str(result.ch);
-        cache_error_pos(result, ErrorName::UnclosedQuote);
+        result.context = In::Code;
+    }
+}
+fn in_lisp_block_comment_post_on_else<'a>(result: &mut State<'a>, depth: usize) {
+    result.context = In::LispBlockComment { depth };
+}
+
+fn in_code_on_grave<'a>(result: &mut State<'a>) {
+    result.context = In::JanetLongStringPre { open_delim_len: 1 };
+    cache_error_pos(result, ErrorName::UnclosedQuote);
+}
+fn in_janet_long_string_pre_on_grave<'a>(result: &mut State<'a>, open_delim_len: usize) {
+    result.context = In::JanetLongStringPre { open_delim_len: open_delim_len + 1 };
+}
+fn in_janet_long_string_pre_on_else<'a>(result: &mut State<'a>, open_delim_len: usize) {
+    result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
+}
+fn in_janet_long_string_on_grave<'a>(result: &mut State<'a>, open_delim_len: usize, close_delim_len: usize) {
+    let close_delim_len = close_delim_len + 1;
+    if open_delim_len == close_delim_len {
+        result.context = In::Code;
+    } else {
+        result.context = In::JanetLongString { open_delim_len, close_delim_len };
+    }
+}
+fn in_janet_long_string_on_else<'a>(result: &mut State<'a>, open_delim_len: usize, close_delim_len: usize) {
+    if close_delim_len > 0 {
+        result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
     }
 }
 
 fn on_backslash<'a>(result: &mut State<'a>) {
-    result.is_escaping = true;
+    result.escape = Now::Escaping;
 }
 
 fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
-    result.is_escaping = false;
-    result.is_escaped = true;
+    result.escape = Now::Escaped;
 
     if result.ch == NEWLINE {
-        if result.is_in_code {
+        if result.is_in_code() {
             return error(result, ErrorName::EolBackslash);
         }
     }
@@ -891,42 +939,103 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
 
 // {{{1 Character dispatch
 
-fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
-    let mut ch = result.ch;
-    result.is_escaped = false;
-
-    if result.is_escaping {
-        after_backslash(result)?;
-    } else if is_open_paren(ch) {
-        on_open_paren(result);
-    } else if is_close_paren(ch) {
-        on_close_paren(result)?;
-    } else if ch == DOUBLE_QUOTE {
-        on_quote(result);
-    } else if ch == VERTICAL_LINE {
-        if result.lisp_vline_symbols_enabled {
-            on_quote(result);
-        }
-    } else if ch == TILDE {
-        on_lquote(result);
-    } else if ch == result.comment_char {
-        on_comment_char(result);
-    } else if ch == BACKSLASH {
-        on_backslash(result);
-    } else if ch == TAB {
-        on_tab(result);
-    } else if ch == NEWLINE {
-        on_newline(result);
+fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
+    let ch = result.ch;
+    match result.context {
+        In::Code => {
+            if ch == result.comment_char {
+                in_code_on_comment_char(result)
+            } else {
+                match ch {
+                    "(" | "[" | "{" => in_code_on_open_paren(result),
+                    ")" | "]" | "}" => in_code_on_close_paren(result)?,
+                    DOUBLE_QUOTE => in_code_on_quote(result),
+                    VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
+                    NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
+                    GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
+                    TAB => in_code_on_tab(result),
+                    _ => (),
+                }
+            }
+        },
+        In::Comment => {
+            match ch {
+                DOUBLE_QUOTE => in_comment_on_quote(result),
+                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
+                GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
+                _ => (),
+            }
+        },
+        In::String { delim } => {
+            match ch {
+                DOUBLE_QUOTE => in_string_on_quote(result, delim),
+                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
+                _ => (),
+            }
+        },
+        In::LispReaderSyntax => {
+            match ch {
+                VERTICAL_LINE if result.lisp_block_comment_enabled => in_lisp_reader_syntax_on_vline(result),
+                _ => {
+                    // Backtrack!
+                    result.context = In::Code;
+                    on_context(result)?
+                },
+            }
+        },
+        In::LispBlockCommentPre { depth } => {
+            match ch {
+                VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
+                _ => in_lisp_block_comment_pre_on_else(result, depth),
+            }
+        },
+        In::LispBlockComment { depth } => {
+            match ch {
+                NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
+                VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
+                _ => (),
+            }
+        },
+        In::LispBlockCommentPost { depth } => {
+            match ch {
+                NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
+                _ => in_lisp_block_comment_post_on_else(result, depth),
+            }
+        },
+        In::JanetLongStringPre { open_delim_len } => {
+            match ch {
+                GRAVE => in_janet_long_string_pre_on_grave(result, open_delim_len),
+                _ => in_janet_long_string_pre_on_else(result, open_delim_len),
+            }
+        },
+        In::JanetLongString { open_delim_len, close_delim_len } => {
+            match ch {
+                GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
+                _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
+            }
+        },
     }
 
-    if result.is_in_str && ch != TILDE {
-        result.str_started = true;
-        result.quote_close_delim.clear();
+    Ok(())
+}
+
+fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
+    let mut ch = result.ch;
+    if result.is_escaped() {
+        result.escape = Now::Normal;
+    }
+
+    if result.is_escaping() {
+        after_backslash(result)?;
+    } else if ch == BACKSLASH {
+        on_backslash(result);
+    } else if ch == NEWLINE {
+        on_newline(result);
+    } else {
+        on_context(result)?;
     }
 
     ch = result.ch;
-
-    result.is_in_code = !result.is_in_comment && !result.is_in_str;
 
     if is_closable(result) {
         let line_no = result.line_no;
@@ -1418,7 +1527,7 @@ fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
-    if result.is_in_str {
+    if result.is_in_stringish() {
         invalidate_paren_trail(result);
     } else if result.mode == Mode::Indent {
         clamp_paren_trail_to_cursor(result);
@@ -1709,7 +1818,7 @@ fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
     if result.quote_danger {
         error(result, ErrorName::QuoteDanger)?;
     }
-    if result.is_in_str {
+    if result.is_in_stringish() {
         error(result, ErrorName::UnclosedQuote)?;
     }
 
