@@ -170,7 +170,11 @@ enum In<'a> {
 
 impl<'a> State<'a> {
     fn is_in_code(&'a self) -> bool {
-        match self.context { In::Code => true, _ => false }
+        match self.context {
+            In::Code => true,
+            In::LispReaderSyntax => true,
+            _ => false
+        }
     }
     fn is_in_comment(&'a self) -> bool {
         match self.context { In::Comment => true, _ => false }
