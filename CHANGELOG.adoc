@@ -13,6 +13,9 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
   buffers is `#`.
 * Add support for Janet's long strings.
 * Support for WebAssembly
+* More support for Common Lisp and Scheme:
+  - `|Enclosed symbols|`
+  - `#|Block comments|#`
 
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...v0.4.3[0.4.3]
 ------------------------------------------------------------------------

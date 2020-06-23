@@ -201,6 +201,7 @@ This wouldn’t be possible without the work of others:
   inspiration was stolen.
 * Justin Barclay - Emacs module.
 * Michael Camilleri - User-defined comments.
+* Mitsuhiro Nakamura - Support for Common Lisp and Scheme.
 
 == License
 
