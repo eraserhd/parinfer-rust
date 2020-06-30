@@ -637,20 +637,6 @@ fn peek_works() {
 
 // {{{1 Questions about characters
 
-fn is_open_paren(paren: &str) -> bool {
-    match paren {
-        "{" | "[" | "(" => true,
-        _ => false,
-    }
-}
-
-#[cfg(test)]
-#[test]
-fn is_open_paren_works() {
-    assert!(is_open_paren("("));
-    assert!(!is_open_paren("}"));
-}
-
 fn is_close_paren(paren: &str) -> bool {
     match paren {
         "}" | "]" | ")" => true,
