@@ -108,6 +108,7 @@ impl Options {
                         selection_start_line: None,
                         lisp_vline_symbols: false,
                         lisp_block_comment: false,
+                        scheme_sexp_comment: false,
                         janet_long_strings: false
                     }
                 })
@@ -139,6 +140,7 @@ impl Options {
                         selection_start_line: None,
                         lisp_vline_symbols: false,
                         lisp_block_comment: false,
+                        scheme_sexp_comment: false,
                         janet_long_strings: false
                     }
                 })

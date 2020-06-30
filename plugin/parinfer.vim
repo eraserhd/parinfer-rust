@@ -16,6 +16,9 @@ endif
 if !exists('g:parinfer_lisp_block_comment')
   let g:parinfer_lisp_block_comment = 0
 endif
+if !exists('g:parinfer_scheme_sexp_comment')
+  let g:parinfer_scheme_sexp_comment = 0
+endif
 if !exists('g:parinfer_janet_long_strings')
   let g:parinfer_janet_long_strings = 0
 endif
@@ -48,6 +51,9 @@ au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_vline_symbols =
 " Common Lisp and Scheme: ignore parens in block comments
 au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_block_comment = 1
 au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_block_comment = 1
+
+" Scheme (SRFI-62): S-expression comment
+au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_scheme_sexp_comment = 1
 
 " Comment settings
 au BufNewFile,BufRead *.janet let b:parinfer_comment_char = "#"
@@ -169,6 +175,9 @@ function! s:process_buffer() abort
   if !exists('b:parinfer_lisp_block_comment')
     let b:parinfer_lisp_block_comment = g:parinfer_lisp_block_comment
   endif
+  if !exists('b:parinfer_scheme_sexp_comment')
+    let b:parinfer_scheme_sexp_comment = g:parinfer_scheme_sexp_comment
+  endif
   if !exists('b:parinfer_janet_long_strings')
     let b:parinfer_janet_long_strings = g:parinfer_janet_long_strings
   endif
@@ -184,6 +193,7 @@ function! s:process_buffer() abort
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
                                  \ "lispVlineSymbols": b:parinfer_lisp_vline_symbols ? v:true : v:false,
                                  \ "lispBlockComment": b:parinfer_lisp_block_comment ? v:true : v:false,
+                                 \ "schemeSexpComment": b:parinfer_scheme_sexp_comment ? v:true : v:false,
                                  \ "janetLongStrings": b:parinfer_janet_long_strings ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1],

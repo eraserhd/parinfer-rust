@@ -16,6 +16,7 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
 * More support for Common Lisp and Scheme:
   - `|Enclosed symbols|`
   - `#|Block comments|#`
+  - `#;(S-expression comments)`
 
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...v0.4.3[0.4.3]
 ------------------------------------------------------------------------
