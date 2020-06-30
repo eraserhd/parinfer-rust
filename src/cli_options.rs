@@ -138,10 +138,18 @@ impl Options {
                         comment_char: char::from(self.comment_char()),
                         partial_result: false,
                         selection_start_line: None,
-                        lisp_vline_symbols: false,
-                        lisp_block_comment: false,
-                        scheme_sexp_comment: false,
-                        janet_long_strings: false
+                        lisp_vline_symbols: env::var("kak_opt_parinfer_lisp_vline_symbols")
+                            .map(|s| s == "true")
+                            .unwrap(),
+                        lisp_block_comment: env::var("kak_opt_parinfer_lisp_block_comment")
+                            .map(|s| s == "true")
+                            .unwrap(),
+                        scheme_sexp_comment: env::var("kak_opt_parinfer_scheme_sexp_comment")
+                            .map(|s| s == "true")
+                            .unwrap(),
+                        janet_long_strings: env::var("kak_opt_parinfer_janet_long_strings")
+                            .map(|s| s == "true")
+                            .unwrap()
                     }
                 })
             },

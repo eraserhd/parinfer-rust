@@ -41,6 +41,18 @@ bool parinfer_display_errors true
 declare-option -docstring "Currently Parinfer active mode" \
 str parinfer_current_mode
 
+declare-option -docstring "Parse lisp-style bar-delimited |symbols|" \
+bool parinfer_lisp_vline_symbols false
+
+declare-option -docstring "Parse lisp-style block comments (#| ... |#)" \
+bool parinfer_lisp_block_comment false
+
+declare-option -docstring "Parse scheme-style sexp comment #; ( ... )" \
+bool parinfer_scheme_sexp_comment false
+
+declare-option -docstring "Parse Janet-style long string" \
+bool parinfer_janet_long_strings false
+
 declare-option -hidden str parinfer_previous_text
 declare-option -hidden str parinfer_previous_cursor_char_column
 declare-option -hidden str parinfer_previous_cursor_line
@@ -98,6 +110,10 @@ parinfer -params ..2 %{
             # kak_opt_parinfer_previous_cursor_char_column,
             # kak_opt_parinfer_previous_cursor_line,
             # kak_opt_parinfer_select_switches
+            # kak_opt_parinfer_lisp_vline_symbols
+            # kak_opt_parinfer_lisp_block_comment
+            # kak_opt_parinfer_scheme_sexp_comment
+            # kak_opt_parinfer_janet_long_strings
             exec parinfer-rust --mode=$mode --input-format=kakoune --output-format=kakoune
         }
         evaluate-commands %{
