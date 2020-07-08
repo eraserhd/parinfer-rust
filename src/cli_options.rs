@@ -114,7 +114,15 @@ impl Options {
                 })
             },
             InputType::Kakoune => {
-                Ok  (Request {
+                let ( lisp_vline_symbols, lisp_block_comment, scheme_sexp_comment, janet_long_strings ) =
+                    match env::var("kak_opt_filetype").unwrap() {
+                    ref s if s == "janet"  => ( false, false, false, true  ),
+                    ref s if s == "lisp"   => ( true , true , false, false ),
+                    ref s if s == "racket" => ( true , true , true , false ),
+                    ref s if s == "scheme" => ( true , true , true , false ),
+                    _                      => ( false, false, false, false ),
+                };
+                Ok(Request {
                     mode: String::from(self.mode()),
                     text: env::var("kak_selection").unwrap(),
                     options: types::Options {
@@ -138,18 +146,10 @@ impl Options {
                         comment_char: char::from(self.comment_char()),
                         partial_result: false,
                         selection_start_line: None,
-                        lisp_vline_symbols: env::var("kak_opt_parinfer_lisp_vline_symbols")
-                            .map(|s| s == "true")
-                            .unwrap(),
-                        lisp_block_comment: env::var("kak_opt_parinfer_lisp_block_comment")
-                            .map(|s| s == "true")
-                            .unwrap(),
-                        scheme_sexp_comment: env::var("kak_opt_parinfer_scheme_sexp_comment")
-                            .map(|s| s == "true")
-                            .unwrap(),
-                        janet_long_strings: env::var("kak_opt_parinfer_janet_long_strings")
-                            .map(|s| s == "true")
-                            .unwrap()
+                        lisp_vline_symbols,
+                        lisp_block_comment,
+                        scheme_sexp_comment,
+                        janet_long_strings,
                     }
                 })
             },

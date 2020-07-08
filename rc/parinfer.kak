@@ -103,17 +103,14 @@ parinfer -params ..2 %{
                 printf 'set-option global parinfer_select_switches "%s"\n' "$kak_opt_parinfer_select_switches"
             fi
             # VARIABLES USED:
-            # kak_selection,
+            # kak_opt_filetype,
             # kak_opt_parinfer_cursor_char_column,
             # kak_opt_parinfer_cursor_line,
             # kak_opt_parinfer_previous_text,
             # kak_opt_parinfer_previous_cursor_char_column,
             # kak_opt_parinfer_previous_cursor_line,
-            # kak_opt_parinfer_select_switches
-            # kak_opt_parinfer_lisp_vline_symbols
-            # kak_opt_parinfer_lisp_block_comment
-            # kak_opt_parinfer_scheme_sexp_comment
-            # kak_opt_parinfer_janet_long_strings
+            # kak_opt_parinfer_select_switches,
+            # kak_selection
             exec parinfer-rust --mode=$mode --input-format=kakoune --output-format=kakoune
         }
         evaluate-commands %{
