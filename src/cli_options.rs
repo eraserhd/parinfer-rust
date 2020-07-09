@@ -44,41 +44,41 @@ struct Defaults {
     janet_long_strings: bool
 }
 
-fn language_defaults(language: Option<&str>) -> Defaults {
+fn language_defaults(language: Option<String>) -> Defaults {
     match language {
-        Some("clojure") => Defaults {
+        Some(ref s) if s == "clojure" => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comment: false,
             scheme_sexp_comment: false,
             janet_long_strings: false,
         },
-        Some("janet") => Defaults {
+        Some(ref s) if s == "janet" => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comment: false,
             scheme_sexp_comment: false,
             janet_long_strings: true,
         },
-        Some("lisp") => Defaults {
+        Some(ref s) if s == "lisp" => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comment: true,
             scheme_sexp_comment: false,
             janet_long_strings: false
         },
-        Some("racket") => Defaults {
+        Some(ref s) if s == "racket" => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comment: true,
             scheme_sexp_comment: true,
             janet_long_strings: false
         },
-        Some("scheme") => Defaults {
+        Some(ref s) if s == "scheme" => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comment: true,
             scheme_sexp_comment: true,
             janet_long_strings: false
         },
-        None    => language_defaults(Some("clojure")),
+        None    => language_defaults(Some(String::from("clojure"))),
         // Unknown language.  Defaults kind of work for most lisps
-        Some(_) => language_defaults(Some("clojure")),
+        Some(_) => language_defaults(Some(String::from("clojure"))),
     }
 }
 
@@ -140,10 +140,7 @@ impl Options {
                     lisp_block_comment,
                     scheme_sexp_comment,
                     janet_long_strings
-                } = match &self.matches.opt_str("language") {
-                    Some(language) => language_defaults(Some(&language)),
-                    None => language_defaults(None)
-                };
+                } = language_defaults(self.matches.opt_str("language"));
                 let mut text = String::new();
                 io::stdin().read_to_string(&mut text)?;
                 Ok(Request {
@@ -174,10 +171,7 @@ impl Options {
                     lisp_block_comment,
                     scheme_sexp_comment,
                     janet_long_strings
-                } = match env::var("kak_opt_filetype") {
-                    Ok(filetype) => language_defaults(Some(&filetype)),
-                    Err(_)       => language_defaults(None),
-                };
+                } = language_defaults(env::var("kak_opt_filetype").ok());
                 Ok(Request {
                     mode: String::from(self.mode()),
                     text: env::var("kak_selection").unwrap(),
