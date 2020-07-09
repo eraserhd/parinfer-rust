@@ -43,38 +43,41 @@ struct Defaults {
     janet_long_strings: bool
 }
 
-fn language_defaults(language: &str) -> Defaults {
+fn language_defaults(language: Option<&str>) -> Defaults {
     match language {
-        "janet" => Defaults {
+        Some("clojure") => Defaults {
+            lisp_vline_symbols: false,
+            lisp_block_comment: false,
+            scheme_sexp_comment: false,
+            janet_long_strings: false,
+        },
+        Some("janet") => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comment: false,
             scheme_sexp_comment: false,
             janet_long_strings: true,
         },
-        "lisp" => Defaults {
+        Some("lisp") => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comment: true,
             scheme_sexp_comment: false,
             janet_long_strings: false
         },
-        "racket" => Defaults {
+        Some("racket") => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comment: true,
             scheme_sexp_comment: true,
             janet_long_strings: false
         },
-        "scheme" => Defaults {
+        Some("scheme") => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comment: true,
             scheme_sexp_comment: true,
             janet_long_strings: false
         },
-        _ => Defaults {
-            lisp_vline_symbols: false,
-            lisp_block_comment: false,
-            scheme_sexp_comment: false,
-            janet_long_strings: false
-        },
+        None    => language_defaults(Some("clojure")),
+        // Unknown language.  Defaults kind of work for most lisps
+        Some(_) => language_defaults(Some("clojure")),
     }
 }
 
@@ -156,8 +159,15 @@ impl Options {
                 })
             },
             InputType::Kakoune => {
-                let Defaults { lisp_vline_symbols, lisp_block_comment, scheme_sexp_comment, janet_long_strings } =
-                    language_defaults(&env::var("kak_opt_filetype").unwrap());
+                let Defaults {
+                    lisp_vline_symbols,
+                    lisp_block_comment,
+                    scheme_sexp_comment,
+                    janet_long_strings
+                } = match env::var("kak_opt_filetype") {
+                    Ok(filetype) => language_defaults(Some(&filetype)),
+                    Err(_)       => language_defaults(None),
+                };
                 Ok(Request {
                     mode: String::from(self.mode()),
                     text: env::var("kak_selection").unwrap(),
