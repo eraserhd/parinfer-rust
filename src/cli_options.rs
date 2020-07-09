@@ -36,13 +36,45 @@ pub fn usage() -> String {
     options().usage("Usage: parinfer-rust [options]")
 }
 
-fn language_defaults(language: &str) -> (bool, bool, bool, bool) {
+struct Defaults {
+    lisp_vline_symbols: bool,
+    lisp_block_comment: bool,
+    scheme_sexp_comment: bool,
+    janet_long_strings: bool
+}
+
+fn language_defaults(language: &str) -> Defaults {
     match language {
-        "janet"  => ( false, false, false, true  ),
-        "lisp"   => ( true , true , false, false ),
-        "racket" => ( true , true , true , false ),
-        "scheme" => ( true , true , true , false ),
-        _        => ( false, false, false, false ),
+        "janet" => Defaults {
+            lisp_vline_symbols: false,
+            lisp_block_comment: false,
+            scheme_sexp_comment: false,
+            janet_long_strings: true,
+        },
+        "lisp" => Defaults {
+            lisp_vline_symbols: true,
+            lisp_block_comment: true,
+            scheme_sexp_comment: false,
+            janet_long_strings: false
+        },
+        "racket" => Defaults {
+            lisp_vline_symbols: true,
+            lisp_block_comment: true,
+            scheme_sexp_comment: true,
+            janet_long_strings: false
+        },
+        "scheme" => Defaults {
+            lisp_vline_symbols: true,
+            lisp_block_comment: true,
+            scheme_sexp_comment: true,
+            janet_long_strings: false
+        },
+        _ => Defaults {
+            lisp_vline_symbols: false,
+            lisp_block_comment: false,
+            scheme_sexp_comment: false,
+            janet_long_strings: false
+        },
     }
 }
 
@@ -124,7 +156,7 @@ impl Options {
                 })
             },
             InputType::Kakoune => {
-                let ( lisp_vline_symbols, lisp_block_comment, scheme_sexp_comment, janet_long_strings ) =
+                let Defaults { lisp_vline_symbols, lisp_block_comment, scheme_sexp_comment, janet_long_strings } =
                     language_defaults(&env::var("kak_opt_filetype").unwrap());
                 Ok(Request {
                     mode: String::from(self.mode()),
