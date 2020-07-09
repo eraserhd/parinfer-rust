@@ -36,6 +36,16 @@ pub fn usage() -> String {
     options().usage("Usage: parinfer-rust [options]")
 }
 
+fn language_defaults(language: &str) -> (bool, bool, bool, bool) {
+    match language {
+        "janet"  => ( false, false, false, true  ),
+        "lisp"   => ( true , true , false, false ),
+        "racket" => ( true , true , true , false ),
+        "scheme" => ( true , true , true , false ),
+        _        => ( false, false, false, false ),
+    }
+}
+
 impl Options {
     pub fn parse(args: &[String]) -> Result<Options, String> {
         options()
@@ -115,13 +125,7 @@ impl Options {
             },
             InputType::Kakoune => {
                 let ( lisp_vline_symbols, lisp_block_comment, scheme_sexp_comment, janet_long_strings ) =
-                    match env::var("kak_opt_filetype").unwrap() {
-                    ref s if s == "janet"  => ( false, false, false, true  ),
-                    ref s if s == "lisp"   => ( true , true , false, false ),
-                    ref s if s == "racket" => ( true , true , true , false ),
-                    ref s if s == "scheme" => ( true , true , true , false ),
-                    _                      => ( false, false, false, false ),
-                };
+                    language_defaults(&env::var("kak_opt_filetype").unwrap());
                 Ok(Request {
                     mode: String::from(self.mode()),
                     text: env::var("kak_selection").unwrap(),
