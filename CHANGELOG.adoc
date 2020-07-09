@@ -6,6 +6,7 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
 
 === Added
 
+* Added -l, --language LANG option to easily specify language defaults.
 * The user can now set the character used to denote comments. The
   character can be set on a global or per-buffer basis (using
   `g:parinfer_comment_char` and `b:parinfer_comment_char` respectively).

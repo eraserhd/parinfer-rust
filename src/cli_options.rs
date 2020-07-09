@@ -24,11 +24,12 @@ pub struct Options {
 
 fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
-    options.optflag("h", "help", "show this help message");
-    options.optopt("", "input-format", "'json', 'text' (default: 'text')", "FMT");
-    options.optopt("m", "mode", "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
-    options.optopt("", "output-format", "'json', 'kakoune', 'text' (default: 'text')", "FMT");
-    options.optopt("", "comment-char", "(default: ';')", "CC");
+    options.optopt(  "", "comment-char" , "(default: ';')", "CC");
+    options.optflag("h", "help"         , "show this help message");
+    options.optopt(  "", "input-format" , "'json', 'text' (default: 'text')", "FMT");
+    options.optopt( "l", "language"     , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
+    options.optopt( "m", "mode"         , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
+    options.optopt(  "", "output-format", "'json', 'kakoune', 'text' (default: 'text')", "FMT");
     options
 }
 
@@ -134,6 +135,15 @@ impl Options {
     pub fn request(&self) -> io::Result<Request> {
         match self.input_type() {
             InputType::Text => {
+                let Defaults {
+                    lisp_vline_symbols,
+                    lisp_block_comment,
+                    scheme_sexp_comment,
+                    janet_long_strings
+                } = match &self.matches.opt_str("language") {
+                    Some(language) => language_defaults(Some(&language)),
+                    None => language_defaults(None)
+                };
                 let mut text = String::new();
                 io::stdin().read_to_string(&mut text)?;
                 Ok(Request {
@@ -151,10 +161,10 @@ impl Options {
                         comment_char: char::from(self.comment_char()),
                         partial_result: false,
                         selection_start_line: None,
-                        lisp_vline_symbols: false,
-                        lisp_block_comment: false,
-                        scheme_sexp_comment: false,
-                        janet_long_strings: false
+                        lisp_vline_symbols,
+                        lisp_block_comment,
+                        scheme_sexp_comment,
+                        janet_long_strings,
                     }
                 })
             },
