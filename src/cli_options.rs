@@ -246,9 +246,13 @@ impl Options {
 mod tests {
     use super::*;
 
-    fn for_args(args: &[String]) -> Request {
+    fn for_args(args: &[&str]) -> Request {
         let input = Vec::new();
-        let request = Options::parse(args)
+        let string_args = args
+            .iter()
+            .map(|&s| String::from(s))
+            .collect::<Vec<String>>();
+        let request = Options::parse(&string_args)
             .expect("unable to parse options")
             .request(&mut input.as_slice())
             .expect("unable to make request");
@@ -257,9 +261,9 @@ mod tests {
 
     #[test]
     fn language_option_sets_defaults() {
-        let clojure = for_args(&[String::from("--language=clojure")]);
-        let scheme = for_args(&[String::from("--language=scheme")]);
-        let janet = for_args(&[String::from("--language=janet")]);
+        let clojure = for_args(&["--language=clojure"]);
+        let scheme = for_args(&["--language=scheme"]);
+        let janet = for_args(&["--language=janet"]);
 
         assert_eq!(clojure.options.lisp_vline_symbols, false);
         assert_eq!(scheme.options.lisp_vline_symbols, true);
@@ -272,14 +276,14 @@ mod tests {
     #[test]
     fn lisp_vline_symbols() {
         assert_eq!(for_args(&[]).options.lisp_vline_symbols, false);
-        assert_eq!(for_args(&[String::from("--language=lisp")]).options.lisp_vline_symbols, true);
-        assert_eq!(for_args(&[String::from("--lisp-vline-symbols")]).options.lisp_vline_symbols, true);
-        assert_eq!(for_args(&[String::from("--language=lisp"), String::from("--no-lisp-vline-symbols")]).options.lisp_vline_symbols, false);
+        assert_eq!(for_args(&["--language=lisp"]).options.lisp_vline_symbols, true);
+        assert_eq!(for_args(&["--lisp-vline-symbols"]).options.lisp_vline_symbols, true);
+        assert_eq!(for_args(&["--language=lisp", "--no-lisp-vline-symbols"]).options.lisp_vline_symbols, false);
     }
 
     #[test]
     fn lisp_block_comments() {
         assert_eq!(for_args(&[]).options.lisp_block_comments, false);
-        assert_eq!(for_args(&[String::from("--language=lisp")]).options.lisp_block_comments, true);
+        assert_eq!(for_args(&["--language=lisp"]).options.lisp_block_comments, true);
     }
 }
