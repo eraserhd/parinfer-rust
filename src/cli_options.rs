@@ -18,6 +18,14 @@ pub enum OutputType {
     Text
 }
 
+enum Language {
+    Clojure,
+    Janet,
+    Lisp,
+    Racket,
+    Scheme,
+}
+
 pub struct Options {
     matches: getopts::Matches
 }
@@ -46,41 +54,51 @@ struct Defaults {
     janet_long_strings: bool
 }
 
-fn language_defaults(language: Option<String>) -> Defaults {
+fn parse_language(language: Option<String>) -> Language {
     match language {
-        Some(ref s) if s == "clojure" => Defaults {
+        Some(ref s) if s == "clojure" => Language::Clojure,
+        Some(ref s) if s == "janet"   => Language::Janet,
+        Some(ref s) if s == "lisp"    => Language::Lisp,
+        Some(ref s) if s == "racket"  => Language::Racket,
+        Some(ref s) if s == "scheme"  => Language::Scheme,
+        None                          => Language::Clojure,
+        // Unknown language.  Defaults kind of work for most lisps
+        Some(_)                       => Language::Clojure,
+    }
+}
+
+fn language_defaults(language: Option<String>) -> Defaults {
+    match parse_language(language) {
+        Language::Clojure => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comment: false,
             scheme_sexp_comment: false,
             janet_long_strings: false,
         },
-        Some(ref s) if s == "janet" => Defaults {
+        Language::Janet => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comment: false,
             scheme_sexp_comment: false,
             janet_long_strings: true,
         },
-        Some(ref s) if s == "lisp" => Defaults {
+        Language::Lisp => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comment: true,
             scheme_sexp_comment: false,
             janet_long_strings: false
         },
-        Some(ref s) if s == "racket" => Defaults {
+        Language::Racket => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comment: true,
             scheme_sexp_comment: true,
             janet_long_strings: false
         },
-        Some(ref s) if s == "scheme" => Defaults {
+        Language::Scheme => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comment: true,
             scheme_sexp_comment: true,
             janet_long_strings: false
         },
-        None    => language_defaults(Some(String::from("clojure"))),
-        // Unknown language.  Defaults kind of work for most lisps
-        Some(_) => language_defaults(Some(String::from("clojure"))),
     }
 }
 
