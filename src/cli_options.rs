@@ -276,4 +276,10 @@ mod tests {
         assert_eq!(for_args(&[String::from("--lisp-vline-symbols")]).options.lisp_vline_symbols, true);
         assert_eq!(for_args(&[String::from("--language=lisp"), String::from("--no-lisp-vline-symbols")]).options.lisp_vline_symbols, false);
     }
+
+    #[test]
+    fn lisp_block_comments() {
+        assert_eq!(for_args(&[]).options.lisp_block_comments, false);
+        assert_eq!(for_args(&[String::from("--language=lisp")]).options.lisp_block_comments, true);
+    }
 }
