@@ -24,12 +24,14 @@ pub struct Options {
 
 fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
-    options.optopt(  "", "comment-char" , "(default: ';')", "CC");
-    options.optflag("h", "help"         , "show this help message");
-    options.optopt(  "", "input-format" , "'json', 'text' (default: 'text')", "FMT");
-    options.optopt( "l", "language"     , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
-    options.optopt( "m", "mode"         , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
-    options.optopt(  "", "output-format", "'json', 'kakoune', 'text' (default: 'text')", "FMT");
+    options.optopt(  "", "comment-char"         , "(default: ';')", "CC");
+    options.optflag("h", "help"                 , "show this help message");
+    options.optopt(  "", "input-format"         , "'json', 'text' (default: 'text')", "FMT");
+    options.optopt( "l", "language"             , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
+    options.optflag( "", "lisp-vline-symbols"   , "recognize |lisp-style vline symbol|s.");
+    options.optopt( "m", "mode"                 , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
+    options.optflag( "", "no-lisp-vline-symbols", "do not recognize |lisp-style vline symbol|s.");
+    options.optopt(  "", "output-format"        , "'json', 'kakoune', 'text' (default: 'text')", "FMT");
     options
 }
 
@@ -132,6 +134,16 @@ impl Options {
         }
     }
 
+    fn lisp_vline_symbols(&self) -> Option<bool> {
+        if self.matches.opt_present("lisp-vline-symbols") {
+            Some(true)
+        } else if self.matches.opt_present("no-lisp-vline-symbols") {
+            Some(false)
+        } else {
+            None
+        }
+    }
+
     pub fn request(&self, input: &mut dyn Read) -> io::Result<Request> {
         match self.input_type() {
             InputType::Text => {
@@ -158,7 +170,7 @@ impl Options {
                         comment_char: char::from(self.comment_char()),
                         partial_result: false,
                         selection_start_line: None,
-                        lisp_vline_symbols,
+                        lisp_vline_symbols: self.lisp_vline_symbols().unwrap_or(lisp_vline_symbols),
                         lisp_block_comment,
                         scheme_sexp_comment,
                         janet_long_strings,
@@ -237,5 +249,13 @@ mod tests {
         assert_eq!(clojure.options.janet_long_strings, false);
         assert_eq!(scheme.options.janet_long_strings, false);
         assert_eq!(janet.options.janet_long_strings, true);
+    }
+
+    #[test]
+    fn lisp_vline_symbols() {
+        assert_eq!(for_args(&[]).options.lisp_vline_symbols, false);
+        assert_eq!(for_args(&[String::from("--language=lisp")]).options.lisp_vline_symbols, true);
+        assert_eq!(for_args(&[String::from("--lisp-vline-symbols")]).options.lisp_vline_symbols, true);
+        assert_eq!(for_args(&[String::from("--language=lisp"), String::from("--no-lisp-vline-symbols")]).options.lisp_vline_symbols, false);
     }
 }
