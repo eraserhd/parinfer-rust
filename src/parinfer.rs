@@ -235,7 +235,7 @@ struct State<'a> {
 
     lisp_vline_symbols_enabled: bool,
     lisp_reader_syntax_enabled: bool,
-    lisp_block_comment_enabled: bool,
+    lisp_block_comments_enabled: bool,
     scheme_sexp_comment_enabled: bool,
     janet_long_strings_enabled: bool,
 
@@ -278,7 +278,7 @@ fn get_initial_result<'a>(
     smart: bool,
 ) -> State<'a> {
     let lisp_reader_syntax_enabled = [
-        options.lisp_block_comment,
+        options.lisp_block_comments,
         options.scheme_sexp_comment,
     ].iter().any(|is_true| *is_true);
 
@@ -324,7 +324,7 @@ fn get_initial_result<'a>(
 
         lisp_vline_symbols_enabled: options.lisp_vline_symbols,
         lisp_reader_syntax_enabled,
-        lisp_block_comment_enabled: options.lisp_block_comment,
+        lisp_block_comments_enabled: options.lisp_block_comments,
         scheme_sexp_comment_enabled: options.scheme_sexp_comment,
         janet_long_strings_enabled: options.janet_long_strings,
 
@@ -969,7 +969,7 @@ fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
         },
         In::LispReaderSyntax => {
             match ch {
-                VERTICAL_LINE if result.lisp_block_comment_enabled => in_lisp_reader_syntax_on_vline(result),
+                VERTICAL_LINE if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
                 ";" if result.scheme_sexp_comment_enabled => in_lisp_reader_syntax_on_semicolon(result),
                 _ => {
                     // Backtrack!

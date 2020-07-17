@@ -13,8 +13,8 @@ endif
 if !exists('g:parinfer_lisp_vline_symbols')
   let g:parinfer_lisp_vline_symbols = 0
 endif
-if !exists('g:parinfer_lisp_block_comment')
-  let g:parinfer_lisp_block_comment = 0
+if !exists('g:parinfer_lisp_block_comments')
+  let g:parinfer_lisp_block_comments = 0
 endif
 if !exists('g:parinfer_scheme_sexp_comment')
   let g:parinfer_scheme_sexp_comment = 0
@@ -49,8 +49,8 @@ au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_v
 au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_vline_symbols = 1
 
 " Common Lisp and Scheme: ignore parens in block comments
-au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_block_comment = 1
-au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_block_comment = 1
+au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_block_comments = 1
+au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_block_comments = 1
 
 " Scheme (SRFI-62): S-expression comment
 au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_scheme_sexp_comment = 1
@@ -172,8 +172,8 @@ function! s:process_buffer() abort
   if !exists('b:parinfer_lisp_vline_symbols')
     let b:parinfer_lisp_vline_symbols = g:parinfer_lisp_vline_symbols
   endif
-  if !exists('b:parinfer_lisp_block_comment')
-    let b:parinfer_lisp_block_comment = g:parinfer_lisp_block_comment
+  if !exists('b:parinfer_lisp_block_comments')
+    let b:parinfer_lisp_block_comments = g:parinfer_lisp_block_comments
   endif
   if !exists('b:parinfer_scheme_sexp_comment')
     let b:parinfer_scheme_sexp_comment = g:parinfer_scheme_sexp_comment
@@ -192,7 +192,7 @@ function! s:process_buffer() abort
                                  \ "cursorLine": l:cursor[1],
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
                                  \ "lispVlineSymbols": b:parinfer_lisp_vline_symbols ? v:true : v:false,
-                                 \ "lispBlockComment": b:parinfer_lisp_block_comment ? v:true : v:false,
+                                 \ "lispBlockComments": b:parinfer_lisp_block_comments ? v:true : v:false,
                                  \ "schemeSexpComment": b:parinfer_scheme_sexp_comment ? v:true : v:false,
                                  \ "janetLongStrings": b:parinfer_janet_long_strings ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],

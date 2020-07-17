@@ -49,7 +49,7 @@ pub fn usage() -> String {
 
 struct Defaults {
     lisp_vline_symbols: bool,
-    lisp_block_comment: bool,
+    lisp_block_comments: bool,
     scheme_sexp_comment: bool,
     janet_long_strings: bool
 }
@@ -71,31 +71,31 @@ fn language_defaults(language: Language) -> Defaults {
     match language {
         Language::Clojure => Defaults {
             lisp_vline_symbols: false,
-            lisp_block_comment: false,
+            lisp_block_comments: false,
             scheme_sexp_comment: false,
             janet_long_strings: false,
         },
         Language::Janet => Defaults {
             lisp_vline_symbols: false,
-            lisp_block_comment: false,
+            lisp_block_comments: false,
             scheme_sexp_comment: false,
             janet_long_strings: true,
         },
         Language::Lisp => Defaults {
             lisp_vline_symbols: true,
-            lisp_block_comment: true,
+            lisp_block_comments: true,
             scheme_sexp_comment: false,
             janet_long_strings: false
         },
         Language::Racket => Defaults {
             lisp_vline_symbols: true,
-            lisp_block_comment: true,
+            lisp_block_comments: true,
             scheme_sexp_comment: true,
             janet_long_strings: false
         },
         Language::Scheme => Defaults {
             lisp_vline_symbols: true,
-            lisp_block_comment: true,
+            lisp_block_comments: true,
             scheme_sexp_comment: true,
             janet_long_strings: false
         },
@@ -167,7 +167,7 @@ impl Options {
             InputType::Text => {
                 let Defaults {
                     lisp_vline_symbols,
-                    lisp_block_comment,
+                    lisp_block_comments,
                     scheme_sexp_comment,
                     janet_long_strings
                 } = language_defaults(parse_language(self.matches.opt_str("language")));
@@ -189,7 +189,7 @@ impl Options {
                         partial_result: false,
                         selection_start_line: None,
                         lisp_vline_symbols: self.lisp_vline_symbols().unwrap_or(lisp_vline_symbols),
-                        lisp_block_comment,
+                        lisp_block_comments,
                         scheme_sexp_comment,
                         janet_long_strings,
                     }
@@ -198,7 +198,7 @@ impl Options {
             InputType::Kakoune => {
                 let Defaults {
                     lisp_vline_symbols,
-                    lisp_block_comment,
+                    lisp_block_comments,
                     scheme_sexp_comment,
                     janet_long_strings
                 } = language_defaults(parse_language(env::var("kak_opt_filetype").ok()));
@@ -227,7 +227,7 @@ impl Options {
                         partial_result: false,
                         selection_start_line: None,
                         lisp_vline_symbols,
-                        lisp_block_comment,
+                        lisp_block_comments,
                         scheme_sexp_comment,
                         janet_long_strings,
                     }

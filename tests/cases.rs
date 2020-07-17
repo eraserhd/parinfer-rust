@@ -146,7 +146,7 @@ struct Options {
     #[serde(skip_serializing_if = "Option::is_none")]
     lisp_vline_symbols: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    lisp_block_comment: Option<bool>,
+    lisp_block_comments: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     scheme_sexp_comment: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -283,7 +283,7 @@ pub fn composed_unicode_graphemes_count_as_a_single_character() {
             cursor_line: None,
             changes: None,
             lisp_vline_symbols: None,
-            lisp_block_comment: None,
+            lisp_block_comments: None,
             scheme_sexp_comment: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -327,7 +327,7 @@ pub fn graphemes_in_changes_are_counted_correctly() {
                 }
             ]),
             lisp_vline_symbols: None,
-            lisp_block_comment: None,
+            lisp_block_comments: None,
             scheme_sexp_comment: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -371,7 +371,7 @@ pub fn wide_characters() {
                 }
             ]),
             lisp_vline_symbols: None,
-            lisp_block_comment: None,
+            lisp_block_comments: None,
             scheme_sexp_comment: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -408,7 +408,7 @@ pub fn lisp_vline_symbols() {
             cursor_line: None,
             changes: None,
             lisp_vline_symbols: Some(true),
-            lisp_block_comment: None,
+            lisp_block_comments: None,
             scheme_sexp_comment: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -445,7 +445,7 @@ pub fn lisp_sharp_syntax_backtrack() {
             cursor_line: None,
             changes: None,
             lisp_vline_symbols: None,
-            lisp_block_comment: Some(true),
+            lisp_block_comments: Some(true),
             scheme_sexp_comment: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -462,7 +462,7 @@ pub fn lisp_sharp_syntax_backtrack() {
 }
 
 #[test]
-pub fn lisp_block_comment() {
+pub fn lisp_block_comments() {
     let case = Case {
         text: String::from("'(#| this #| is |# nested ) comment |# passed through)"),
         result: CaseResult {
@@ -482,7 +482,7 @@ pub fn lisp_block_comment() {
             cursor_line: None,
             changes: None,
             lisp_vline_symbols: None,
-            lisp_block_comment: Some(true),
+            lisp_block_comments: Some(true),
             scheme_sexp_comment: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -519,7 +519,7 @@ pub fn scheme_sexp_comment() {
             cursor_line: None,
             changes: None,
             lisp_vline_symbols: None,
-            lisp_block_comment: None,
+            lisp_block_comments: None,
             scheme_sexp_comment: Some(true),
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -556,7 +556,7 @@ pub fn janet_long_strings() {
             cursor_line: None,
             changes: None,
             lisp_vline_symbols: None,
-            lisp_block_comment: None,
+            lisp_block_comments: None,
             scheme_sexp_comment: None,
             janet_long_strings: Some(true),
             prev_cursor_x: None,
