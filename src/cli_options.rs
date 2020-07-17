@@ -132,7 +132,7 @@ impl Options {
         }
     }
 
-    pub fn request(&self) -> io::Result<Request> {
+    pub fn request(&self, input: &mut dyn Read) -> io::Result<Request> {
         match self.input_type() {
             InputType::Text => {
                 let Defaults {
@@ -142,7 +142,7 @@ impl Options {
                     janet_long_strings
                 } = language_defaults(self.matches.opt_str("language"));
                 let mut text = String::new();
-                io::stdin().read_to_string(&mut text)?;
+                input.read_to_string(&mut text)?;
                 Ok(Request {
                     mode: String::from(self.mode()),
                     text,
@@ -204,11 +204,38 @@ impl Options {
                 })
             },
             InputType::Json => {
-                let mut input = String::new();
-                io::stdin().read_to_string(&mut input)?;
-                Ok(serde_json::from_str(&input)?)
+                let mut text = String::new();
+                input.read_to_string(&mut text)?;
+                Ok(serde_json::from_str(&text)?)
             },
         }
     }
+}
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn for_args(args: &[String]) -> Request {
+        let input = Vec::new();
+        let request = Options::parse(args)
+            .expect("unable to parse options")
+            .request(&mut input.as_slice())
+            .expect("unable to make request");
+        request
+    }
+
+    #[test]
+    fn language_option_sets_defaults() {
+        let clojure = for_args(&[String::from("--language=clojure")]);
+        let scheme = for_args(&[String::from("--language=scheme")]);
+        let janet = for_args(&[String::from("--language=janet")]);
+
+        assert_eq!(clojure.options.lisp_vline_symbols, false);
+        assert_eq!(scheme.options.lisp_vline_symbols, true);
+
+        assert_eq!(clojure.options.janet_long_strings, false);
+        assert_eq!(scheme.options.janet_long_strings, false);
+        assert_eq!(janet.options.janet_long_strings, true);
+    }
 }

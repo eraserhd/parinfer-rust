@@ -52,7 +52,7 @@ pub fn main() {
     if opts.want_help() {
         print!("{}", cli_options::usage());
     } else {
-        let request = opts.request().expect("unable to parse options");
+        let request = opts.request(&mut io::stdin()).expect("unable to parse options");
         let answer = parinfer::process(&request);
         let (output, error_code) = match opts.output_type() {
             OutputType::Json => json_output(&request, answer),
