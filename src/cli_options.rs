@@ -32,15 +32,16 @@ pub struct Options {
 
 fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
-    options.optopt(  "", "comment-char"         , "(default: ';')", "CC");
-    options.optflag("h", "help"                 , "show this help message");
-    options.optopt( "" , "input-format"         , "'json', 'text' (default: 'text')", "FMT");
-    options.optopt( "l", "language"             , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
-    options.optflag("" , "lisp-block-comments"  , "recognize #| lisp-style block commments |#.");
-    options.optflag("" , "lisp-vline-symbols"   , "recognize |lisp-style vline symbol|s.");
-    options.optopt( "m", "mode"                 , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
-    options.optflag("" , "no-lisp-vline-symbols", "do not recognize |lisp-style vline symbol|s.");
-    options.optopt( "" , "output-format"        , "'json', 'kakoune', 'text' (default: 'text')", "FMT");
+    options.optopt(  "", "comment-char"          , "(default: ';')", "CC");
+    options.optflag("h", "help"                  , "show this help message");
+    options.optopt( "" , "input-format"          , "'json', 'text' (default: 'text')", "FMT");
+    options.optopt( "l", "language"              , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
+    options.optflag("" , "lisp-block-comments"   , "recognize #| lisp-style block commments |#.");
+    options.optflag("" , "lisp-vline-symbols"    , "recognize |lisp-style vline symbol|s.");
+    options.optopt( "m", "mode"                  , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
+    options.optflag("" , "no-lisp-block-comments", "do not recognize #| lisp-style block comments |#.");
+    options.optflag("" , "no-lisp-vline-symbols" , "do not recognize |lisp-style vline symbol|s.");
+    options.optopt( "" , "output-format"         , "'json', 'kakoune', 'text' (default: 'text')", "FMT");
     options
 }
 
@@ -166,6 +167,8 @@ impl Options {
     fn lisp_block_comments(&self) -> Option<bool> {
         if self.matches.opt_present("lisp-block-comments") {
             Some(true)
+        } else if self.matches.opt_present("no-lisp-block-comments") {
+            Some(false)
         } else {
             None
         }
@@ -295,5 +298,6 @@ mod tests {
         assert_eq!(for_args(&[]).options.lisp_block_comments, false);
         assert_eq!(for_args(&["--language=lisp"]).options.lisp_block_comments, true);
         assert_eq!(for_args(&["--lisp-block-comments"]).options.lisp_block_comments, true);
+        assert_eq!(for_args(&["--language=lisp", "--no-lisp-block-comments"]).options.lisp_block_comments, false);
     }
 }
