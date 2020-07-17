@@ -154,24 +154,22 @@ impl Options {
         }
     }
 
-    fn lisp_vline_symbols(&self) -> Option<bool> {
-        if self.matches.opt_present("lisp-vline-symbols") {
+    fn invertible_flag(&self, name: &str) -> Option<bool> {
+        if self.matches.opt_present(name) {
             Some(true)
-        } else if self.matches.opt_present("no-lisp-vline-symbols") {
+        } else if self.matches.opt_present(&format!("no-{}", name)) {
             Some(false)
         } else {
             None
         }
     }
 
+    fn lisp_vline_symbols(&self) -> Option<bool> {
+        self.invertible_flag("lisp-vline-symbols")
+    }
+
     fn lisp_block_comments(&self) -> Option<bool> {
-        if self.matches.opt_present("lisp-block-comments") {
-            Some(true)
-        } else if self.matches.opt_present("no-lisp-block-comments") {
-            Some(false)
-        } else {
-            None
-        }
+        self.invertible_flag("lisp-block-comments")
     }
 
     pub fn request(&self, input: &mut dyn Read) -> io::Result<Request> {
