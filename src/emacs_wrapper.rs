@@ -125,7 +125,7 @@ fn make_option() -> Result<Options> {
     comment_char: ';',
     lisp_vline_symbols: false,
     lisp_block_comments: false,
-    scheme_sexp_comment: false,
+    scheme_sexp_comments: false,
     janet_long_strings: false,
   })
 }
@@ -159,7 +159,7 @@ fn new_options(
     comment_char: ';',
     lisp_vline_symbols: false,
     lisp_block_comments: false,
-    scheme_sexp_comment: false,
+    scheme_sexp_comments: false,
     janet_long_strings: false,
   })
 }

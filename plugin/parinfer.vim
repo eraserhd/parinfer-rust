@@ -16,8 +16,8 @@ endif
 if !exists('g:parinfer_lisp_block_comments')
   let g:parinfer_lisp_block_comments = 0
 endif
-if !exists('g:parinfer_scheme_sexp_comment')
-  let g:parinfer_scheme_sexp_comment = 0
+if !exists('g:parinfer_scheme_sexp_comments')
+  let g:parinfer_scheme_sexp_comments = 0
 endif
 if !exists('g:parinfer_janet_long_strings')
   let g:parinfer_janet_long_strings = 0
@@ -53,7 +53,7 @@ au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_b
 au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_block_comments = 1
 
 " Scheme (SRFI-62): S-expression comment
-au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_scheme_sexp_comment = 1
+au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_scheme_sexp_comments = 1
 
 " Comment settings
 au BufNewFile,BufRead *.janet let b:parinfer_comment_char = "#"
@@ -175,8 +175,8 @@ function! s:process_buffer() abort
   if !exists('b:parinfer_lisp_block_comments')
     let b:parinfer_lisp_block_comments = g:parinfer_lisp_block_comments
   endif
-  if !exists('b:parinfer_scheme_sexp_comment')
-    let b:parinfer_scheme_sexp_comment = g:parinfer_scheme_sexp_comment
+  if !exists('b:parinfer_scheme_sexp_comments')
+    let b:parinfer_scheme_sexp_comments = g:parinfer_scheme_sexp_comments
   endif
   if !exists('b:parinfer_janet_long_strings')
     let b:parinfer_janet_long_strings = g:parinfer_janet_long_strings
@@ -193,7 +193,7 @@ function! s:process_buffer() abort
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
                                  \ "lispVlineSymbols": b:parinfer_lisp_vline_symbols ? v:true : v:false,
                                  \ "lispBlockComments": b:parinfer_lisp_block_comments ? v:true : v:false,
-                                 \ "schemeSexpComment": b:parinfer_scheme_sexp_comment ? v:true : v:false,
+                                 \ "schemeSexpComments": b:parinfer_scheme_sexp_comments ? v:true : v:false,
                                  \ "janetLongStrings": b:parinfer_janet_long_strings ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1],

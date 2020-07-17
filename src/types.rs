@@ -42,7 +42,7 @@ pub struct Options {
     #[serde(default = "Options::default_false")]
     pub lisp_block_comments: bool,
     #[serde(default = "Options::default_false")]
-    pub scheme_sexp_comment: bool,
+    pub scheme_sexp_comments: bool,
     #[serde(default = "Options::default_false")]
     pub janet_long_strings: bool,
 }

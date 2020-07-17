@@ -50,7 +50,7 @@ pub fn usage() -> String {
 struct Defaults {
     lisp_vline_symbols: bool,
     lisp_block_comments: bool,
-    scheme_sexp_comment: bool,
+    scheme_sexp_comments: bool,
     janet_long_strings: bool
 }
 
@@ -72,31 +72,31 @@ fn language_defaults(language: Language) -> Defaults {
         Language::Clojure => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comments: false,
-            scheme_sexp_comment: false,
+            scheme_sexp_comments: false,
             janet_long_strings: false,
         },
         Language::Janet => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comments: false,
-            scheme_sexp_comment: false,
+            scheme_sexp_comments: false,
             janet_long_strings: true,
         },
         Language::Lisp => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
-            scheme_sexp_comment: false,
+            scheme_sexp_comments: false,
             janet_long_strings: false
         },
         Language::Racket => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
-            scheme_sexp_comment: true,
+            scheme_sexp_comments: true,
             janet_long_strings: false
         },
         Language::Scheme => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
-            scheme_sexp_comment: true,
+            scheme_sexp_comments: true,
             janet_long_strings: false
         },
     }
@@ -168,7 +168,7 @@ impl Options {
                 let Defaults {
                     lisp_vline_symbols,
                     lisp_block_comments,
-                    scheme_sexp_comment,
+                    scheme_sexp_comments,
                     janet_long_strings
                 } = language_defaults(parse_language(self.matches.opt_str("language")));
                 let mut text = String::new();
@@ -190,7 +190,7 @@ impl Options {
                         selection_start_line: None,
                         lisp_vline_symbols: self.lisp_vline_symbols().unwrap_or(lisp_vline_symbols),
                         lisp_block_comments,
-                        scheme_sexp_comment,
+                        scheme_sexp_comments,
                         janet_long_strings,
                     }
                 })
@@ -199,7 +199,7 @@ impl Options {
                 let Defaults {
                     lisp_vline_symbols,
                     lisp_block_comments,
-                    scheme_sexp_comment,
+                    scheme_sexp_comments,
                     janet_long_strings
                 } = language_defaults(parse_language(env::var("kak_opt_filetype").ok()));
                 Ok(Request {
@@ -228,7 +228,7 @@ impl Options {
                         selection_start_line: None,
                         lisp_vline_symbols,
                         lisp_block_comments,
-                        scheme_sexp_comment,
+                        scheme_sexp_comments,
                         janet_long_strings,
                     }
                 })

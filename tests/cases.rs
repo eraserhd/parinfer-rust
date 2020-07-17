@@ -148,7 +148,7 @@ struct Options {
     #[serde(skip_serializing_if = "Option::is_none")]
     lisp_block_comments: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    scheme_sexp_comment: Option<bool>,
+    scheme_sexp_comments: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     janet_long_strings: Option<bool>,
 }
@@ -284,7 +284,7 @@ pub fn composed_unicode_graphemes_count_as_a_single_character() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: None,
-            scheme_sexp_comment: None,
+            scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -328,7 +328,7 @@ pub fn graphemes_in_changes_are_counted_correctly() {
             ]),
             lisp_vline_symbols: None,
             lisp_block_comments: None,
-            scheme_sexp_comment: None,
+            scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -372,7 +372,7 @@ pub fn wide_characters() {
             ]),
             lisp_vline_symbols: None,
             lisp_block_comments: None,
-            scheme_sexp_comment: None,
+            scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -409,7 +409,7 @@ pub fn lisp_vline_symbols() {
             changes: None,
             lisp_vline_symbols: Some(true),
             lisp_block_comments: None,
-            scheme_sexp_comment: None,
+            scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -446,7 +446,7 @@ pub fn lisp_sharp_syntax_backtrack() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: Some(true),
-            scheme_sexp_comment: None,
+            scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -483,7 +483,7 @@ pub fn lisp_block_comments() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: Some(true),
-            scheme_sexp_comment: None,
+            scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -499,7 +499,7 @@ pub fn lisp_block_comments() {
 }
 
 #[test]
-pub fn scheme_sexp_comment() {
+pub fn scheme_sexp_comments() {
     let case = Case {
         text: String::from("'(#; (ignored here) not ignored"),
         result: CaseResult {
@@ -520,7 +520,7 @@ pub fn scheme_sexp_comment() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: None,
-            scheme_sexp_comment: Some(true),
+            scheme_sexp_comments: Some(true),
             janet_long_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
@@ -557,7 +557,7 @@ pub fn janet_long_strings() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: None,
-            scheme_sexp_comment: None,
+            scheme_sexp_comments: None,
             janet_long_strings: Some(true),
             prev_cursor_x: None,
             prev_cursor_line: None
