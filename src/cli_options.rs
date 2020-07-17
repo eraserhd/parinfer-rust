@@ -67,8 +67,8 @@ fn parse_language(language: Option<String>) -> Language {
     }
 }
 
-fn language_defaults(language: Option<String>) -> Defaults {
-    match parse_language(language) {
+fn language_defaults(language: Language) -> Defaults {
+    match language {
         Language::Clojure => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comment: false,
@@ -170,7 +170,7 @@ impl Options {
                     lisp_block_comment,
                     scheme_sexp_comment,
                     janet_long_strings
-                } = language_defaults(self.matches.opt_str("language"));
+                } = language_defaults(parse_language(self.matches.opt_str("language")));
                 let mut text = String::new();
                 input.read_to_string(&mut text)?;
                 Ok(Request {
@@ -201,7 +201,7 @@ impl Options {
                     lisp_block_comment,
                     scheme_sexp_comment,
                     janet_long_strings
-                } = language_defaults(env::var("kak_opt_filetype").ok());
+                } = language_defaults(parse_language(env::var("kak_opt_filetype").ok()));
                 Ok(Request {
                     mode: String::from(self.mode()),
                     text: env::var("kak_selection").unwrap(),
