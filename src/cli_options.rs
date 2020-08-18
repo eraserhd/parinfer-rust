@@ -30,6 +30,23 @@ pub struct Options {
     matches: getopts::Matches
 }
 
+struct YesNoDefaultOption {
+    name: &'static str,
+    description: &'static str
+}
+
+impl YesNoDefaultOption {
+    fn add(&self, options: &mut getopts::Options) {
+        options.optflag("", self.name, self.description);
+        options.optflag("", &format!("no-{}", self.name), &format!("do not {}", self.description));
+    }
+}
+
+const JANET_LONG_STRINGS_OPTION : YesNoDefaultOption = YesNoDefaultOption {
+    name: "janet-long-strings",
+    description: "recognize ``` janet-style long strings ```"
+};
+
 fn options() -> getopts::Options {
     fn invertible(options: &mut getopts::Options, name: &str, description: &str) {
         options.optflag("", name, description);
@@ -40,7 +57,7 @@ fn options() -> getopts::Options {
     options.optopt(  ""    , "comment-char"         , "(default: ';')", "CC");
     options.optflag("h"    , "help"                 , "show this help message");
     options.optopt( ""     , "input-format"         , "'json', 'text' (default: 'text')", "FMT");
-    invertible(&mut options, "janet-long-strings"   , "recognize ``` janet-style long strings ```");
+    JANET_LONG_STRINGS_OPTION.add(&mut options);
     options.optopt( "l"    , "language"             , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
     invertible(&mut options, "lisp-block-comments"  , "recognize #| lisp-style block commments |#.");
     invertible(&mut options, "lisp-vline-symbols"   , "recognize |lisp-style vline symbol|s.");
