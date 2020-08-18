@@ -40,7 +40,7 @@ fn options() -> getopts::Options {
     options.optopt(  ""    , "comment-char"         , "(default: ';')", "CC");
     options.optflag("h"    , "help"                 , "show this help message");
     options.optopt( ""     , "input-format"         , "'json', 'text' (default: 'text')", "FMT");
-    invertible(&mut options, "janet-long-strings"   , "recognize \"\"\" janet-style long strings \"\"\"");
+    invertible(&mut options, "janet-long-strings"   , "recognize ``` janet-style long strings ```");
     options.optopt( "l"    , "language"             , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
     invertible(&mut options, "lisp-block-comments"  , "recognize #| lisp-style block commments |#.");
     invertible(&mut options, "lisp-vline-symbols"   , "recognize |lisp-style vline symbol|s.");
