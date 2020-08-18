@@ -44,7 +44,11 @@ impl YesNoDefaultOption {
 
 const JANET_LONG_STRINGS_OPTION : YesNoDefaultOption = YesNoDefaultOption {
     name: "janet-long-strings",
-    description: "recognize ``` janet-style long strings ```"
+    description: "recognize ``` janet-style long strings ```",
+};
+const LISP_BLOCK_COMMENTS_OPTION : YesNoDefaultOption = YesNoDefaultOption {
+    name: "lisp-block-comments",
+    description:"recognize #| lisp-style block commments |#.",
 };
 
 fn options() -> getopts::Options {
@@ -59,7 +63,7 @@ fn options() -> getopts::Options {
     options.optopt( ""     , "input-format"         , "'json', 'text' (default: 'text')", "FMT");
     JANET_LONG_STRINGS_OPTION.add(&mut options);
     options.optopt( "l"    , "language"             , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
-    invertible(&mut options, "lisp-block-comments"  , "recognize #| lisp-style block commments |#.");
+    LISP_BLOCK_COMMENTS_OPTION.add(&mut options);
     invertible(&mut options, "lisp-vline-symbols"   , "recognize |lisp-style vline symbol|s.");
     options.optopt( "m"    , "mode"                 , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
     options.optopt( ""     , "output-format"        , "'json', 'kakoune', 'text' (default: 'text')", "FMT");
