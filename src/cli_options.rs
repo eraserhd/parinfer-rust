@@ -45,6 +45,7 @@ fn options() -> getopts::Options {
     invertible(&mut options, "lisp-vline-symbols"   , "recognize |lisp-style vline symbol|s.");
     options.optopt( "m"    , "mode"                 , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
     options.optopt( ""     , "output-format"        , "'json', 'kakoune', 'text' (default: 'text')", "FMT");
+    invertible(&mut options, "scheme-sexp-comments" , "recognize #;( scheme sexp comments )");
     options
 }
 
@@ -175,6 +176,10 @@ impl Options {
         self.invertible_flag("lisp-block-comments")
     }
 
+    fn scheme_sexp_comments(&self) -> Option<bool> {
+        self.invertible_flag("scheme-sexp-comments")
+    }
+
     pub fn request(&self, input: &mut dyn Read) -> io::Result<Request> {
         match self.input_type() {
             InputType::Text => {
@@ -203,7 +208,7 @@ impl Options {
                         selection_start_line: None,
                         lisp_vline_symbols: self.lisp_vline_symbols().unwrap_or(lisp_vline_symbols),
                         lisp_block_comments: self.lisp_block_comments().unwrap_or(lisp_block_comments),
-                        scheme_sexp_comments,
+                        scheme_sexp_comments: self.scheme_sexp_comments().unwrap_or(scheme_sexp_comments),
                         janet_long_strings,
                     }
                 })
