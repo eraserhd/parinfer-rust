@@ -40,6 +40,7 @@ fn options() -> getopts::Options {
     options.optopt(  ""    , "comment-char"         , "(default: ';')", "CC");
     options.optflag("h"    , "help"                 , "show this help message");
     options.optopt( ""     , "input-format"         , "'json', 'text' (default: 'text')", "FMT");
+    invertible(&mut options, "janet-long-strings"   , "recognize \"\"\" janet-style long strings \"\"\"");
     options.optopt( "l"    , "language"             , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
     invertible(&mut options, "lisp-block-comments"  , "recognize #| lisp-style block commments |#.");
     invertible(&mut options, "lisp-vline-symbols"   , "recognize |lisp-style vline symbol|s.");
@@ -168,6 +169,10 @@ impl Options {
         }
     }
 
+    fn janet_long_strings(&self) -> Option<bool> {
+        self.invertible_flag("janet-long-strings")
+    }
+
     fn lisp_vline_symbols(&self) -> Option<bool> {
         self.invertible_flag("lisp-vline-symbols")
     }
@@ -209,7 +214,7 @@ impl Options {
                         lisp_vline_symbols: self.lisp_vline_symbols().unwrap_or(lisp_vline_symbols),
                         lisp_block_comments: self.lisp_block_comments().unwrap_or(lisp_block_comments),
                         scheme_sexp_comments: self.scheme_sexp_comments().unwrap_or(scheme_sexp_comments),
-                        janet_long_strings,
+                        janet_long_strings: self.janet_long_strings().unwrap_or(janet_long_strings),
                     }
                 })
             },
