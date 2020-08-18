@@ -50,13 +50,16 @@ const LISP_BLOCK_COMMENTS_OPTION : YesNoDefaultOption = YesNoDefaultOption {
     name: "lisp-block-comments",
     description:"recognize #| lisp-style block commments |#.",
 };
+const LISP_VLINE_SYMBOLS_OPTION : YesNoDefaultOption = YesNoDefaultOption {
+    name: "lisp-vline-symbols",
+    description:"recognize |lisp-style vline symbol|s.",
+};
+const SCHEME_SEXP_COMMENTS : YesNoDefaultOption = YesNoDefaultOption {
+    name: "scheme-sexp-comments",
+    description: "recognize #;( scheme sexp comments )",
+};
 
 fn options() -> getopts::Options {
-    fn invertible(options: &mut getopts::Options, name: &str, description: &str) {
-        options.optflag("", name, description);
-        options.optflag("", &format!("no-{}", name), &format!("do not {}", description));
-    }
-
     let mut options = getopts::Options::new();
     options.optopt(  ""    , "comment-char"         , "(default: ';')", "CC");
     options.optflag("h"    , "help"                 , "show this help message");
@@ -64,10 +67,10 @@ fn options() -> getopts::Options {
     JANET_LONG_STRINGS_OPTION.add(&mut options);
     options.optopt( "l"    , "language"             , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
     LISP_BLOCK_COMMENTS_OPTION.add(&mut options);
-    invertible(&mut options, "lisp-vline-symbols"   , "recognize |lisp-style vline symbol|s.");
+    LISP_VLINE_SYMBOLS_OPTION.add(&mut options);
     options.optopt( "m"    , "mode"                 , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
     options.optopt( ""     , "output-format"        , "'json', 'kakoune', 'text' (default: 'text')", "FMT");
-    invertible(&mut options, "scheme-sexp-comments" , "recognize #;( scheme sexp comments )");
+    SCHEME_SEXP_COMMENTS.add(&mut options);
     options
 }
 
