@@ -37,15 +37,14 @@ fn options() -> getopts::Options {
     }
 
     let mut options = getopts::Options::new();
-    options.optopt(  "", "comment-char"          , "(default: ';')", "CC");
-    options.optflag("h", "help"                  , "show this help message");
-    options.optopt( "" , "input-format"          , "'json', 'text' (default: 'text')", "FMT");
-    options.optopt( "l", "language"              , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
+    options.optopt(  ""    , "comment-char"         , "(default: ';')", "CC");
+    options.optflag("h"    , "help"                 , "show this help message");
+    options.optopt( ""     , "input-format"         , "'json', 'text' (default: 'text')", "FMT");
+    options.optopt( "l"    , "language"             , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
     invertible(&mut options, "lisp-block-comments"  , "recognize #| lisp-style block commments |#.");
-    options.optflag("" , "lisp-vline-symbols"    , "recognize |lisp-style vline symbol|s.");
-    options.optopt( "m", "mode"                  , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
-    options.optflag("" , "no-lisp-vline-symbols" , "do not recognize |lisp-style vline symbol|s.");
-    options.optopt( "" , "output-format"         , "'json', 'kakoune', 'text' (default: 'text')", "FMT");
+    invertible(&mut options, "lisp-vline-symbols"   , "recognize |lisp-style vline symbol|s.");
+    options.optopt( "m"    , "mode"                 , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
+    options.optopt( ""     , "output-format"        , "'json', 'kakoune', 'text' (default: 'text')", "FMT");
     options
 }
 
