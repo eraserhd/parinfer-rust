@@ -307,3 +307,14 @@ After `f]ix<Esc>`:
 ```
 (def å [x])
 ```
+
+## Cursor position with fullwidth text (#87)
+
+```
+;; １２３４５
+```
+
+After `6lixy<Esc>`:
+```
+;; １２３xy４５
+```

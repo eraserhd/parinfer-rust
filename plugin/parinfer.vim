@@ -137,7 +137,11 @@ endfunction
 function! s:set_cursor_position(position) abort
   let l:cursor = copy(a:position)
   let l:cursor[1] += 1
-  let l:cursor[2] = strlen(strcharpart(getline(l:cursor[1]), 0, l:cursor[2])) + 1
+  let l:cursor[2] += 1
+
+  let line = getline(l:cursor[1])
+  let head = matchstr(line, '.\+\%<' . (l:cursor[2] + 1) . 'v') " text before cursor
+  let l:cursor[2] = strlen(head) + 1
   call setpos('.', l:cursor)
 endfunction
 
