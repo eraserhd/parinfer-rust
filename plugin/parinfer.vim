@@ -23,23 +23,27 @@ if !exists('g:parinfer_janet_long_strings')
   let g:parinfer_janet_long_strings = 0
 endif
 
-if !exists('g:parinfer_dylib_path')
-  let s:libdir = expand('<sfile>:p:h:h') . '/target/release'
+" Needs to be outside function because we want <sfile> to be the location of this file,
+" not where it is getting called from.
+let s:libdir = expand('<sfile>:p:h:h') . '/target/release'
+
+function! s:guess_dylib_path() abort
   if has('macunix')
-    let g:parinfer_dylib_path = s:libdir . '/libparinfer_rust.dylib'
+    return s:libdir . '/libparinfer_rust.dylib'
   elseif has('unix')
     let s:uname = system("uname")
     if s:uname == "Darwin\n"
-      let g:parinfer_dylib_path = s:libdir . '/libparinfer_rust.dylib'
+      return s:libdir . '/libparinfer_rust.dylib'
     else
-      let g:parinfer_dylib_path = s:libdir . '/libparinfer_rust.so'
+      return s:libdir . '/libparinfer_rust.so'
     endif
   elseif has('win32')
-    let g:parinfer_dylib_path = s:libdir . '/parinfer_rust.dll'
+    return s:libdir . '/parinfer_rust.dll'
   else
     " I hope we don't come here!
+    echoerr 'Parinfer was unable to guess its dynamic library path.'
   endif
-endif
+endfunction
 
 command! ParinferOn let g:parinfer_enabled = 1
 command! ParinferOff let g:parinfer_enabled = 0
@@ -202,6 +206,9 @@ function! s:process_buffer() abort
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1],
                                  \ "prevText": b:parinfer_previous_text } }
+    if !exists('g:parinfer_dylib_path')
+      let g:parinfer_dylib_path = s:guess_dylib_path()
+    endif
     let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
     if l:response["success"]
       if l:response["text"] !=# l:orig_text
