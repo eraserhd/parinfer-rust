@@ -4,6 +4,8 @@ ChangeLog
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
 ---------------------------------------------------------------------------
 
+* Support for Apple Silicon (by bumping dependency versions)
+
 === Added
 
 * Added -l, --language LANG option to easily specify language defaults.
