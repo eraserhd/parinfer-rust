@@ -220,7 +220,7 @@ function! s:process_buffer() abort
         silent! undojoin
         try
           call setline(l:changed[0]+1, l:lines[l:changed[0]:l:changed[-1]])
-        catch /E523:/ " not allowed here
+        catch /E5\(23\|78\):/ " not allowed here / not allowed to change text here
           " If an event doesn't allow us to modify the buffer, that's OK.
           " Usually another event will happen before a redraw.
           call s:log('not-allowed-here', {})
