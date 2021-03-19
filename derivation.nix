@@ -1,4 +1,4 @@
-{ stdenv, rustPlatform, fetchFromGitHub, llvmPackages }:
+{ stdenv, libiconv, rustPlatform, fetchFromGitHub, llvmPackages }:
 
 rustPlatform.buildRustPackage rec {
   name = "parinfer-rust-${version}";
@@ -7,7 +7,11 @@ rustPlatform.buildRustPackage rec {
   src = ./.;
   cargoSha256 = "19rcxax8b1zmsfqnxf9v7rizfwyg3fw6pz7di40mw0i8cq9cpzhl";
 
-  buildInputs = [ llvmPackages.libclang llvmPackages.clang ];
+  buildInputs = [
+    llvmPackages.libclang
+    llvmPackages.clang
+    libiconv
+  ];
   LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
 
   postInstall = ''
