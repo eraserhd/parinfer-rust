@@ -168,7 +168,7 @@ function! s:enter_buffer() abort
 endfunction
 
 function! s:process_buffer() abort
-  if !g:parinfer_enabled || &paste || !&modifiable
+  if !g:parinfer_enabled || &paste || !&modified
     return
   endif
   if !exists('b:parinfer_last_changedtick')
