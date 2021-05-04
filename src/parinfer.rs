@@ -628,10 +628,16 @@ fn peek_works() {
 
 // {{{1 Questions about characters
 
-fn is_close_paren(paren: &str) -> bool {
-    match paren {
-        "}" | "]" | ")" => true,
-        _ => false,
+#[link(name="parinfer", kind="static")]
+extern "C" {
+    fn is_close_paren(s: *const cty::c_char) -> bool;
+}
+
+fn rust_is_close_paren(paren: &str) -> bool {
+    use std::ffi::CString;
+    let s = CString::new(paren).expect("CString::new failed");
+    unsafe {
+        is_close_paren(s.as_ptr())
     }
 }
 
@@ -655,7 +661,7 @@ fn is_whitespace<'a>(result: &State<'a>) -> bool {
 
 fn is_closable<'a>(result: &State<'a>) -> bool {
     let ch = result.ch;
-    let closer = is_close_paren(ch) && !result.is_escaped();
+    let closer = rust_is_close_paren(ch) && !result.is_escaped();
     return result.is_in_code() && !is_whitespace(result) && ch != "" && !closer;
 }
 
@@ -1154,7 +1160,7 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
             if x < start_x || x >= new_start_x {
                 continue;
             }
-            if is_close_paren(ch) {
+            if rust_is_close_paren(ch) {
                 remove_count += 1;
             }
         }
@@ -1425,7 +1431,7 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
             continue;
         }
 
-        if is_close_paren(ch) {
+        if rust_is_close_paren(ch) {
             new_trail.push_str(ch);
         } else {
             space_count += 1;
@@ -1714,7 +1720,7 @@ fn on_comment_line<'a>(result: &mut State<'a>) {
 }
 
 fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
-    if is_close_paren(result.ch) {
+    if rust_is_close_paren(result.ch) {
         on_leading_close_paren(result)?;
     } else if result.ch == result.comment_char {
         // comments don't count as indentation points

@@ -10,7 +10,11 @@ crate-type = ["lib", "cdylib"]
 name = "parinfer-rust"
 path =  "src/main.rs"
 
+[build-dependencies]
+cc = "1.0"
+
 [dependencies]
+cty = "0.2"
 getopts = "0.2"
 libc = "0.2.39"
 emacs = "0.16.2"

@@ -1,3 +1,5 @@
+extern crate cty;
+
 extern crate serde;
 extern crate serde_json;
 
