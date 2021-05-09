@@ -148,6 +148,8 @@ struct Options {
     #[serde(skip_serializing_if = "Option::is_none")]
     lisp_block_comments: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    guile_block_comments: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     scheme_sexp_comments: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     janet_long_strings: Option<bool>,
@@ -284,6 +286,7 @@ pub fn composed_unicode_graphemes_count_as_a_single_character() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: None,
+            guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -328,6 +331,7 @@ pub fn graphemes_in_changes_are_counted_correctly() {
             ]),
             lisp_vline_symbols: None,
             lisp_block_comments: None,
+            guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -372,6 +376,7 @@ pub fn wide_characters() {
             ]),
             lisp_vline_symbols: None,
             lisp_block_comments: None,
+            guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -409,6 +414,7 @@ pub fn lisp_vline_symbols() {
             changes: None,
             lisp_vline_symbols: Some(true),
             lisp_block_comments: None,
+            guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -446,6 +452,7 @@ pub fn lisp_sharp_syntax_backtrack() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: Some(true),
+            guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -483,6 +490,7 @@ pub fn lisp_block_comments() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: Some(true),
+            guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -491,6 +499,44 @@ pub fn lisp_block_comments() {
     };
     let input = json!({
         "mode": "paren",
+        "text": &case.text,
+        "options": &case.options
+    }).to_string();
+    let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
+    case.check2(answer);
+}
+
+#[test]
+pub fn guile_block_comments() {
+    let case = Case {
+        text: String::from("#!/bin/guile -s \\\n-e main -s\n!#\n(display\n'hello)"),
+        result: CaseResult {
+            text: String::from("#!/bin/guile -s \\\n-e main -s\n!#\n(display)\n'hello"),
+            success: true,
+            error: None,
+            cursor_x: None,
+            cursor_line: None,
+            tab_stops: None,
+            paren_trails: None
+        },
+        source: Source {
+            line_no: 0
+        },
+        options: Options {
+            cursor_x: None,
+            cursor_line: None,
+            changes: None,
+            lisp_vline_symbols: None,
+            lisp_block_comments: None,
+            guile_block_comments: Some(true),
+            scheme_sexp_comments: None,
+            janet_long_strings: None,
+            prev_cursor_x: None,
+            prev_cursor_line: None
+        }
+    };
+    let input = json!({
+        "mode": "indent",
         "text": &case.text,
         "options": &case.options
     }).to_string();
@@ -520,6 +566,7 @@ pub fn scheme_sexp_comments() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: None,
+            guile_block_comments: None,
             scheme_sexp_comments: Some(true),
             janet_long_strings: None,
             prev_cursor_x: None,
@@ -557,6 +604,7 @@ pub fn janet_long_strings() {
             changes: None,
             lisp_vline_symbols: None,
             lisp_block_comments: None,
+            guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: Some(true),
             prev_cursor_x: None,
