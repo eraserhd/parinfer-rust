@@ -3,8 +3,10 @@
 #include <string.h>
 
 typedef size_t Column;
+typedef size_t LineNumber;
 
 #define NO_COLUMN ((size_t)-1)
+#define NO_LINE_NUMBER ((size_t)-1)
 
 typedef enum Mode
 {
@@ -20,6 +22,7 @@ typedef struct State
 
     char* orig_text;
     Column orig_cursor_x;
+    LineNumber orig_cursor_line;
 }
 State;
 

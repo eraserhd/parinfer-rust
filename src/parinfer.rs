@@ -21,6 +21,7 @@ const TAB: &'static str = "\t";
 const GRAVE: &'static str = "`";
 
 const NO_COLUMN: Column = usize::MAX;
+const NO_LINE_NUMBER: LineNumber = usize::MAX;
 
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
@@ -208,7 +209,7 @@ struct State<'a> {
 
     orig_text: *const libc::c_char,
     orig_cursor_x: Column,
-    orig_cursor_line: Option<LineNumber>,
+    orig_cursor_line: LineNumber,
 
     input_lines: Vec<&'a str>,
     input_line_no: LineNumber,
@@ -312,7 +313,10 @@ fn get_initial_result<'a>(
             None => NO_COLUMN,
             Some(column) => column,
         },
-        orig_cursor_line: options.cursor_line,
+        orig_cursor_line: match options.cursor_line {
+            None => NO_LINE_NUMBER,
+            Some(line_number) => line_number
+        },
 
         input_lines: split_lines(text),
         input_line_no: 0,
@@ -1948,7 +1952,11 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             cursor_line: if result.partial_result {
                 result.cursor_line
             } else {
-                result.orig_cursor_line
+                if result.orig_cursor_line == NO_LINE_NUMBER {
+                    None
+                } else {
+                    Some(result.orig_cursor_line)
+                }
             },
             paren_trails: result.paren_trails.clone(),
             success: false,
