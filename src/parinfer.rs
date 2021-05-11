@@ -31,6 +31,13 @@ fn column_to_option(column: Column) -> Option<Column> {
     }
 }
 
+fn column_from_option(column: Option<Column>) -> Column {
+    match column {
+        None => NO_COLUMN,
+        Some(c) => c
+    }
+}
+
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
         "{" => Some("}"),
@@ -317,10 +324,7 @@ fn get_initial_result<'a>(
 
         orig_text: std::ptr::null(),
 
-        orig_cursor_x: match options.cursor_x {
-            None => NO_COLUMN,
-            Some(column) => column,
-        },
+        orig_cursor_x: column_from_option(options.cursor_x),
         orig_cursor_line: match options.cursor_line {
             None => NO_LINE_NUMBER,
             Some(line_number) => line_number
