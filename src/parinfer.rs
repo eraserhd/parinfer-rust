@@ -127,10 +127,11 @@ struct InternalParenTrail<'a> {
     clamped: ParenTrailClamped<'a>,
 }
 
+#[repr(C)]
 #[derive(PartialEq, Eq)]
 pub enum Mode {
-    Indent,
-    Paren,
+    Indent = 0,
+    Paren = 1,
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]

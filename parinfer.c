@@ -2,8 +2,16 @@
 #include <stdbool.h>
 #include <string.h>
 
+typedef enum Mode
+{
+    MODE_INDENT,
+    MODE_PAREN
+}
+Mode;
+
 typedef struct State
 {
+    Mode mode;
 }
 State;
 
