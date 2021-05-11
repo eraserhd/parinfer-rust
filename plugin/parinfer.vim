@@ -16,6 +16,9 @@ endif
 if !exists('g:parinfer_lisp_block_comments')
   let g:parinfer_lisp_block_comments = 0
 endif
+if !exists('g:parinfer_guile_block_comments')
+  let g:parinfer_guile_block_comments = 0
+endif
 if !exists('g:parinfer_scheme_sexp_comments')
   let g:parinfer_scheme_sexp_comments = 0
 endif
@@ -183,6 +186,9 @@ function! s:process_buffer() abort
   if !exists('b:parinfer_lisp_block_comments')
     let b:parinfer_lisp_block_comments = g:parinfer_lisp_block_comments
   endif
+  if !exists('b:parinfer_guile_block_comments')
+    let b:parinfer_guile_block_comments = g:parinfer_guile_block_comments
+  endif
   if !exists('b:parinfer_scheme_sexp_comments')
     let b:parinfer_scheme_sexp_comments = g:parinfer_scheme_sexp_comments
   endif
@@ -201,6 +207,7 @@ function! s:process_buffer() abort
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
                                  \ "lispVlineSymbols": b:parinfer_lisp_vline_symbols ? v:true : v:false,
                                  \ "lispBlockComments": b:parinfer_lisp_block_comments ? v:true : v:false,
+                                 \ "guileBlockComments": b:parinfer_guile_block_comments ? v:true : v:false,
                                  \ "schemeSexpComments": b:parinfer_scheme_sexp_comments ? v:true : v:false,
                                  \ "janetLongStrings": b:parinfer_janet_long_strings ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],

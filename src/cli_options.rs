@@ -23,6 +23,7 @@ enum Language {
     Janet,
     Lisp,
     Racket,
+    Guile,
     Scheme,
 }
 
@@ -54,6 +55,10 @@ const LISP_VLINE_SYMBOLS_OPTION : YesNoDefaultOption = YesNoDefaultOption {
     name: "lisp-vline-symbols",
     description:"recognize |lisp-style vline symbol|s.",
 };
+const GUILE_BLOCK_COMMENTS_OPTION : YesNoDefaultOption = YesNoDefaultOption {
+    name: "guile-block-comments",
+    description: "recognize #!/guile/block/comments \\n!# )",
+};
 const SCHEME_SEXP_COMMENTS : YesNoDefaultOption = YesNoDefaultOption {
     name: "scheme-sexp-comments",
     description: "recognize #;( scheme sexp comments )",
@@ -64,8 +69,9 @@ fn options() -> getopts::Options {
     options.optopt(  ""    , "comment-char"         , "(default: ';')", "CC");
     options.optflag("h"    , "help"                 , "show this help message");
     options.optopt( ""     , "input-format"         , "'json', 'text' (default: 'text')", "FMT");
+    GUILE_BLOCK_COMMENTS_OPTION.add(&mut options);
     JANET_LONG_STRINGS_OPTION.add(&mut options);
-    options.optopt( "l"    , "language"             , "'clojure', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')", "LANG");
+    options.optopt( "l"    , "language"             , "'clojure', 'janet', 'lisp', 'racket', 'guile', 'scheme' (default: 'clojure')", "LANG");
     LISP_BLOCK_COMMENTS_OPTION.add(&mut options);
     LISP_VLINE_SYMBOLS_OPTION.add(&mut options);
     options.optopt( "m"    , "mode"                 , "parinfer mode (indent, paren, or smart) (default: smart)", "MODE");
@@ -81,6 +87,7 @@ pub fn usage() -> String {
 struct Defaults {
     lisp_vline_symbols: bool,
     lisp_block_comments: bool,
+    guile_block_comments: bool,
     scheme_sexp_comments: bool,
     janet_long_strings: bool
 }
@@ -91,6 +98,7 @@ fn parse_language(language: Option<String>) -> Language {
         Some(ref s) if s == "janet"   => Language::Janet,
         Some(ref s) if s == "lisp"    => Language::Lisp,
         Some(ref s) if s == "racket"  => Language::Racket,
+        Some(ref s) if s == "guile"   => Language::Guile,
         Some(ref s) if s == "scheme"  => Language::Scheme,
         None                          => Language::Clojure,
         // Unknown language.  Defaults kind of work for most lisps
@@ -103,30 +111,42 @@ fn language_defaults(language: Language) -> Defaults {
         Language::Clojure => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comments: false,
+            guile_block_comments: false,
             scheme_sexp_comments: false,
             janet_long_strings: false,
         },
         Language::Janet => Defaults {
             lisp_vline_symbols: false,
             lisp_block_comments: false,
+            guile_block_comments: false,
             scheme_sexp_comments: false,
             janet_long_strings: true,
         },
         Language::Lisp => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
+            guile_block_comments: false,
             scheme_sexp_comments: false,
             janet_long_strings: false
         },
         Language::Racket => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
+            guile_block_comments: false,
+            scheme_sexp_comments: true,
+            janet_long_strings: false
+        },
+        Language::Guile => Defaults {
+            lisp_vline_symbols: true,
+            lisp_block_comments: true,
+            guile_block_comments: true,
             scheme_sexp_comments: true,
             janet_long_strings: false
         },
         Language::Scheme => Defaults {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
+            guile_block_comments: false,
             scheme_sexp_comments: true,
             janet_long_strings: false
         },
@@ -205,6 +225,10 @@ impl Options {
         self.invertible_flag("lisp-block-comments")
     }
 
+    fn guile_block_comments(&self) -> Option<bool> {
+        self.invertible_flag("guile-block-comments")
+    }
+
     fn scheme_sexp_comments(&self) -> Option<bool> {
         self.invertible_flag("scheme-sexp-comments")
     }
@@ -215,6 +239,7 @@ impl Options {
                 let Defaults {
                     lisp_vline_symbols,
                     lisp_block_comments,
+                    guile_block_comments,
                     scheme_sexp_comments,
                     janet_long_strings
                 } = language_defaults(parse_language(self.matches.opt_str("language")));
@@ -237,6 +262,7 @@ impl Options {
                         selection_start_line: None,
                         lisp_vline_symbols: self.lisp_vline_symbols().unwrap_or(lisp_vline_symbols),
                         lisp_block_comments: self.lisp_block_comments().unwrap_or(lisp_block_comments),
+                        guile_block_comments: self.guile_block_comments().unwrap_or(guile_block_comments),
                         scheme_sexp_comments: self.scheme_sexp_comments().unwrap_or(scheme_sexp_comments),
                         janet_long_strings: self.janet_long_strings().unwrap_or(janet_long_strings),
                     }
@@ -246,6 +272,7 @@ impl Options {
                 let Defaults {
                     lisp_vline_symbols,
                     lisp_block_comments,
+                    guile_block_comments,
                     scheme_sexp_comments,
                     janet_long_strings
                 } = language_defaults(parse_language(env::var("kak_opt_filetype").ok()));
@@ -275,6 +302,7 @@ impl Options {
                         selection_start_line: None,
                         lisp_vline_symbols,
                         lisp_block_comments,
+                        guile_block_comments,
                         scheme_sexp_comments,
                         janet_long_strings,
                     }

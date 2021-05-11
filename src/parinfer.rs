@@ -13,6 +13,7 @@ const BLANK_SPACE: &'static str = " ";
 const DOUBLE_SPACE: &'static str = "  ";
 const DOUBLE_QUOTE: &'static str = "\"";
 const VERTICAL_LINE: &'static str = "|";
+const BANG: &'static str = "!";
 const NUMBER_SIGN: &'static str = "#";
 const NEWLINE: &'static str = "\n";
 const TAB: &'static str = "\t";
@@ -164,6 +165,8 @@ enum In<'a> {
     LispBlockCommentPre { depth: usize },
     LispBlockComment { depth: usize },
     LispBlockCommentPost { depth: usize },
+    GuileBlockComment,
+    GuileBlockCommentPost,
     JanetLongStringPre { open_delim_len: usize },
     JanetLongString { open_delim_len: usize, close_delim_len: usize },
 }
@@ -185,6 +188,8 @@ impl<'a> State<'a> {
             In::LispBlockCommentPre {..} => true,
             In::LispBlockComment {..} => true,
             In::LispBlockCommentPost {..} => true,
+            In::GuileBlockComment => true,
+            In::GuileBlockCommentPost => true,
             In::JanetLongStringPre {..} => true,
             In::JanetLongString {..} => true,
             _ => false
@@ -236,6 +241,7 @@ struct State<'a> {
     lisp_vline_symbols_enabled: bool,
     lisp_reader_syntax_enabled: bool,
     lisp_block_comments_enabled: bool,
+    guile_block_comments_enabled: bool,
     scheme_sexp_comments_enabled: bool,
     janet_long_strings_enabled: bool,
 
@@ -279,6 +285,7 @@ fn get_initial_result<'a>(
 ) -> State<'a> {
     let lisp_reader_syntax_enabled = [
         options.lisp_block_comments,
+        options.guile_block_comments,
         options.scheme_sexp_comments,
     ].iter().any(|is_true| *is_true);
 
@@ -325,6 +332,7 @@ fn get_initial_result<'a>(
         lisp_vline_symbols_enabled: options.lisp_vline_symbols,
         lisp_reader_syntax_enabled,
         lisp_block_comments_enabled: options.lisp_block_comments,
+        guile_block_comments_enabled: options.guile_block_comments,
         scheme_sexp_comments_enabled: options.scheme_sexp_comments,
         janet_long_strings_enabled: options.janet_long_strings,
 
@@ -863,6 +871,9 @@ fn in_code_on_nsign<'a>(result: &mut State<'a>) {
 fn in_lisp_reader_syntax_on_vline<'a>(result: &mut State<'a>) {
     result.context = In::LispBlockComment { depth: 1 };
 }
+fn in_lisp_reader_syntax_on_bang<'a>(result: &mut State<'a>) {
+    result.context = In::GuileBlockComment;
+}
 fn in_lisp_reader_syntax_on_semicolon<'a>(result: &mut State<'a>) {
     result.context = In::Code;
 }
@@ -889,6 +900,16 @@ fn in_lisp_block_comment_post_on_nsign<'a>(result: &mut State<'a>, depth: usize)
 }
 fn in_lisp_block_comment_post_on_else<'a>(result: &mut State<'a>, depth: usize) {
     result.context = In::LispBlockComment { depth };
+}
+
+fn in_guile_block_comment_on_bang<'a>(result: &mut State<'a>) {
+    result.context = In::GuileBlockCommentPost;
+}
+fn in_guile_block_comment_post_on_nsign<'a>(result: &mut State<'a>) {
+    result.context = In::Code;
+}
+fn in_guile_block_comment_post_on_else<'a>(result: &mut State<'a>) {
+    result.context = In::GuileBlockComment;
 }
 
 fn in_code_on_grave<'a>(result: &mut State<'a>) {
@@ -970,6 +991,7 @@ fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
         In::LispReaderSyntax => {
             match ch {
                 VERTICAL_LINE if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
+                BANG if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
                 ";" if result.scheme_sexp_comments_enabled => in_lisp_reader_syntax_on_semicolon(result),
                 _ => {
                     // Backtrack!
@@ -995,6 +1017,18 @@ fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
             match ch {
                 NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
                 _ => in_lisp_block_comment_post_on_else(result, depth),
+            }
+        },
+        In::GuileBlockComment => {
+            match ch {
+                BANG => in_guile_block_comment_on_bang(result),
+                _ => (),
+            }
+        },
+        In::GuileBlockCommentPost => {
+            match ch {
+                NUMBER_SIGN => in_guile_block_comment_post_on_nsign(result),
+                _ => in_guile_block_comment_post_on_else(result),
             }
         },
         In::JanetLongStringPre { open_delim_len } => {
