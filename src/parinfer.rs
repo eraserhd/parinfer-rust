@@ -46,6 +46,13 @@ fn line_number_to_option(line_number: LineNumber) -> Option<LineNumber> {
     }
 }
 
+fn line_number_from_option(line_number: Option<LineNumber>) -> LineNumber {
+    match line_number {
+        None => NO_LINE_NUMBER,
+        Some(ln) => ln
+    }
+}
+
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
         "{" => Some("}"),
@@ -333,10 +340,7 @@ fn get_initial_result<'a>(
         orig_text: std::ptr::null(),
 
         orig_cursor_x: column_from_option(options.cursor_x),
-        orig_cursor_line: match options.cursor_line {
-            None => NO_LINE_NUMBER,
-            Some(line_number) => line_number
-        },
+        orig_cursor_line: line_number_from_option(options.cursor_line),
 
         input_lines: split_lines(text),
         input_line_no: 0,
