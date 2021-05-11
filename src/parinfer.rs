@@ -23,6 +23,14 @@ const GRAVE: &'static str = "`";
 const NO_COLUMN: Column = usize::MAX;
 const NO_LINE_NUMBER: LineNumber = usize::MAX;
 
+fn column_to_option(column: Column) -> Option<Column> {
+    if column == NO_COLUMN {
+        None
+    } else {
+        Some(column)
+    }
+}
+
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
         "{" => Some("}"),
@@ -1943,11 +1951,7 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             cursor_x: if result.partial_result {
                 result.cursor_x
             } else {
-                if result.orig_cursor_x == NO_COLUMN {
-                    None
-                } else {
-                    Some(result.orig_cursor_x)
-                }
+                column_to_option(result.orig_cursor_x)
             },
             cursor_line: if result.partial_result {
                 result.cursor_line
