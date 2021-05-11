@@ -197,6 +197,7 @@ impl<'a> State<'a> {
     }
 }
 
+#[repr(C)]
 struct State<'a> {
     mode: Mode,
     smart: bool,
