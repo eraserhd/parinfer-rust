@@ -38,6 +38,14 @@ fn column_from_option(column: Option<Column>) -> Column {
     }
 }
 
+fn line_number_to_option(line_number: LineNumber) -> Option<LineNumber> {
+    if line_number == NO_LINE_NUMBER {
+        None
+    } else {
+        Some(line_number)
+    }
+}
+
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
         "{" => Some("}"),
@@ -1960,11 +1968,7 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             cursor_line: if result.partial_result {
                 result.cursor_line
             } else {
-                if result.orig_cursor_line == NO_LINE_NUMBER {
-                    None
-                } else {
-                    Some(result.orig_cursor_line)
-                }
+                line_number_to_option(result.orig_cursor_line)
             },
             paren_trails: result.paren_trails.clone(),
             success: false,
