@@ -20,6 +20,8 @@ const NEWLINE: &'static str = "\n";
 const TAB: &'static str = "\t";
 const GRAVE: &'static str = "`";
 
+const NO_COLUMN: Column = usize::MAX;
+
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
         "{" => Some("}"),
@@ -205,7 +207,7 @@ struct State<'a> {
     smart: bool,
 
     orig_text: *const libc::c_char,
-    orig_cursor_x: Option<Column>,
+    orig_cursor_x: Column,
     orig_cursor_line: Option<LineNumber>,
 
     input_lines: Vec<&'a str>,
@@ -306,7 +308,10 @@ fn get_initial_result<'a>(
 
         orig_text: std::ptr::null(),
 
-        orig_cursor_x: options.cursor_x,
+        orig_cursor_x: match options.cursor_x {
+            None => NO_COLUMN,
+            Some(column) => column,
+        },
         orig_cursor_line: options.cursor_line,
 
         input_lines: split_lines(text),
@@ -1934,7 +1939,11 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             cursor_x: if result.partial_result {
                 result.cursor_x
             } else {
-                result.orig_cursor_x
+                if result.orig_cursor_x == NO_COLUMN {
+                    None
+                } else {
+                    Some(result.orig_cursor_x)
+                }
             },
             cursor_line: if result.partial_result {
                 result.cursor_line

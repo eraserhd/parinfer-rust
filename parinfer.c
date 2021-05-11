@@ -2,6 +2,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+typedef size_t Column;
+
+#define NO_COLUMN ((size_t)-1)
+
 typedef enum Mode
 {
     MODE_INDENT,
@@ -15,6 +19,7 @@ typedef struct State
     _Bool smart;
 
     char* orig_text;
+    Column orig_cursor_x;
 }
 State;
 
