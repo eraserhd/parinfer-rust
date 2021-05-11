@@ -26,6 +26,7 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
   - `|Enclosed symbols|`
   - `#|Block comments|#`
   - `#;(S-expression comments)`
+* Support for Guile's `#!block comments!#`
 
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...v0.4.3[0.4.3]
 ------------------------------------------------------------------------
