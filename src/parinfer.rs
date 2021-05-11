@@ -1,6 +1,7 @@
 use super::std;
 use std::collections::HashMap;
 use std::borrow::Cow;
+use std::ffi::{CStr,CString};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 use types::*;
@@ -203,7 +204,7 @@ struct State<'a> {
     mode: Mode,
     smart: bool,
 
-    orig_text: &'a str,
+    orig_text: *const libc::c_char,
     orig_cursor_x: Option<Column>,
     orig_cursor_line: Option<LineNumber>,
 
@@ -265,6 +266,14 @@ struct State<'a> {
     error_pos_cache: HashMap<ErrorName, Error>,
 }
 
+impl<'a> Drop for State<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            state_destroy(self)
+        }
+    }
+}
+
 fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
     InternalParenTrail {
         line_no: None,
@@ -291,11 +300,12 @@ fn get_initial_result<'a>(
         options.scheme_sexp_comments,
     ].iter().any(|is_true| *is_true);
 
-    State {
+    let mut state = State {
         mode: mode,
         smart: smart,
 
-        orig_text: text,
+        orig_text: std::ptr::null(),
+
         orig_cursor_x: options.cursor_x,
         orig_cursor_line: options.cursor_line,
 
@@ -354,7 +364,11 @@ fn get_initial_result<'a>(
 
         error: None,
         error_pos_cache: HashMap::new(),
+    };
+    unsafe {
+        state_init(&mut state, CString::new(text).expect("CString::new failed").as_ptr());
     }
+    state
 }
 
 // {{{1 Possible Errors
@@ -484,19 +498,21 @@ fn repeat_string_works() {
     assert_eq!(repeat_string("", 5), "");
 }
 
-fn get_line_ending(text: &str) -> &'static str {
-    if text.chars().any(|ch| ch == '\r') {
-        "\r\n"
-    } else {
-        "\n"
+fn get_line_ending(text: *const libc::c_char) -> &'static str {
+    unsafe {
+        if libc::strchr(text, '\r' as libc::c_int) != std::ptr::null_mut() {
+            "\r\n"
+        } else {
+            "\n"
+        }
     }
 }
 
 #[cfg(test)]
 #[test]
 fn get_line_ending_works() {
-    assert_eq!(get_line_ending("foo\nbar"), "\n");
-    assert_eq!(get_line_ending("foo\r\nbar"), "\r\n");
+    assert_eq!(get_line_ending(CString::new("foo\nbar").expect("!").as_ptr()), "\n");
+    assert_eq!(get_line_ending(CString::new("foo\r\nbar").expect("!").as_ptr()), "\r\n");
 }
 
 // {{{1 Line operations
@@ -632,11 +648,13 @@ fn peek_works() {
 
 #[link(name="parinfer", kind="static")]
 extern "C" {
-    fn is_close_paren(s: *const cty::c_char) -> bool;
+    fn is_close_paren(s: *const libc::c_char) -> bool;
+
+    fn state_init(state: *mut State, orig_text: *const libc::c_char);
+    fn state_destroy(state: *mut State);
 }
 
 fn rust_is_close_paren(paren: &str) -> bool {
-    use std::ffi::CString;
     let s = CString::new(paren).expect("CString::new failed");
     unsafe {
         is_close_paren(s.as_ptr())
@@ -1899,9 +1917,9 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             cursor_x: result.cursor_x,
             cursor_line: result.cursor_line,
             success: true,
-            tab_stops: result.tab_stops,
-            paren_trails: result.paren_trails,
-            parens: result.parens,
+            tab_stops: result.tab_stops.clone(),
+            paren_trails: result.paren_trails.clone(),
+            parens: result.parens.clone(),
             error: None,
         }
     } else {
@@ -1909,7 +1927,9 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             text: if result.partial_result {
                 Cow::from(result.lines.join(line_ending))
             } else {
-                Cow::from(result.orig_text)
+                unsafe {
+                    Cow::from(CStr::from_ptr(result.orig_text).to_string_lossy().into_owned())
+                }
             },
             cursor_x: if result.partial_result {
                 result.cursor_x
@@ -1921,11 +1941,11 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             } else {
                 result.orig_cursor_line
             },
-            paren_trails: result.paren_trails,
+            paren_trails: result.paren_trails.clone(),
             success: false,
-            tab_stops: result.tab_stops,
-            error: result.error,
-            parens: result.parens,
+            tab_stops: result.tab_stops.clone(),
+            error: result.error.clone(),
+            parens: result.parens.clone(),
         }
     }
 }
