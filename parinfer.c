@@ -23,6 +23,8 @@ typedef struct State
     char* orig_text;
     Column orig_cursor_x;
     LineNumber orig_cursor_line;
+
+    LineNumber input_line_count;
 }
 State;
 

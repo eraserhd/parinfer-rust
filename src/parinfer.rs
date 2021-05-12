@@ -241,6 +241,7 @@ struct State<'a> {
     orig_cursor_x: Column,
     orig_cursor_line: LineNumber,
 
+    input_line_count: LineNumber,
     input_lines: Vec<&'a str>,
     input_line_no: LineNumber,
     input_x: Column,
@@ -333,6 +334,7 @@ fn get_initial_result<'a>(
         options.scheme_sexp_comments,
     ].iter().any(|is_true| *is_true);
 
+    let input_lines = split_lines(text);
     let mut state = State {
         mode: mode,
         smart: smart,
@@ -342,7 +344,8 @@ fn get_initial_result<'a>(
         orig_cursor_x: column_from_option(options.cursor_x),
         orig_cursor_line: line_number_from_option(options.cursor_line),
 
-        input_lines: split_lines(text),
+        input_line_count: input_lines.len(),
+        input_lines,
         input_line_no: 0,
         input_x: 0,
 
@@ -1915,7 +1918,7 @@ fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -
     let mut result = get_initial_result(text, &options, mode, smart);
 
     let mut process_result: Result<()> = Ok(());
-    for i in 0..result.input_lines.len() {
+    for i in 0..result.input_line_count {
         result.input_line_no = i;
         process_result = process_line(&mut result, i);
         if let Err(_) = process_result {
