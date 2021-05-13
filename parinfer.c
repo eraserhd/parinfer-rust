@@ -15,12 +15,27 @@ typedef enum Mode
 }
 Mode;
 
+typedef struct Slice
+{
+    size_t length;
+    void* data;
+}
+Slice;
+
+void slice_destroy(Slice* slice)
+{
+    if (NULL != slice->data)
+        free(slice->data);
+    slice->data = NULL;
+    slice->length = 0;
+}
+
 typedef struct State
 {
     Mode mode;
     _Bool smart;
 
-    char* orig_text;
+    Slice orig_text;
     Column orig_cursor_x;
     LineNumber orig_cursor_line;
 
@@ -30,14 +45,13 @@ State;
 
 void state_init(State *state, const char* orig_text)
 {
-    state->orig_text = strdup(orig_text);
+    state->orig_text.length = strlen(orig_text);
+    state->orig_text.data = (void*)strdup(orig_text);
 }
 
 void state_destroy(State *state)
 {
-    if (NULL == state->orig_text)
-        free(state->orig_text);
-    state->orig_text = NULL;
+    slice_destroy(&state->orig_text);
 }
 
 _Bool is_close_paren(const char* s)

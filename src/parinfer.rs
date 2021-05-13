@@ -233,11 +233,28 @@ impl<'a> State<'a> {
 }
 
 #[repr(C)]
+struct Slice<'a, T> {
+    length: usize,
+    data: *mut T,
+    phantom: std::marker::PhantomData<&'a T>
+}
+
+impl<'a, T> std::ops::Index<usize> for Slice<'a, T> {
+    type Output = T;
+    fn index(&self, index: usize) -> &T {
+        assert!(index < self.length);
+        unsafe {
+            &*self.data.offset(index as isize)
+        }
+    }
+}
+
+#[repr(C)]
 struct State<'a> {
     mode: Mode,
     smart: bool,
 
-    orig_text: *const libc::c_char,
+    orig_text: Slice<'a, libc::c_char>,
     orig_cursor_x: Column,
     orig_cursor_line: LineNumber,
 
@@ -339,7 +356,11 @@ fn get_initial_result<'a>(
         mode: mode,
         smart: smart,
 
-        orig_text: std::ptr::null(),
+        orig_text: Slice {
+            data: std::ptr::null_mut(),
+            length: 0,
+            phantom: std::marker::PhantomData,
+        },
 
         orig_cursor_x: column_from_option(options.cursor_x),
         orig_cursor_line: line_number_from_option(options.cursor_line),
@@ -1946,7 +1967,7 @@ fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -
 // {{{1 Public API
 
 fn public_result<'a>(result: State<'a>) -> Answer<'a> {
-    let line_ending = get_line_ending(result.orig_text);
+    let line_ending = get_line_ending(result.orig_text.data);
     if result.success {
         Answer {
             text: Cow::from(result.lines.join(line_ending)),
@@ -1964,7 +1985,7 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
                 Cow::from(result.lines.join(line_ending))
             } else {
                 unsafe {
-                    Cow::from(CStr::from_ptr(result.orig_text).to_string_lossy().into_owned())
+                    Cow::from(CStr::from_ptr(result.orig_text.data).to_string_lossy().into_owned())
                 }
             },
             cursor_x: if result.partial_result {
