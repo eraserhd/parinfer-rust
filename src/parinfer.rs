@@ -1,7 +1,7 @@
 use super::std;
 use std::collections::HashMap;
 use std::borrow::Cow;
-use std::ffi::{CStr,CString};
+use std::ffi::CString;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 use types::*;
@@ -239,16 +239,6 @@ struct Slice<'a, T> {
     phantom: std::marker::PhantomData<&'a T>
 }
 
-impl<'a, T> std::ops::Index<usize> for Slice<'a, T> {
-    type Output = T;
-    fn index(&self, index: usize) -> &T {
-        assert!(index < self.length);
-        unsafe {
-            &*self.data.offset(index as isize)
-        }
-    }
-}
-
 #[repr(C)]
 struct State<'a> {
     mode: Mode,
@@ -315,14 +305,6 @@ struct State<'a> {
 
     error: Option<Error>,
     error_pos_cache: HashMap<ErrorName, Error>,
-}
-
-impl<'a> Drop for State<'a> {
-    fn drop(&mut self) {
-        unsafe {
-            state_destroy(self)
-        }
-    }
 }
 
 fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
@@ -423,7 +405,7 @@ fn get_initial_result<'a>(
         error_pos_cache: HashMap::new(),
     };
     unsafe {
-        state_init(&mut state, CString::new(text).expect("CString::new failed").as_ptr());
+        state_init(&mut state, text.as_ptr(), text.len());
     }
     state
 }
@@ -555,9 +537,9 @@ fn repeat_string_works() {
     assert_eq!(repeat_string("", 5), "");
 }
 
-fn get_line_ending(text: *const libc::c_char) -> &'static str {
+fn get_line_ending<'a>(text: &Slice<'a, libc::c_char>) -> &'static str {
     unsafe {
-        if libc::strchr(text, '\r' as libc::c_int) != std::ptr::null_mut() {
+        if libc::memchr(text.data as *mut libc::c_void, '\r' as libc::c_int, text.length) != std::ptr::null_mut() {
             "\r\n"
         } else {
             "\n"
@@ -568,8 +550,18 @@ fn get_line_ending(text: *const libc::c_char) -> &'static str {
 #[cfg(test)]
 #[test]
 fn get_line_ending_works() {
-    assert_eq!(get_line_ending(CString::new("foo\nbar").expect("!").as_ptr()), "\n");
-    assert_eq!(get_line_ending(CString::new("foo\r\nbar").expect("!").as_ptr()), "\r\n");
+    let unix = "foo\nbar";
+    let dos = "foo\r\nbar";
+    assert_eq!(get_line_ending(&Slice{
+        data: unix.as_ptr() as *mut libc::c_char,
+        length: unix.len(),
+        phantom: std::marker::PhantomData,
+    }), "\n");
+    assert_eq!(get_line_ending(&Slice{
+        data: dos.as_ptr() as *mut libc::c_char,
+        length: dos.len(),
+        phantom: std::marker::PhantomData,
+    }), "\r\n");
 }
 
 // {{{1 Line operations
@@ -707,8 +699,7 @@ fn peek_works() {
 extern "C" {
     fn is_close_paren(s: *const libc::c_char) -> bool;
 
-    fn state_init(state: *mut State, orig_text: *const libc::c_char);
-    fn state_destroy(state: *mut State);
+    fn state_init(state: *mut State, orig_text: *const u8, orig_text_length: usize);
 }
 
 fn rust_is_close_paren(paren: &str) -> bool {
@@ -1967,7 +1958,7 @@ fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -
 // {{{1 Public API
 
 fn public_result<'a>(result: State<'a>) -> Answer<'a> {
-    let line_ending = get_line_ending(result.orig_text.data);
+    let line_ending = get_line_ending(&result.orig_text);
     if result.success {
         Answer {
             text: Cow::from(result.lines.join(line_ending)),
@@ -1985,7 +1976,8 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
                 Cow::from(result.lines.join(line_ending))
             } else {
                 unsafe {
-                    Cow::from(CStr::from_ptr(result.orig_text.data).to_string_lossy().into_owned())
+                    let slice = std::slice::from_raw_parts(result.orig_text.data as *mut u8, result.orig_text.length);
+                    Cow::from(std::str::from_utf8_unchecked(slice))
                 }
             },
             cursor_x: if result.partial_result {

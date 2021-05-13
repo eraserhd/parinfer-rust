@@ -22,14 +22,6 @@ typedef struct Slice
 }
 Slice;
 
-void slice_destroy(Slice* slice)
-{
-    if (NULL != slice->data)
-        free(slice->data);
-    slice->data = NULL;
-    slice->length = 0;
-}
-
 typedef struct State
 {
     Mode mode;
@@ -43,15 +35,10 @@ typedef struct State
 }
 State;
 
-void state_init(State *state, const char* orig_text)
+void state_init(State *state, const char* orig_text, size_t orig_text_length)
 {
-    state->orig_text.length = strlen(orig_text);
-    state->orig_text.data = (void*)strdup(orig_text);
-}
-
-void state_destroy(State *state)
-{
-    slice_destroy(&state->orig_text);
+    state->orig_text.length = orig_text_length;
+    state->orig_text.data = (void*)orig_text;
 }
 
 _Bool is_close_paren(const char* s)
