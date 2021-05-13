@@ -89,8 +89,17 @@ pub fn chomp_cr<'a>(text: &'a str) -> &'a str {
     }
 }
 
-fn split_lines<'a>(text: &'a str) -> Vec<&'a str> {
-    text.split('\n').map(chomp_cr).collect()
+
+fn to_slice<'a>(text: &'a str) -> Slice<'a, libc::c_char> {
+    Slice {
+        data: text.as_ptr() as *mut libc::c_char,
+        length: text.len(),
+        phantom: std::marker::PhantomData,
+    }
+}
+
+fn split_lines<'a>(text: &'a str) -> Vec<Slice<'a, libc::c_char>> {
+    text.split('\n').map(chomp_cr).map(to_slice).collect()
 }
 
 fn transform_change<'a>(change: &'a Change) -> TransformedChange {
@@ -258,7 +267,7 @@ struct State<'a> {
     orig_cursor_line: LineNumber,
 
     input_line_count: LineNumber,
-    input_lines: Vec<&'a str>,
+    input_lines: Vec<Slice<'a, libc::c_char>>,
     input_line_no: LineNumber,
     input_x: Column,
 
@@ -1879,11 +1888,12 @@ fn process_char<'a>(result: &mut State<'a>, ch: &'a str) -> Result<()> {
 
 fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
     init_line(result);
-    result.lines.push(Cow::from(result.input_lines[line_no]));
+    result.lines.push(Cow::from(result.input_lines[line_no].as_str()));
 
     set_tab_stops(result);
 
     for (x, ch) in result.input_lines[line_no]
+        .as_str()
         .graphemes(true)
         .scan(0, |column, ch| {
             let start_column = *column;
