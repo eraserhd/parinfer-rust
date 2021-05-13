@@ -239,6 +239,15 @@ struct Slice<'a, T> {
     phantom: std::marker::PhantomData<&'a T>
 }
 
+impl<'a> Slice<'a, libc::c_char> {
+    fn as_str(&self) -> &'a str {
+        unsafe {
+            let slice = std::slice::from_raw_parts(self.data as *mut u8, self.length);
+            std::str::from_utf8_unchecked(slice)
+        }
+    }
+}
+
 #[repr(C)]
 struct State<'a> {
     mode: Mode,
@@ -1975,10 +1984,7 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
             text: if result.partial_result {
                 Cow::from(result.lines.join(line_ending))
             } else {
-                unsafe {
-                    let slice = std::slice::from_raw_parts(result.orig_text.data as *mut u8, result.orig_text.length);
-                    Cow::from(std::str::from_utf8_unchecked(slice))
-                }
+                Cow::from(result.orig_text.as_str())
             },
             cursor_x: if result.partial_result {
                 result.cursor_x
