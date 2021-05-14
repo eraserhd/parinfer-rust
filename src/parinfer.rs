@@ -244,7 +244,7 @@ impl<'a> State<'a> {
 #[repr(C)]
 struct Slice<'a, T> {
     length: usize,
-    data: *mut T,
+    data: *const T,
     phantom: std::marker::PhantomData<&'a T>
 }
 
@@ -257,35 +257,45 @@ impl<'a> Slice<'a, libc::c_char> {
     }
 }
 
+impl<'a, T> std::ops::Index<usize> for Slice<'a, T> {
+    type Output = T;
+    fn index(&self, index: usize) -> &T {
+        assert!(index < self.length);
+        unsafe {
+            &*self.data.offset(index as isize)
+        }
+    }
+}
+
 #[repr(C)]
-struct State<'a> {
+struct State<'text> {
     mode: Mode,
     smart: bool,
 
-    orig_text: Slice<'a, libc::c_char>,
+    orig_text: Slice<'text, libc::c_char>,
     orig_cursor_x: Column,
     orig_cursor_line: LineNumber,
 
     input_line_count: LineNumber,
-    input_lines: Vec<Slice<'a, libc::c_char>>,
+    input_lines: Vec<Slice<'text, libc::c_char>>,
     input_line_no: LineNumber,
     input_x: Column,
 
-    lines: Vec<Cow<'a, str>>,
+    lines: Vec<Cow<'text, str>>,
     line_no: LineNumber,
-    ch: &'a str,
+    ch: &'text str,
     x: Column,
     indent_x: Option<Column>,
 
-    paren_stack: Vec<Paren<'a>>,
+    paren_stack: Vec<Paren<'text>>,
 
-    tab_stops: Vec<TabStop<'a>>,
+    tab_stops: Vec<TabStop<'text>>,
 
-    paren_trail: InternalParenTrail<'a>,
+    paren_trail: InternalParenTrail<'text>,
     paren_trails: Vec<ParenTrail>,
 
     return_parens: bool,
-    parens: Vec<Paren<'a>>,
+    parens: Vec<Paren<'text>>,
 
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
@@ -296,7 +306,7 @@ struct State<'a> {
 
     changes: HashMap<(LineNumber, Column), TransformedChange>,
 
-    context: In<'a>,
+    context: In<'text>,
     comment_x: Option<Column>,
     escape: Now,
 

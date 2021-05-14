@@ -18,7 +18,7 @@ Mode;
 typedef struct Slice
 {
     size_t length;
-    void* data;
+    const void* data;
 }
 Slice;
 
