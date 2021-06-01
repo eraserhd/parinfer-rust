@@ -12,7 +12,7 @@ rustPlatform.buildRustPackage rec {
     llvmPackages.clang
     libiconv
   ];
-  LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
+  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
 
   postInstall = ''
     mkdir -p $out/share/kak/autoload/plugins
