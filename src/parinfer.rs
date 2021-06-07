@@ -1955,7 +1955,7 @@ fn process_error<'a>(result: &mut State<'a>, e: Error) {
     result.error = Some(e);
 }
 
-fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -> State<'a> {
+fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -> Answer<'a> {
     let mut result = get_initial_result(text, &options, mode, smart);
 
     let mut process_result: Result<()> = Ok(());
@@ -1978,9 +1978,9 @@ fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -
         }) => process_text(text, &options, Mode::Paren, smart),
         Err(e) => {
             process_error(&mut result, e);
-            result
+            public_result(result)
         }
-        _ => result,
+        _ => public_result(result),
     }
 }
 
@@ -2026,16 +2026,16 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
 }
 
 pub fn indent_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
-    public_result(process_text(text, options, Mode::Indent, false))
+    process_text(text, options, Mode::Indent, false)
 }
 
 pub fn paren_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
-    public_result(process_text(text, options, Mode::Paren, false))
+    process_text(text, options, Mode::Paren, false)
 }
 
 pub fn smart_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
     let smart = options.selection_start_line == None;
-    public_result(process_text(text, options, Mode::Indent, smart))
+    process_text(text, options, Mode::Indent, smart)
 }
 
 pub fn process(request: &Request) -> Answer {
