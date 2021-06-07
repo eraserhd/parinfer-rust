@@ -191,7 +191,7 @@ enum Now {
     Escaped,
 }
 
-impl<'a> State<'a> {
+impl<'text, 'lines> State<'text, 'lines> {
     fn is_escaping(&self) -> bool {
         match self.escape { Now::Escaping => true, _ => false }
     }
@@ -201,10 +201,10 @@ impl<'a> State<'a> {
 }
 
 #[derive(PartialEq, Eq)]
-enum In<'a> {
+enum In<'text> {
     Code,
     Comment,
-    String { delim: &'a str },
+    String { delim: &'text str },
     LispReaderSyntax,
     LispBlockCommentPre { depth: usize },
     LispBlockComment { depth: usize },
@@ -215,7 +215,7 @@ enum In<'a> {
     JanetLongString { open_delim_len: usize, close_delim_len: usize },
 }
 
-impl<'a> State<'a> {
+impl<'text, 'lines> State<'text, 'lines> {
     fn is_in_code(&self) -> bool {
         match self.context {
             In::Code => true,
@@ -268,7 +268,7 @@ impl<'a, T> std::ops::Index<usize> for Slice<'a, T> {
 }
 
 #[repr(C)]
-struct State<'text> {
+struct State<'text, 'lines> {
     mode: Mode,
     smart: bool,
 
@@ -277,7 +277,7 @@ struct State<'text> {
     orig_cursor_line: LineNumber,
 
     input_line_count: LineNumber,
-    input_lines: Vec<Slice<'text, libc::c_char>>,
+    input_lines: Slice<'lines, Slice<'text, libc::c_char>>,
     input_line_no: LineNumber,
     input_x: Column,
 
@@ -349,19 +349,19 @@ fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
     }
 }
 
-fn get_initial_result<'a>(
-    text: &'a str,
+fn get_initial_result<'text, 'lines>(
+    text: &'text str,
+    input_lines: &'lines Vec<Slice<'text, libc::c_char>>,
     options: &Options,
     mode: Mode,
     smart: bool,
-) -> State<'a> {
+) -> State<'text, 'lines> {
     let lisp_reader_syntax_enabled = [
         options.lisp_block_comments,
         options.guile_block_comments,
         options.scheme_sexp_comments,
     ].iter().any(|is_true| *is_true);
 
-    let input_lines = split_lines(text);
     let mut state = State {
         mode: mode,
         smart: smart,
@@ -376,7 +376,11 @@ fn get_initial_result<'a>(
         orig_cursor_line: line_number_from_option(options.cursor_line),
 
         input_line_count: input_lines.len(),
-        input_lines,
+        input_lines: Slice {
+            data: input_lines.as_ptr(),
+            length: input_lines.len(),
+            phantom: std::marker::PhantomData,
+        },
         input_line_no: 0,
         input_x: 0,
 
@@ -594,7 +598,7 @@ fn get_line_ending_works() {
 
 // {{{1 Line operations
 
-fn is_cursor_affected<'a>(result: &State<'a>, start: Column, end: Column) -> bool {
+fn is_cursor_affected<'text, 'lines>(result: &State<'text, 'lines>, start: Column, end: Column) -> bool {
     match result.cursor_x {
         Some(x) if x == start && x == end => x == 0,
         Some(x) => x >= end,
@@ -602,8 +606,8 @@ fn is_cursor_affected<'a>(result: &State<'a>, start: Column, end: Column) -> boo
     }
 }
 
-fn shift_cursor_on_edit<'a>(
-    result: &mut State<'a>,
+fn shift_cursor_on_edit<'text, 'lines>(
+    result: &mut State<'text, 'lines>,
     line_no: LineNumber,
     start: Column,
     end: Column,
@@ -620,8 +624,8 @@ fn shift_cursor_on_edit<'a>(
     }
 }
 
-fn replace_within_line<'a>(
-    result: &mut State<'a>,
+fn replace_within_line<'text, 'lines>(
+    result: &mut State<'text, 'lines>,
     line_no: LineNumber,
     start: Column,
     end: Column,
@@ -634,11 +638,11 @@ fn replace_within_line<'a>(
     shift_cursor_on_edit(result, line_no, start, end, replace);
 }
 
-fn insert_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, idx: Column, insert: &str) {
+fn insert_within_line<'text, 'lines>(result: &mut State<'text, 'lines>, line_no: LineNumber, idx: Column, insert: &str) {
     replace_within_line(result, line_no, idx, idx, insert);
 }
 
-fn init_line<'a>(result: &mut State<'a>) {
+fn init_line<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.x = 0;
     result.line_no = usize::wrapping_add(result.line_no, 1);
 
@@ -659,7 +663,7 @@ fn init_line<'a>(result: &mut State<'a>) {
     result.tracking_indent = !result.is_in_stringish();
 }
 
-fn commit_char<'a>(result: &mut State<'a>, orig_ch: &'a str) {
+fn commit_char<'text, 'lines>(result: &mut State<'text, 'lines>, orig_ch: &'text str) {
     let ch = result.ch;
     let ch_width = UnicodeWidthStr::width(ch);
     if orig_ch != ch {
@@ -751,11 +755,11 @@ fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren<'a>>, ch: &'a str) -> bool {
     false
 }
 
-fn is_whitespace<'a>(result: &State<'a>) -> bool {
+fn is_whitespace<'text, 'lines>(result: &State<'text, 'lines>) -> bool {
     !result.is_escaped() && (result.ch == BLANK_SPACE || result.ch == DOUBLE_SPACE)
 }
 
-fn is_closable<'a>(result: &State<'a>) -> bool {
+fn is_closable<'text, 'lines>(result: &State<'text, 'lines>) -> bool {
     let ch = result.ch;
     let closer = rust_is_close_paren(ch) && !result.is_escaped();
     return result.is_in_code() && !is_whitespace(result) && ch != "" && !closer;
@@ -764,7 +768,7 @@ fn is_closable<'a>(result: &State<'a>) -> bool {
 
 // {{{1 Advanced operations on characters
 
-fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
+fn check_cursor_holding<'text, 'lines>(result: &State<'text, 'lines>) -> Result<bool> {
     let opener = peek(&result.paren_stack, 0).unwrap();
     let hold_min_x = peek(&result.paren_stack, 1).map(|p| p.x + 1).unwrap_or(0);
     let hold_max_x = opener.x;
@@ -798,7 +802,7 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
     Ok(holding)
 }
 
-fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
+fn track_arg_tab_stop<'text, 'lines>(result: &mut State<'text, 'lines>, state: TrackingArgTabStop) {
     if state == TrackingArgTabStop::Space {
         if result.is_in_code() && is_whitespace(result) {
             result.tracking_arg_tab_stop = TrackingArgTabStop::Arg;
@@ -814,7 +818,7 @@ fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
 
 // {{{1 Literal character events
 
-fn in_code_on_open_paren<'a>(result: &mut State<'a>) {
+fn in_code_on_open_paren<'text, 'lines>(result: &mut State<'text, 'lines>) {
     let opener = Paren {
         input_line_no: result.input_line_no,
         input_x: result.input_x,
@@ -842,7 +846,7 @@ fn in_code_on_open_paren<'a>(result: &mut State<'a>) {
     result.tracking_arg_tab_stop = TrackingArgTabStop::Space;
 }
 
-fn in_code_on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn in_code_on_matched_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     let mut opener = (*peek(&result.paren_stack, 0).unwrap()).clone();
     if result.return_parens {
         set_closer(&mut opener, result.line_no, result.x, result.ch);
@@ -870,7 +874,7 @@ fn in_code_on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn in_code_on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn in_code_on_unmatched_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     match result.mode {
         Mode::Paren => {
             let in_leading_paren_trail = result.paren_trail.line_no == Some(result.line_no)
@@ -905,7 +909,7 @@ fn in_code_on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn in_code_on_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn in_code_on_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     if is_valid_close_paren(&result.paren_stack, result.ch) {
         in_code_on_matched_close_paren(result)?;
     } else {
@@ -915,66 +919,66 @@ fn in_code_on_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn in_code_on_tab<'a>(result: &mut State<'a>) {
+fn in_code_on_tab<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.ch = DOUBLE_SPACE;
 }
 
-fn in_code_on_comment_char<'a>(result: &mut State<'a>) {
+fn in_code_on_comment_char<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::Comment;
     result.comment_x = Some(result.x);
     result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
 }
 
-fn on_newline<'a>(result: &mut State<'a>) {
+fn on_newline<'text, 'lines>(result: &mut State<'text, 'lines>) {
     if result.is_in_comment() {
         result.context = In::Code;
     }
     result.ch = "";
 }
 
-fn in_code_on_quote<'a>(result: &mut State<'a>) {
+fn in_code_on_quote<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::String { delim: result.ch };
     cache_error_pos(result, ErrorName::UnclosedQuote);
 }
-fn in_comment_on_quote<'a>(result: &mut State<'a>) {
+fn in_comment_on_quote<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.quote_danger = !result.quote_danger;
     if result.quote_danger {
         cache_error_pos(result, ErrorName::QuoteDanger);
     }
 }
-fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
+fn in_string_on_quote<'text, 'lines>(result: &mut State<'text, 'lines>, delim: &'text str) {
     if delim == result.ch {
         result.context = In::Code;
     }
 }
 
-fn in_code_on_nsign<'a>(result: &mut State<'a>) {
+fn in_code_on_nsign<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::LispReaderSyntax;
 }
 
-fn in_lisp_reader_syntax_on_vline<'a>(result: &mut State<'a>) {
+fn in_lisp_reader_syntax_on_vline<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::LispBlockComment { depth: 1 };
 }
-fn in_lisp_reader_syntax_on_bang<'a>(result: &mut State<'a>) {
+fn in_lisp_reader_syntax_on_bang<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::GuileBlockComment;
 }
-fn in_lisp_reader_syntax_on_semicolon<'a>(result: &mut State<'a>) {
+fn in_lisp_reader_syntax_on_semicolon<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::Code;
 }
 
-fn in_lisp_block_comment_pre_on_vline<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_pre_on_vline<'text, 'lines>(result: &mut State<'text, 'lines>, depth: usize) {
     result.context = In::LispBlockComment { depth: depth + 1 };
 }
-fn in_lisp_block_comment_pre_on_else<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_pre_on_else<'text, 'lines>(result: &mut State<'text, 'lines>, depth: usize) {
     result.context = In::LispBlockComment { depth };
 }
-fn in_lisp_block_comment_on_nsign<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_on_nsign<'text, 'lines>(result: &mut State<'text, 'lines>, depth: usize) {
     result.context = In::LispBlockCommentPre { depth };
 }
-fn in_lisp_block_comment_on_vline<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_on_vline<'text, 'lines>(result: &mut State<'text, 'lines>, depth: usize) {
     result.context = In::LispBlockCommentPost { depth };
 }
-fn in_lisp_block_comment_post_on_nsign<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_post_on_nsign<'text, 'lines>(result: &mut State<'text, 'lines>, depth: usize) {
     let depth = depth - 1;
     if depth > 0 {
         result.context = In::LispBlockComment { depth };
@@ -982,31 +986,31 @@ fn in_lisp_block_comment_post_on_nsign<'a>(result: &mut State<'a>, depth: usize)
         result.context = In::Code;
     }
 }
-fn in_lisp_block_comment_post_on_else<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_post_on_else<'text, 'lines>(result: &mut State<'text, 'lines>, depth: usize) {
     result.context = In::LispBlockComment { depth };
 }
 
-fn in_guile_block_comment_on_bang<'a>(result: &mut State<'a>) {
+fn in_guile_block_comment_on_bang<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::GuileBlockCommentPost;
 }
-fn in_guile_block_comment_post_on_nsign<'a>(result: &mut State<'a>) {
+fn in_guile_block_comment_post_on_nsign<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::Code;
 }
-fn in_guile_block_comment_post_on_else<'a>(result: &mut State<'a>) {
+fn in_guile_block_comment_post_on_else<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::GuileBlockComment;
 }
 
-fn in_code_on_grave<'a>(result: &mut State<'a>) {
+fn in_code_on_grave<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::JanetLongStringPre { open_delim_len: 1 };
     cache_error_pos(result, ErrorName::UnclosedQuote);
 }
-fn in_janet_long_string_pre_on_grave<'a>(result: &mut State<'a>, open_delim_len: usize) {
+fn in_janet_long_string_pre_on_grave<'text, 'lines>(result: &mut State<'text, 'lines>, open_delim_len: usize) {
     result.context = In::JanetLongStringPre { open_delim_len: open_delim_len + 1 };
 }
-fn in_janet_long_string_pre_on_else<'a>(result: &mut State<'a>, open_delim_len: usize) {
+fn in_janet_long_string_pre_on_else<'text, 'lines>(result: &mut State<'text, 'lines>, open_delim_len: usize) {
     result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
 }
-fn in_janet_long_string_on_grave<'a>(result: &mut State<'a>, open_delim_len: usize, close_delim_len: usize) {
+fn in_janet_long_string_on_grave<'text, 'lines>(result: &mut State<'text, 'lines>, open_delim_len: usize, close_delim_len: usize) {
     let close_delim_len = close_delim_len + 1;
     if open_delim_len == close_delim_len {
         result.context = In::Code;
@@ -1014,17 +1018,17 @@ fn in_janet_long_string_on_grave<'a>(result: &mut State<'a>, open_delim_len: usi
         result.context = In::JanetLongString { open_delim_len, close_delim_len };
     }
 }
-fn in_janet_long_string_on_else<'a>(result: &mut State<'a>, open_delim_len: usize, close_delim_len: usize) {
+fn in_janet_long_string_on_else<'text, 'lines>(result: &mut State<'text, 'lines>, open_delim_len: usize, close_delim_len: usize) {
     if close_delim_len > 0 {
         result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
     }
 }
 
-fn on_backslash<'a>(result: &mut State<'a>) {
+fn on_backslash<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.escape = Now::Escaping;
 }
 
-fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
+fn after_backslash<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     result.escape = Now::Escaped;
 
     if result.ch == NEWLINE {
@@ -1038,7 +1042,7 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
 
 // {{{1 Character dispatch
 
-fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
+fn on_context<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     let ch = result.ch;
     match result.context {
         In::Code => {
@@ -1132,7 +1136,7 @@ fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
+fn on_char<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     let mut ch = result.ch;
     if result.is_escaped() {
         result.escape = Now::Normal;
@@ -1166,7 +1170,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
 
 // {{{1 Cursor functions
 
-fn is_cursor_left_of<'a>(
+fn is_cursor_left_of(
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
     x: Option<Column>,
@@ -1179,7 +1183,7 @@ fn is_cursor_left_of<'a>(
     }
 }
 
-fn is_cursor_right_of<'a>(
+fn is_cursor_right_of(
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
     x: Option<Column>,
@@ -1192,15 +1196,15 @@ fn is_cursor_right_of<'a>(
     }
 }
 
-fn is_cursor_in_comment<'a>(
-    result: &State<'a>,
+fn is_cursor_in_comment<'text, 'lines>(
+    result: &State<'text, 'lines>,
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
 ) -> bool {
     is_cursor_right_of(cursor_x, cursor_line, result.comment_x, result.line_no)
 }
 
-fn handle_change_delta<'a>(result: &mut State<'a>) {
+fn handle_change_delta<'text, 'lines>(result: &mut State<'text, 'lines>) {
     if !result.changes.is_empty() && (result.smart || result.mode == Mode::Paren) {
         if let Some(change) = result.changes.get(&(result.input_line_no, result.input_x)) {
             result.indent_delta += change.new_end_x as Delta - change.old_end_x as Delta;
@@ -1210,7 +1214,7 @@ fn handle_change_delta<'a>(result: &mut State<'a>) {
 
 // {{{1 Paren Trail functions
 
-fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column) {
+fn reset_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>, line_no: LineNumber, x: Column) {
     result.paren_trail.line_no = Some(line_no);
     result.paren_trail.start_x = Some(x);
     result.paren_trail.end_x = Some(x);
@@ -1220,8 +1224,8 @@ fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column)
     result.paren_trail.clamped.openers = vec![];
 }
 
-fn is_cursor_clamping_paren_trail<'a>(
-    result: &State<'a>,
+fn is_cursor_clamping_paren_trail<'text, 'lines>(
+    result: &State<'text, 'lines>,
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
 ) -> bool {
@@ -1234,7 +1238,7 @@ fn is_cursor_clamping_paren_trail<'a>(
 }
 
 // INDENT MODE: allow the cursor to clamp the paren trail
-fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
+fn clamp_paren_trail_to_cursor<'text, 'lines>(result: &mut State<'text, 'lines>) {
     let clamping = is_cursor_clamping_paren_trail(result, result.cursor_x, result.cursor_line);
     if clamping {
         let start_x = result.paren_trail.start_x.unwrap();
@@ -1273,7 +1277,7 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
     }
 }
 
-fn pop_paren_trail<'a>(result: &mut State<'a>) {
+fn pop_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>) {
     let start_x = result.paren_trail.start_x;
     let end_x = result.paren_trail.end_x;
 
@@ -1286,7 +1290,7 @@ fn pop_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
-fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize {
+fn get_parent_opener_index<'text, 'lines>(result: &mut State<'text, 'lines>, indent_x: usize) -> usize {
     for i in 0..result.paren_stack.len() {
         let opener = peek(&result.paren_stack, i).unwrap().clone();
         let opener_index = result.paren_stack.len() - i - 1;
@@ -1473,7 +1477,7 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
 }
 
 // INDENT MODE: correct paren trail from indentation
-fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
+fn correct_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>, indent_x: usize) {
     let mut parens = String::new();
 
     let index = get_parent_opener_index(result, indent_x);
@@ -1502,7 +1506,7 @@ fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
     }
 }
 
-fn clean_paren_trail<'a>(result: &mut State<'a>) {
+fn clean_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>) {
     let start_x = result.paren_trail.start_x;
     let end_x = result.paren_trail.end_x;
 
@@ -1545,7 +1549,7 @@ fn set_closer<'a>(opener: &mut Paren<'a>, line_no: LineNumber, x: Column, ch: &'
     opener.closer = Some(Closer { line_no, x, ch, trail: None })
 }
 
-fn append_paren_trail<'a>(result: &mut State<'a>) {
+fn append_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>) {
     let mut opener = result.paren_stack.pop().unwrap().clone();
     let close_ch = match_paren(opener.ch).unwrap();
     if result.return_parens {
@@ -1562,11 +1566,11 @@ fn append_paren_trail<'a>(result: &mut State<'a>) {
     update_remembered_paren_trail(result);
 }
 
-fn invalidate_paren_trail<'a>(result: &mut State<'a>) {
+fn invalidate_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.paren_trail = initial_paren_trail();
 }
 
-fn check_unmatched_outside_paren_trail<'a>(result: &mut State<'a>) -> Result<()> {
+fn check_unmatched_outside_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     let mut do_error = false;
     if let Some(cache) = result.error_pos_cache.get(&ErrorName::UnmatchedCloseParen) {
         if result
@@ -1586,7 +1590,7 @@ fn check_unmatched_outside_paren_trail<'a>(result: &mut State<'a>) -> Result<()>
     Ok(())
 }
 
-fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
+fn set_max_indent<'text, 'lines>(result: &mut State<'text, 'lines>, opener: &Paren<'text>) {
     if let Some(parent) = result.paren_stack.last_mut() {
         parent.max_child_indent = Some(opener.x);
     } else {
@@ -1594,7 +1598,7 @@ fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
     }
 }
 
-fn remember_paren_trail<'a>(result: &mut State<'a>) {
+fn remember_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>) {
     if result.paren_trail.clamped.openers.len() > 0 || result.paren_trail.openers.len() > 0 {
         let is_clamped = result.paren_trail.clamped.start_x != None;
         let short_trail = ParenTrail {
@@ -1621,7 +1625,7 @@ fn remember_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
-fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
+fn update_remembered_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>) {
     if result.paren_trails.is_empty()
         || Some(result.paren_trails[result.paren_trails.len() - 1].line_no)
             != result.paren_trail.line_no
@@ -1639,7 +1643,7 @@ fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
-fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
+fn finish_new_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>) {
     if result.is_in_stringish() {
         invalidate_paren_trail(result);
     } else if result.mode == Mode::Indent {
@@ -1658,7 +1662,7 @@ fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
 
 // {{{1 Indentation functions
 
-fn add_indent<'a>(result: &mut State<'a>, delta: Delta) {
+fn add_indent<'text, 'lines>(result: &mut State<'text, 'lines>, delta: Delta) {
     let orig_indent = result.x;
     let new_indent = (orig_indent as Delta + delta) as Column;
     let indent_str = repeat_string(BLANK_SPACE, new_indent);
@@ -1669,13 +1673,13 @@ fn add_indent<'a>(result: &mut State<'a>, delta: Delta) {
     result.indent_delta += delta;
 }
 
-fn should_add_opener_indent<'a>(result: &State<'a>, opener: &Paren<'a>) -> bool {
+fn should_add_opener_indent<'text, 'lines>(result: &State<'text, 'lines>, opener: &Paren<'text>) -> bool {
     // Don't add opener.indent_delta if the user already added it.
     // (happens when multiple lines are indented together)
     opener.indent_delta != result.indent_delta
 }
 
-fn correct_indent<'a>(result: &mut State<'a>) {
+fn correct_indent<'text, 'lines>(result: &mut State<'text, 'lines>) {
     let orig_indent = result.x as Delta;
     let mut new_indent = orig_indent as Delta;
     let mut min_indent = 0;
@@ -1696,7 +1700,7 @@ fn correct_indent<'a>(result: &mut State<'a>) {
     }
 }
 
-fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
+fn on_indent<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     result.indent_x = Some(result.x);
     result.tracking_indent = false;
 
@@ -1726,7 +1730,7 @@ fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn check_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn check_leading_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     if result
         .error_pos_cache
         .contains_key(&ErrorName::LeadingCloseParen)
@@ -1738,7 +1742,7 @@ fn check_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn on_leading_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     match result.mode {
         Mode::Indent => {
             if !result.force_balance {
@@ -1781,7 +1785,7 @@ fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn on_comment_line<'a>(result: &mut State<'a>) {
+fn on_comment_line<'text, 'lines>(result: &mut State<'text, 'lines>) {
     let paren_trail_length = result.paren_trail.openers.len();
 
     // restore the openers matching the previous paren trail
@@ -1815,7 +1819,7 @@ fn on_comment_line<'a>(result: &mut State<'a>) {
     }
 }
 
-fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
+fn check_indent<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     if rust_is_close_paren(result.ch) {
         on_leading_close_paren(result)?;
     } else if result.ch == result.comment_char {
@@ -1838,11 +1842,11 @@ fn make_tab_stop<'a>(opener: &Paren<'a>) -> TabStop<'a> {
     }
 }
 
-fn get_tab_stop_line<'a>(result: &State<'a>) -> Option<LineNumber> {
+fn get_tab_stop_line<'text, 'lines>(result: &State<'text, 'lines>) -> Option<LineNumber> {
     result.selection_start_line.or(result.cursor_line)
 }
 
-fn set_tab_stops<'a>(result: &mut State<'a>) {
+fn set_tab_stops<'text, 'lines>(result: &mut State<'text, 'lines>) {
     if get_tab_stop_line(result) != Some(result.line_no) {
         return;
     }
@@ -1873,7 +1877,7 @@ fn set_tab_stops<'a>(result: &mut State<'a>) {
 
 // {{{1 High-level processing functions
 
-fn process_char<'a>(result: &mut State<'a>, ch: &'a str) -> Result<()> {
+fn process_char<'text, 'lines>(result: &mut State<'text, 'lines>, ch: &'text str) -> Result<()> {
     let orig_ch = ch;
 
     result.ch = ch;
@@ -1896,7 +1900,7 @@ fn process_char<'a>(result: &mut State<'a>, ch: &'a str) -> Result<()> {
     Ok(())
 }
 
-fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
+fn process_line<'text, 'lines>(result: &mut State<'text, 'lines>, line_no: usize) -> Result<()> {
     init_line(result);
     result.lines.push(Cow::from(result.input_lines[line_no].as_str()));
 
@@ -1928,7 +1932,7 @@ fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
     Ok(())
 }
 
-fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
+fn finalize_result<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     if result.quote_danger {
         error(result, ErrorName::QuoteDanger)?;
     }
@@ -1950,13 +1954,13 @@ fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn process_error<'a>(result: &mut State<'a>, e: Error) {
+fn process_error<'a,'b>(result: &mut State<'a, 'b>, e: Error) {
     result.success = false;
     result.error = Some(e);
 }
 
-fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -> Answer<'a> {
-    let mut result = get_initial_result(text, &options, mode, smart);
+fn process_text<'text, 'lines>(text: &'text str, input_lines: &'lines Vec<Slice<'text, libc::c_char>>, options: &Options, mode: Mode, smart: bool) -> Answer<'text> {
+    let mut result = get_initial_result(text, input_lines, &options, mode, smart);
 
     let mut process_result: Result<()> = Ok(());
     for i in 0..result.input_line_count {
@@ -1975,18 +1979,18 @@ fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -
         Err(Error {
             name: ErrorName::Restart,
             ..
-        }) => process_text(text, &options, Mode::Paren, smart),
+        }) => process_text(text, input_lines, &options, Mode::Paren, smart),
         Err(e) => {
             process_error(&mut result, e);
-            public_result(result)
+            public_result(&result)
         }
-        _ => public_result(result),
+        _ => public_result(&result),
     }
 }
 
 // {{{1 Public API
 
-fn public_result<'a>(result: State<'a>) -> Answer<'a> {
+fn public_result<'text, 'lines>(result: &State<'text, 'lines>) -> Answer<'text> {
     let line_ending = get_line_ending(&result.orig_text);
     if result.success {
         Answer {
@@ -2026,16 +2030,19 @@ fn public_result<'a>(result: State<'a>) -> Answer<'a> {
 }
 
 pub fn indent_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
-    process_text(text, options, Mode::Indent, false)
+    let input_lines = split_lines(text);
+    process_text(text, &input_lines, options, Mode::Indent, false)
 }
 
 pub fn paren_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
-    process_text(text, options, Mode::Paren, false)
+    let input_lines = split_lines(text);
+    process_text(text, &input_lines, options, Mode::Paren, false)
 }
 
 pub fn smart_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
+    let input_lines = split_lines(text);
     let smart = options.selection_start_line == None;
-    process_text(text, options, Mode::Indent, smart)
+    process_text(text, &input_lines, options, Mode::Indent, smart)
 }
 
 pub fn process(request: &Request) -> Answer {
