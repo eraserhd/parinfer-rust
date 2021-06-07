@@ -31,7 +31,7 @@ typedef struct State
     Column orig_cursor_x;
     LineNumber orig_cursor_line;
 
-    LineNumber input_line_count;
+    Slice input_lines;
 }
 State;
 

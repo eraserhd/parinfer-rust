@@ -276,7 +276,6 @@ struct State<'text, 'lines> {
     orig_cursor_x: Column,
     orig_cursor_line: LineNumber,
 
-    input_line_count: LineNumber,
     input_lines: Slice<'lines, Slice<'text, libc::c_char>>,
     input_line_no: LineNumber,
     input_x: Column,
@@ -375,7 +374,6 @@ fn get_initial_result<'text, 'lines>(
         orig_cursor_x: column_from_option(options.cursor_x),
         orig_cursor_line: line_number_from_option(options.cursor_line),
 
-        input_line_count: input_lines.len(),
         input_lines: Slice {
             data: input_lines.as_ptr(),
             length: input_lines.len(),
@@ -1963,7 +1961,8 @@ fn process_text<'text, 'lines>(text: &'text str, input_lines: &'lines Vec<Slice<
     let mut result = get_initial_result(text, input_lines, &options, mode, smart);
 
     let mut process_result: Result<()> = Ok(());
-    for i in 0..result.input_line_count {
+
+    for i in 0..result.input_lines.length {
         result.input_line_no = i;
         process_result = process_line(&mut result, i);
         if let Err(_) = process_result {
