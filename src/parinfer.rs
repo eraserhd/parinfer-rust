@@ -2046,11 +2046,11 @@ pub fn process(request: &Request) -> Answer {
     }
 
     if request.mode == "paren" {
-        Answer::from(paren_mode(&request.text, &options))
+        paren_mode(&request.text, &options)
     } else if request.mode == "indent" {
-        Answer::from(indent_mode(&request.text, &options))
+        indent_mode(&request.text, &options)
     } else if request.mode == "smart" {
-        Answer::from(smart_mode(&request.text, &options))
+        smart_mode(&request.text, &options)
     } else {
         Answer::from(Error {
             message: String::from("Bad value specified for `mode`"),
