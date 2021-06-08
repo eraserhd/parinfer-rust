@@ -242,6 +242,7 @@ impl<'text, 'lines> State<'text, 'lines> {
 }
 
 #[repr(C)]
+#[derive(Copy, Clone)]
 struct Slice<'a, T> {
     length: usize,
     data: *const T,
@@ -281,7 +282,7 @@ struct State<'text, 'lines> {
     input_x: Column,
 
     line_no: LineNumber,
-    ch: &'text str,
+    ch: Slice<'text, libc::c_char>,
     x: Column,
     indent_x: Option<Column>,
 
@@ -385,7 +386,11 @@ fn get_initial_result<'text, 'lines>(
 
         lines: vec![],
         line_no: usize::max_value(),
-        ch: &text[0..0],
+        ch: Slice {
+            length: 0,
+            data: "".as_ptr() as *const i8,
+            phantom: std::marker::PhantomData,
+        },
         x: 0,
         indent_x: None,
 
@@ -663,13 +668,12 @@ fn init_line<'text, 'lines>(result: &mut State<'text, 'lines>) {
 }
 
 fn commit_char<'text, 'lines>(result: &mut State<'text, 'lines>, orig_ch: &'text str) {
-    let ch = result.ch;
-    let ch_width = UnicodeWidthStr::width(ch);
-    if orig_ch != ch {
+    let ch_width = UnicodeWidthStr::width(result.ch.as_str());
+    if orig_ch != result.ch.as_str() {
         let line_no = result.line_no;
         let x = result.x;
         let orig_ch_width = UnicodeWidthStr::width(orig_ch);
-        replace_within_line(result, line_no, x, x + orig_ch_width, ch);
+        replace_within_line(result, line_no, x, x + orig_ch_width, result.ch.as_str());
         result.indent_delta -= orig_ch_width as Delta - ch_width as Delta;
     }
     result.x += ch_width;
@@ -755,11 +759,11 @@ fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren<'a>>, ch: &'a str) -> bool {
 }
 
 fn is_whitespace<'text, 'lines>(result: &State<'text, 'lines>) -> bool {
-    !result.is_escaped() && (result.ch == BLANK_SPACE || result.ch == DOUBLE_SPACE)
+    !result.is_escaped() && (result.ch.as_str() == BLANK_SPACE || result.ch.as_str() == DOUBLE_SPACE)
 }
 
 fn is_closable<'text, 'lines>(result: &State<'text, 'lines>) -> bool {
-    let ch = result.ch;
+    let ch = result.ch.as_str();
     let closer = rust_is_close_paren(ch) && !result.is_escaped();
     return result.is_in_code() && !is_whitespace(result) && ch != "" && !closer;
 }
@@ -824,7 +828,7 @@ fn in_code_on_open_paren<'text, 'lines>(result: &mut State<'text, 'lines>) {
 
         line_no: result.line_no,
         x: result.x,
-        ch: result.ch,
+        ch: result.ch.as_str(),
         indent_delta: result.indent_delta,
         max_child_indent: None,
 
@@ -848,7 +852,7 @@ fn in_code_on_open_paren<'text, 'lines>(result: &mut State<'text, 'lines>) {
 fn in_code_on_matched_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     let mut opener = (*peek(&result.paren_stack, 0).unwrap()).clone();
     if result.return_parens {
-        set_closer(&mut opener, result.line_no, result.x, result.ch);
+        set_closer(&mut opener, result.line_no, result.x, result.ch.as_str());
     }
 
     result.paren_trail.end_x = Some(result.x + 1);
@@ -903,13 +907,13 @@ fn in_code_on_unmatched_close_paren<'text, 'lines>(result: &mut State<'text, 'li
             }
         }
     }
-    result.ch = "";
+    result.ch = to_slice("");
 
     Ok(())
 }
 
 fn in_code_on_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
-    if is_valid_close_paren(&result.paren_stack, result.ch) {
+    if is_valid_close_paren(&result.paren_stack, result.ch.as_str()) {
         in_code_on_matched_close_paren(result)?;
     } else {
         in_code_on_unmatched_close_paren(result)?;
@@ -919,7 +923,7 @@ fn in_code_on_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> R
 }
 
 fn in_code_on_tab<'text, 'lines>(result: &mut State<'text, 'lines>) {
-    result.ch = DOUBLE_SPACE;
+    result.ch = to_slice(DOUBLE_SPACE);
 }
 
 fn in_code_on_comment_char<'text, 'lines>(result: &mut State<'text, 'lines>) {
@@ -932,11 +936,11 @@ fn on_newline<'text, 'lines>(result: &mut State<'text, 'lines>) {
     if result.is_in_comment() {
         result.context = In::Code;
     }
-    result.ch = "";
+    result.ch = to_slice("");
 }
 
 fn in_code_on_quote<'text, 'lines>(result: &mut State<'text, 'lines>) {
-    result.context = In::String { delim: result.ch };
+    result.context = In::String { delim: result.ch.as_str() };
     cache_error_pos(result, ErrorName::UnclosedQuote);
 }
 fn in_comment_on_quote<'text, 'lines>(result: &mut State<'text, 'lines>) {
@@ -946,7 +950,7 @@ fn in_comment_on_quote<'text, 'lines>(result: &mut State<'text, 'lines>) {
     }
 }
 fn in_string_on_quote<'text, 'lines>(result: &mut State<'text, 'lines>, delim: &'text str) {
-    if delim == result.ch {
+    if delim == result.ch.as_str() {
         result.context = In::Code;
     }
 }
@@ -1030,7 +1034,7 @@ fn on_backslash<'text, 'lines>(result: &mut State<'text, 'lines>) {
 fn after_backslash<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     result.escape = Now::Escaped;
 
-    if result.ch == NEWLINE {
+    if result.ch.as_str() == NEWLINE {
         if result.is_in_code() {
             return error(result, ErrorName::EolBackslash);
         }
@@ -1045,10 +1049,10 @@ fn on_context<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     let ch = result.ch;
     match result.context {
         In::Code => {
-            if ch == result.comment_char {
+            if ch.as_str() == result.comment_char {
                 in_code_on_comment_char(result)
             } else {
-                match ch {
+                match ch.as_str() {
                     "(" | "[" | "{" => in_code_on_open_paren(result),
                     ")" | "]" | "}" => in_code_on_close_paren(result)?,
                     DOUBLE_QUOTE => in_code_on_quote(result),
@@ -1061,7 +1065,7 @@ fn on_context<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
             }
         },
         In::Comment => {
-            match ch {
+            match ch.as_str() {
                 DOUBLE_QUOTE => in_comment_on_quote(result),
                 VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
                 GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
@@ -1069,14 +1073,14 @@ fn on_context<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
             }
         },
         In::String { delim } => {
-            match ch {
+            match ch.as_str() {
                 DOUBLE_QUOTE => in_string_on_quote(result, delim),
                 VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
                 _ => (),
             }
         },
         In::LispReaderSyntax => {
-            match ch {
+            match ch.as_str() {
                 VERTICAL_LINE if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
                 BANG if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
                 ";" if result.scheme_sexp_comments_enabled => in_lisp_reader_syntax_on_semicolon(result),
@@ -1088,44 +1092,44 @@ fn on_context<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
             }
         },
         In::LispBlockCommentPre { depth } => {
-            match ch {
+            match ch.as_str() {
                 VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
                 _ => in_lisp_block_comment_pre_on_else(result, depth),
             }
         },
         In::LispBlockComment { depth } => {
-            match ch {
+            match ch.as_str() {
                 NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
                 VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
                 _ => (),
             }
         },
         In::LispBlockCommentPost { depth } => {
-            match ch {
+            match ch.as_str() {
                 NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
                 _ => in_lisp_block_comment_post_on_else(result, depth),
             }
         },
         In::GuileBlockComment => {
-            match ch {
+            match ch.as_str() {
                 BANG => in_guile_block_comment_on_bang(result),
                 _ => (),
             }
         },
         In::GuileBlockCommentPost => {
-            match ch {
+            match ch.as_str() {
                 NUMBER_SIGN => in_guile_block_comment_post_on_nsign(result),
                 _ => in_guile_block_comment_post_on_else(result),
             }
         },
         In::JanetLongStringPre { open_delim_len } => {
-            match ch {
+            match ch.as_str() {
                 GRAVE => in_janet_long_string_pre_on_grave(result, open_delim_len),
                 _ => in_janet_long_string_pre_on_else(result, open_delim_len),
             }
         },
         In::JanetLongString { open_delim_len, close_delim_len } => {
-            match ch {
+            match ch.as_str() {
                 GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
                 _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
             }
@@ -1143,9 +1147,9 @@ fn on_char<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
 
     if result.is_escaping() {
         after_backslash(result)?;
-    } else if ch == BACKSLASH {
+    } else if ch.as_str() == BACKSLASH {
         on_backslash(result);
-    } else if ch == NEWLINE {
+    } else if ch.as_str() == NEWLINE {
         on_newline(result);
     } else {
         on_context(result)?;
@@ -1156,7 +1160,7 @@ fn on_char<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     if is_closable(result) {
         let line_no = result.line_no;
         let x = result.x;
-        reset_paren_trail(result, line_no, x + UnicodeWidthStr::width(ch));
+        reset_paren_trail(result, line_no, x + UnicodeWidthStr::width(ch.as_str()));
     }
 
     let state = result.tracking_arg_tab_stop;
@@ -1758,7 +1762,7 @@ fn on_leading_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> R
             result.skip_char = true;
         }
         Mode::Paren => {
-            if !is_valid_close_paren(&result.paren_stack, result.ch) {
+            if !is_valid_close_paren(&result.paren_stack, result.ch.as_str()) {
                 if result.smart {
                     result.skip_char = true;
                 } else {
@@ -1819,13 +1823,13 @@ fn on_comment_line<'text, 'lines>(result: &mut State<'text, 'lines>) {
 }
 
 fn check_indent<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
-    if rust_is_close_paren(result.ch) {
+    if rust_is_close_paren(result.ch.as_str()) {
         on_leading_close_paren(result)?;
-    } else if result.ch == result.comment_char {
+    } else if result.ch.as_str() == result.comment_char {
         // comments don't count as indentation points
         on_comment_line(result);
         result.tracking_indent = false;
-    } else if result.ch != NEWLINE && result.ch != BLANK_SPACE && result.ch != TAB {
+    } else if result.ch.as_str() != NEWLINE && result.ch.as_str() != BLANK_SPACE && result.ch.as_str() != TAB {
         on_indent(result)?;
     }
 
@@ -1879,7 +1883,7 @@ fn set_tab_stops<'text, 'lines>(result: &mut State<'text, 'lines>) {
 fn process_char<'text, 'lines>(result: &mut State<'text, 'lines>, ch: &'text str) -> Result<()> {
     let orig_ch = ch;
 
-    result.ch = ch;
+    result.ch = to_slice(ch);
     result.skip_char = false;
 
     handle_change_delta(result);
@@ -1889,7 +1893,7 @@ fn process_char<'text, 'lines>(result: &mut State<'text, 'lines>, ch: &'text str
     }
 
     if result.skip_char {
-        result.ch = "";
+        result.ch = to_slice("");
     } else {
         on_char(result)?;
     }
