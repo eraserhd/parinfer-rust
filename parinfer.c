@@ -111,6 +111,8 @@ typedef struct State
 
     char comment_char;
     Column max_indent;
+
+    int64_t indent_delta;
 }
 State;
 
