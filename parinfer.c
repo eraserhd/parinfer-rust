@@ -94,6 +94,20 @@ typedef struct State
     In context;
     Column comment_x;
     Now escape;
+
+    _Bool lisp_vline_symbols_enabled;
+    _Bool lisp_reader_syntax_enabled;
+    _Bool lisp_block_comments_enabled;
+    _Bool guile_block_comments_enabled;
+    _Bool scheme_sexp_comments_enabled;
+    _Bool janet_long_strings_enabled;
+
+    _Bool quote_danger;
+    _Bool tracking_indent;
+    _Bool skip_char;
+    _Bool success;
+    _Bool partial_result;
+    _Bool force_balance;
 }
 State;
 
