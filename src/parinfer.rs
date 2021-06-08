@@ -148,10 +148,10 @@ enum Now {
 }
 
 impl<'a> State<'a> {
-    fn is_escaping(&'a self) -> bool {
+    fn is_escaping(&self) -> bool {
         match self.escape { Now::Escaping => true, _ => false }
     }
-    fn is_escaped(&'a self) -> bool {
+    fn is_escaped(&self) -> bool {
         match self.escape { Now::Escaped => true, _ => false }
     }
 }
@@ -172,17 +172,17 @@ enum In<'a> {
 }
 
 impl<'a> State<'a> {
-    fn is_in_code(&'a self) -> bool {
+    fn is_in_code(&self) -> bool {
         match self.context {
             In::Code => true,
             In::LispReaderSyntax => true,
             _ => false
         }
     }
-    fn is_in_comment(&'a self) -> bool {
+    fn is_in_comment(&self) -> bool {
         match self.context { In::Comment => true, _ => false }
     }
-    fn is_in_stringish(&'a self) -> bool {
+    fn is_in_stringish(&self) -> bool {
         match self.context {
             In::String {..} => true,
             In::LispBlockCommentPre {..} => true,
