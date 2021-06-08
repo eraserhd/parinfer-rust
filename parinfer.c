@@ -43,6 +43,7 @@ typedef struct State
 
     Column cursor_x;
     LineNumber cursor_line;
+    Column prev_cursor_x;
 }
 State;
 
