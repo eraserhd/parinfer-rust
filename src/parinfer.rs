@@ -314,7 +314,7 @@ struct State<'text, 'lines> {
     selection_start_line: LineNumber,
 
     context: In<'text>,
-    comment_x: Option<Column>,
+    comment_x: Column,
     escape: Now,
 
     lisp_vline_symbols_enabled: bool,
@@ -436,7 +436,7 @@ fn get_initial_result<'text, 'lines>(
         changes: transform_changes(&options.changes),
 
         context: In::Code,
-        comment_x: None,
+        comment_x: NO_COLUMN,
         escape: Now::Normal,
 
         lisp_vline_symbols_enabled: options.lisp_vline_symbols,
@@ -675,7 +675,7 @@ fn init_line<'text, 'lines>(result: &mut State<'text, 'lines>) {
 
     // reset line-specific state
     result.indent_x = NO_COLUMN;
-    result.comment_x = None;
+    result.comment_x = NO_COLUMN;
     result.indent_delta = 0;
 
     result
@@ -947,7 +947,7 @@ fn in_code_on_tab<'text, 'lines>(result: &mut State<'text, 'lines>) {
 
 fn in_code_on_comment_char<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.context = In::Comment;
-    result.comment_x = Some(result.x);
+    result.comment_x = result.x;
     result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
 }
 
@@ -1223,7 +1223,7 @@ fn is_cursor_in_comment<'text, 'lines>(
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
 ) -> bool {
-    is_cursor_right_of(cursor_x, cursor_line, result.comment_x, result.line_no)
+    is_cursor_right_of(cursor_x, cursor_line, column_to_option(result.comment_x), result.line_no)
 }
 
 fn handle_change_delta<'text, 'lines>(result: &mut State<'text, 'lines>) {

@@ -84,6 +84,7 @@ typedef struct State
     LineNumber selection_start_line;
 
     In context;
+    Column comment_x;
 }
 State;
 
