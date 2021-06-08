@@ -22,6 +22,41 @@ typedef struct Slice
 }
 Slice;
 
+typedef enum InTag
+{
+    IN_CODE,
+    IN_COMMENT,
+    IN_STRING,
+    IN_LISP_READER_SYNTAX,
+    IN_LISP_BLOCK_COMMENT_PRE,
+    IN_LISP_BLOCK_COMMENT,
+    IN_LISP_BLOCK_COMMENT_POST,
+    IN_GUILE_BLOCK_COMMENT,
+    IN_GUILE_BLOCK_COMMENT_POST,
+    IN_JANET_LONG_STRING_PRE,
+    IN_JANET_LONG_STRING,
+}
+InTag;
+
+typedef union In
+{
+    InTag tag;
+    struct {
+        InTag tag;
+        Slice delim;
+    } string;
+    struct {
+        InTag tag;
+        size_t depth;
+    } depth;
+    struct {
+        InTag tag;
+        size_t open_delim_len;
+        size_t close_delim_len;
+    } janet;
+}
+In;
+
 typedef struct State
 {
     Mode mode;
@@ -47,6 +82,8 @@ typedef struct State
     LineNumber prev_cursor_line;
 
     LineNumber selection_start_line;
+
+    In context;
 }
 State;
 

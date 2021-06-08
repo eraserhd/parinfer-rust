@@ -200,6 +200,7 @@ impl<'text, 'lines> State<'text, 'lines> {
     }
 }
 
+#[repr(C)]
 #[derive(PartialEq, Eq)]
 enum In<'text> {
     Code,
