@@ -40,6 +40,8 @@ typedef struct State
     Column x;
     Column indent_x;
     _Bool return_parens;
+
+    Column cursor_x;
 }
 State;
 

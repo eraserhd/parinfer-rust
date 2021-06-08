@@ -288,7 +288,7 @@ struct State<'text, 'lines> {
 
     return_parens: bool,
 
-    cursor_x: Option<Column>,
+    cursor_x: Column,
     cursor_line: Option<LineNumber>,
     prev_cursor_x: Option<Column>,
     prev_cursor_line: Option<Column>,
@@ -407,7 +407,7 @@ fn get_initial_result<'text, 'lines>(
         return_parens: false,
         parens: vec![],
 
-        cursor_x: options.cursor_x,
+        cursor_x: column_from_option(options.cursor_x),
         cursor_line: options.cursor_line,
         prev_cursor_x: options.prev_cursor_x,
         prev_cursor_line: options.prev_cursor_line,
@@ -607,10 +607,12 @@ fn get_line_ending_works() {
 // {{{1 Line operations
 
 fn is_cursor_affected<'text, 'lines>(result: &State<'text, 'lines>, start: Column, end: Column) -> bool {
-    match result.cursor_x {
-        Some(x) if x == start && x == end => x == 0,
-        Some(x) => x >= end,
-        None => false,
+    if result.cursor_x == NO_COLUMN {
+        false
+    } else if result.cursor_x == start && result.cursor_x == end {
+        result.cursor_x == 0
+    } else {
+        result.cursor_x >= end
     }
 }
 
@@ -625,9 +627,9 @@ fn shift_cursor_on_edit<'text, 'lines>(
     let new_length = UnicodeWidthStr::width(replace);
     let dx = new_length as Delta - old_length as Delta;
 
-    if let (Some(cursor_x), Some(cursor_line)) = (result.cursor_x, result.cursor_line) {
-        if dx != 0 && cursor_line == line_no && is_cursor_affected(result, start, end) {
-            result.cursor_x = Some(((cursor_x as Delta) + dx) as usize);
+    if let Some(cursor_line) = result.cursor_line {
+        if result.cursor_x != NO_COLUMN && dx != 0 && cursor_line == line_no && is_cursor_affected(result, start, end) {
+            result.cursor_x = ((result.cursor_x as Delta) + dx) as usize;
         }
     }
 }
@@ -781,8 +783,9 @@ fn check_cursor_holding<'text, 'lines>(result: &State<'text, 'lines>) -> Result<
     let hold_max_x = opener.x;
 
     let holding = result.cursor_line == Some(opener.line_no)
-        && result.cursor_x.map(|x| hold_min_x <= x).unwrap_or(false)
-        && result.cursor_x.map(|x| x <= hold_max_x).unwrap_or(false);
+        && result.cursor_x != NO_COLUMN
+        && hold_min_x <= result.cursor_x
+        && result.cursor_x <= hold_max_x;
     let should_check_prev = result.changes.is_empty() && result.prev_cursor_line != None;
     if should_check_prev {
         let prev_holding = result.prev_cursor_line == Some(opener.line_no)
@@ -1246,13 +1249,13 @@ fn is_cursor_clamping_paren_trail<'text, 'lines>(
 
 // INDENT MODE: allow the cursor to clamp the paren trail
 fn clamp_paren_trail_to_cursor<'text, 'lines>(result: &mut State<'text, 'lines>) {
-    let clamping = is_cursor_clamping_paren_trail(result, result.cursor_x, result.cursor_line);
+    let clamping = is_cursor_clamping_paren_trail(result, column_to_option(result.cursor_x), result.cursor_line);
     if clamping {
         let start_x = result.paren_trail.start_x.unwrap();
         let end_x = result.paren_trail.end_x.unwrap();
 
-        let new_start_x = std::cmp::max(start_x, result.cursor_x.unwrap());
-        let new_end_x = std::cmp::max(end_x, result.cursor_x.unwrap());
+        let new_start_x = std::cmp::max(start_x, result.cursor_x);
+        let new_end_x = std::cmp::max(end_x, result.cursor_x);
 
         let line = &result.lines[result.line_no];
         let mut remove_count = 0;
@@ -1773,7 +1776,7 @@ fn on_leading_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> R
                     error(result, ErrorName::UnmatchedCloseParen)?;
                 }
             } else if is_cursor_left_of(
-                result.cursor_x,
+                column_to_option(result.cursor_x),
                 result.cursor_line,
                 Some(result.x),
                 result.line_no,
@@ -2003,7 +2006,7 @@ fn public_result<'text, 'lines>(result: &State<'text, 'lines>) -> Answer<'text> 
     if result.success {
         Answer {
             text: Cow::from(result.lines.join(line_ending)),
-            cursor_x: result.cursor_x,
+            cursor_x: column_to_option(result.cursor_x),
             cursor_line: result.cursor_line,
             success: true,
             tab_stops: result.tab_stops.clone(),
@@ -2019,7 +2022,7 @@ fn public_result<'text, 'lines>(result: &State<'text, 'lines>) -> Answer<'text> 
                 Cow::from(result.orig_text.as_str())
             },
             cursor_x: if result.partial_result {
-                result.cursor_x
+                column_to_option(result.cursor_x)
             } else {
                 column_to_option(result.orig_cursor_x)
             },
