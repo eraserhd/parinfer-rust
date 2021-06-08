@@ -286,15 +286,7 @@ struct State<'text, 'lines> {
     x: Column,
     indent_x: Column,
 
-    paren_stack: Vec<Paren<'text>>,
-
-    tab_stops: Vec<TabStop<'text>>,
-
-    paren_trail: InternalParenTrail<'text>,
-    paren_trails: Vec<ParenTrail>,
-
     return_parens: bool,
-    parens: Vec<Paren<'text>>,
 
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
@@ -333,7 +325,19 @@ struct State<'text, 'lines> {
     error: Option<Error>,
     error_pos_cache: HashMap<ErrorName, Error>,
 
+    // before line_no
     lines: Vec<Cow<'text, str>>,
+
+    // after indent_x
+    paren_stack: Vec<Paren<'text>>,
+
+    tab_stops: Vec<TabStop<'text>>,
+
+    paren_trail: InternalParenTrail<'text>,
+    paren_trails: Vec<ParenTrail>,
+
+    // after return_parens
+    parens: Vec<Paren<'text>>,
 }
 
 fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {

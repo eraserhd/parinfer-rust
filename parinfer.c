@@ -39,6 +39,7 @@ typedef struct State
     Slice ch;
     Column x;
     Column indent_x;
+    _Bool return_parens;
 }
 State;
 
