@@ -289,7 +289,7 @@ struct State<'text, 'lines> {
     return_parens: bool,
 
     cursor_x: Column,
-    cursor_line: Option<LineNumber>,
+    cursor_line: LineNumber,
     prev_cursor_x: Option<Column>,
     prev_cursor_line: Option<Column>,
 
@@ -408,7 +408,7 @@ fn get_initial_result<'text, 'lines>(
         parens: vec![],
 
         cursor_x: column_from_option(options.cursor_x),
-        cursor_line: options.cursor_line,
+        cursor_line: line_number_from_option(options.cursor_line),
         prev_cursor_x: options.prev_cursor_x,
         prev_cursor_line: options.prev_cursor_line,
 
@@ -627,10 +627,8 @@ fn shift_cursor_on_edit<'text, 'lines>(
     let new_length = UnicodeWidthStr::width(replace);
     let dx = new_length as Delta - old_length as Delta;
 
-    if let Some(cursor_line) = result.cursor_line {
-        if result.cursor_x != NO_COLUMN && dx != 0 && cursor_line == line_no && is_cursor_affected(result, start, end) {
-            result.cursor_x = ((result.cursor_x as Delta) + dx) as usize;
-        }
+    if result.cursor_x != NO_COLUMN && result.cursor_line != NO_LINE_NUMBER && dx != 0 && result.cursor_line == line_no && is_cursor_affected(result, start, end) {
+        result.cursor_x = ((result.cursor_x as Delta) + dx) as usize;
     }
 }
 
@@ -782,7 +780,7 @@ fn check_cursor_holding<'text, 'lines>(result: &State<'text, 'lines>) -> Result<
     let hold_min_x = peek(&result.paren_stack, 1).map(|p| p.x + 1).unwrap_or(0);
     let hold_max_x = opener.x;
 
-    let holding = result.cursor_line == Some(opener.line_no)
+    let holding = result.cursor_line == opener.line_no
         && result.cursor_x != NO_COLUMN
         && hold_min_x <= result.cursor_x
         && result.cursor_x <= hold_max_x;
@@ -1249,7 +1247,7 @@ fn is_cursor_clamping_paren_trail<'text, 'lines>(
 
 // INDENT MODE: allow the cursor to clamp the paren trail
 fn clamp_paren_trail_to_cursor<'text, 'lines>(result: &mut State<'text, 'lines>) {
-    let clamping = is_cursor_clamping_paren_trail(result, column_to_option(result.cursor_x), result.cursor_line);
+    let clamping = is_cursor_clamping_paren_trail(result, column_to_option(result.cursor_x), line_number_to_option(result.cursor_line));
     if clamping {
         let start_x = result.paren_trail.start_x.unwrap();
         let end_x = result.paren_trail.end_x.unwrap();
@@ -1663,7 +1661,7 @@ fn finish_new_paren_trail<'text, 'lines>(result: &mut State<'text, 'lines>) {
         if let Some(paren) = peek(&result.paren_trail.openers, 0).map(Clone::clone) {
             set_max_indent(result, &paren);
         }
-        if Some(result.line_no) != result.cursor_line {
+        if result.line_no != result.cursor_line {
             clean_paren_trail(result);
         }
         remember_paren_trail(result);
@@ -1777,7 +1775,7 @@ fn on_leading_close_paren<'text, 'lines>(result: &mut State<'text, 'lines>) -> R
                 }
             } else if is_cursor_left_of(
                 column_to_option(result.cursor_x),
-                result.cursor_line,
+                line_number_to_option(result.cursor_line),
                 Some(result.x),
                 result.line_no,
             ) {
@@ -1853,7 +1851,7 @@ fn make_tab_stop<'a>(opener: &Paren<'a>) -> TabStop<'a> {
 }
 
 fn get_tab_stop_line<'text, 'lines>(result: &State<'text, 'lines>) -> Option<LineNumber> {
-    result.selection_start_line.or(result.cursor_line)
+    result.selection_start_line.or(line_number_to_option(result.cursor_line))
 }
 
 fn set_tab_stops<'text, 'lines>(result: &mut State<'text, 'lines>) {
@@ -2007,7 +2005,7 @@ fn public_result<'text, 'lines>(result: &State<'text, 'lines>) -> Answer<'text> 
         Answer {
             text: Cow::from(result.lines.join(line_ending)),
             cursor_x: column_to_option(result.cursor_x),
-            cursor_line: result.cursor_line,
+            cursor_line: line_number_to_option(result.cursor_line),
             success: true,
             tab_stops: result.tab_stops.clone(),
             paren_trails: result.paren_trails.clone(),
@@ -2027,7 +2025,7 @@ fn public_result<'text, 'lines>(result: &State<'text, 'lines>) -> Answer<'text> 
                 column_to_option(result.orig_cursor_x)
             },
             cursor_line: if result.partial_result {
-                result.cursor_line
+                line_number_to_option(result.cursor_line)
             } else {
                 line_number_to_option(result.orig_cursor_line)
             },

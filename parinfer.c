@@ -42,6 +42,7 @@ typedef struct State
     _Bool return_parens;
 
     Column cursor_x;
+    LineNumber cursor_line;
 }
 State;
 
