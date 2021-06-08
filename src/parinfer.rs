@@ -204,7 +204,7 @@ impl<'text, 'lines> State<'text, 'lines> {
 enum In<'text> {
     Code,
     Comment,
-    String { delim: &'text str },
+    String { delim: Slice<'text, libc::c_char> },
     LispReaderSyntax,
     LispBlockCommentPre { depth: usize },
     LispBlockComment { depth: usize },
@@ -256,6 +256,23 @@ impl<'a> Slice<'a, libc::c_char> {
             std::str::from_utf8_unchecked(slice)
         }
     }
+}
+
+impl<'a> PartialEq for Slice<'a, libc::c_char> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.length != other.length {
+            false
+        } else if self.data == other.data {
+            true
+        } else {
+            unsafe {
+                libc::memcmp(self.data as *const libc::c_void, other.data as *const libc::c_void, self.length) == 0
+            }
+        }
+    }
+}
+
+impl<'a> Eq for Slice<'a, libc::c_char> {
 }
 
 impl<'a, T> std::ops::Index<usize> for Slice<'a, T> {
@@ -941,7 +958,7 @@ fn on_newline<'text, 'lines>(result: &mut State<'text, 'lines>) {
 }
 
 fn in_code_on_quote<'text, 'lines>(result: &mut State<'text, 'lines>) {
-    result.context = In::String { delim: result.ch.as_str() };
+    result.context = In::String { delim: result.ch };
     cache_error_pos(result, ErrorName::UnclosedQuote);
 }
 fn in_comment_on_quote<'text, 'lines>(result: &mut State<'text, 'lines>) {
@@ -1075,8 +1092,8 @@ fn on_context<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
         },
         In::String { delim } => {
             match ch.as_str() {
-                DOUBLE_QUOTE => in_string_on_quote(result, delim),
-                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
+                DOUBLE_QUOTE => in_string_on_quote(result, delim.as_str()),
+                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim.as_str()),
                 _ => (),
             }
         },
