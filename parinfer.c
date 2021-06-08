@@ -34,6 +34,8 @@ typedef struct State
     Slice input_lines;
     LineNumber input_line_no;
     Column input_x;
+
+    LineNumber line_no;
 }
 State;
 

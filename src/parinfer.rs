@@ -280,7 +280,6 @@ struct State<'text, 'lines> {
     input_line_no: LineNumber,
     input_x: Column,
 
-    lines: Vec<Cow<'text, str>>,
     line_no: LineNumber,
     ch: &'text str,
     x: Column,
@@ -332,6 +331,8 @@ struct State<'text, 'lines> {
 
     error: Option<Error>,
     error_pos_cache: HashMap<ErrorName, Error>,
+
+    lines: Vec<Cow<'text, str>>,
 }
 
 fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
