@@ -295,8 +295,6 @@ struct State<'text, 'lines> {
 
     selection_start_line: LineNumber,
 
-    changes: HashMap<(LineNumber, Column), TransformedChange>,
-
     context: In<'text>,
     comment_x: Option<Column>,
     escape: Now,
@@ -338,6 +336,9 @@ struct State<'text, 'lines> {
 
     // after return_parens
     parens: Vec<Paren<'text>>,
+
+    // after selection_start_line
+    changes: HashMap<(LineNumber, Column), TransformedChange>,
 }
 
 fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
