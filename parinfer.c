@@ -45,6 +45,8 @@ typedef struct State
     LineNumber cursor_line;
     Column prev_cursor_x;
     LineNumber prev_cursor_line;
+
+    LineNumber selection_start_line;
 }
 State;
 

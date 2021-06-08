@@ -293,7 +293,7 @@ struct State<'text, 'lines> {
     prev_cursor_x: Column,
     prev_cursor_line: LineNumber,
 
-    selection_start_line: Option<LineNumber>,
+    selection_start_line: LineNumber,
 
     changes: HashMap<(LineNumber, Column), TransformedChange>,
 
@@ -412,7 +412,7 @@ fn get_initial_result<'text, 'lines>(
         prev_cursor_x: column_from_option(options.prev_cursor_x),
         prev_cursor_line: line_number_from_option(options.prev_cursor_line),
 
-        selection_start_line: None,
+        selection_start_line: NO_LINE_NUMBER,
 
         changes: transform_changes(&options.changes),
 
@@ -1846,7 +1846,7 @@ fn make_tab_stop<'a>(opener: &Paren<'a>) -> TabStop<'a> {
 }
 
 fn get_tab_stop_line<'text, 'lines>(result: &State<'text, 'lines>) -> Option<LineNumber> {
-    result.selection_start_line.or(line_number_to_option(result.cursor_line))
+    line_number_to_option(result.selection_start_line).or(line_number_to_option(result.cursor_line))
 }
 
 fn set_tab_stops<'text, 'lines>(result: &mut State<'text, 'lines>) {
