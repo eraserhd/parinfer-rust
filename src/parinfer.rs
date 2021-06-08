@@ -291,7 +291,7 @@ struct State<'text, 'lines> {
     cursor_x: Column,
     cursor_line: LineNumber,
     prev_cursor_x: Column,
-    prev_cursor_line: Option<Column>,
+    prev_cursor_line: LineNumber,
 
     selection_start_line: Option<LineNumber>,
 
@@ -410,7 +410,7 @@ fn get_initial_result<'text, 'lines>(
         cursor_x: column_from_option(options.cursor_x),
         cursor_line: line_number_from_option(options.cursor_line),
         prev_cursor_x: column_from_option(options.prev_cursor_x),
-        prev_cursor_line: options.prev_cursor_line,
+        prev_cursor_line: line_number_from_option(options.prev_cursor_line),
 
         selection_start_line: None,
 
@@ -784,9 +784,9 @@ fn check_cursor_holding<'text, 'lines>(result: &State<'text, 'lines>) -> Result<
         && result.cursor_x != NO_COLUMN
         && hold_min_x <= result.cursor_x
         && result.cursor_x <= hold_max_x;
-    let should_check_prev = result.changes.is_empty() && result.prev_cursor_line != None;
+    let should_check_prev = result.changes.is_empty() && result.prev_cursor_line != NO_LINE_NUMBER;
     if should_check_prev {
-        let prev_holding = result.prev_cursor_line == Some(opener.line_no)
+        let prev_holding = result.prev_cursor_line == opener.line_no
             && result.prev_cursor_x != NO_COLUMN
             && hold_min_x <= result.prev_cursor_x
             && result.prev_cursor_x <= hold_max_x;
