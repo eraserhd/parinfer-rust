@@ -177,6 +177,7 @@ pub enum Mode {
     Paren = 1,
 }
 
+#[repr(C)]
 #[derive(PartialEq, Eq, Clone, Copy)]
 enum TrackingArgTabStop {
     NotSearching,

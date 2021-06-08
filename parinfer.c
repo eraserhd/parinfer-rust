@@ -38,14 +38,6 @@ typedef enum InTag
 }
 InTag;
 
-typedef enum Now
-{
-    NOW_NORMAL,
-    NOW_ESCAPING,
-    NOW_ESCAPED,
-}
-Now;
-
 typedef union In
 {
     InTag tag;
@@ -64,6 +56,22 @@ typedef union In
     } janet;
 }
 In;
+
+typedef enum Now
+{
+    NOW_NORMAL,
+    NOW_ESCAPING,
+    NOW_ESCAPED,
+}
+Now;
+
+typedef enum TrackingArgTabStop
+{
+    TRACKING_ARG_TAB_STOP_NOT_SEARCHING,
+    TRACKING_ARG_TAB_STOP_SPACE,
+    TRACKING_ARG_TAB_STOP_TAB,
+}
+TrackingArgTabStop;
 
 typedef struct State
 {
@@ -113,6 +121,7 @@ typedef struct State
     Column max_indent;
 
     int64_t indent_delta;
+    TrackingArgTabStop tracking_arg_tab_stop;
 }
 State;
 
