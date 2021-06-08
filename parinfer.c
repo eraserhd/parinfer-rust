@@ -90,6 +90,7 @@ typedef struct State
     Slice ch;
     Column x;
     Column indent_x;
+
     _Bool return_parens;
 
     Column cursor_x;
@@ -118,9 +119,10 @@ typedef struct State
     _Bool force_balance;
 
     char comment_char;
-    Column max_indent;
 
+    Column max_indent;
     int64_t indent_delta;
+
     TrackingArgTabStop tracking_arg_tab_stop;
 }
 State;

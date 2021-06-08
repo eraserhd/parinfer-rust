@@ -301,12 +301,21 @@ struct State<'text, 'lines> {
     input_line_no: LineNumber,
     input_x: Column,
 
+    //lines: Vec<Cow<'text, str>>,
     line_no: LineNumber,
     ch: Slice<'text, libc::c_char>,
     x: Column,
     indent_x: Column,
 
+    //paren_stack: Vec<Paren<'text>>,
+
+    //tab_stops: Vec<TabStop<'text>>,
+
+    //paren_trail: InternalParenTrail<'text>,
+    //paren_trails: Vec<ParenTrail>,
+
     return_parens: bool,
+    //parens: Vec<Paren<'text>>,
 
     cursor_x: Column,
     cursor_line: LineNumber,
@@ -314,6 +323,8 @@ struct State<'text, 'lines> {
     prev_cursor_line: LineNumber,
 
     selection_start_line: LineNumber,
+
+    //changes: HashMap<(LineNumber, Column), TransformedChange>,
 
     context: In<'text>,
     comment_x: Column,
@@ -340,25 +351,19 @@ struct State<'text, 'lines> {
 
     tracking_arg_tab_stop: TrackingArgTabStop,
 
-    error: Option<Error>,
-    error_pos_cache: HashMap<ErrorName, Error>,
+    //error: Option<Error>,
+    //error_pos_cache: HashMap<ErrorName, Error>,
 
-    // before line_no
+    //XXX:
     lines: Vec<Cow<'text, str>>,
-
-    // after indent_x
     paren_stack: Vec<Paren<'text>>,
-
     tab_stops: Vec<TabStop<'text>>,
-
     paren_trail: InternalParenTrail<'text>,
     paren_trails: Vec<ParenTrail>,
-
-    // after return_parens
     parens: Vec<Paren<'text>>,
-
-    // after selection_start_line
     changes: HashMap<(LineNumber, Column), TransformedChange>,
+    error: Option<Error>,
+    error_pos_cache: HashMap<ErrorName, Error>,
 }
 
 fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
