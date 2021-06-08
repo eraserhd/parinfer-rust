@@ -332,7 +332,7 @@ struct State<'text, 'lines> {
     partial_result: bool,
     force_balance: bool,
 
-    comment_char: String,
+    comment_char: libc::c_char,
 
     max_indent: Option<Column>,
     indent_delta: i64,
@@ -454,7 +454,7 @@ fn get_initial_result<'text, 'lines>(
         partial_result: false,
         force_balance: false,
 
-        comment_char: options.comment_char.to_string(),
+        comment_char: options.comment_char as libc::c_char,
 
         max_indent: None,
         indent_delta: 0,
@@ -1069,7 +1069,7 @@ fn on_context<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     let ch = result.ch;
     match result.context {
         In::Code => {
-            if ch.as_str() == result.comment_char {
+            if ch.length == 1 && ch[0] == result.comment_char {
                 in_code_on_comment_char(result)
             } else {
                 match ch.as_str() {
@@ -1845,7 +1845,7 @@ fn on_comment_line<'text, 'lines>(result: &mut State<'text, 'lines>) {
 fn check_indent<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
     if rust_is_close_paren(result.ch.as_str()) {
         on_leading_close_paren(result)?;
-    } else if result.ch.as_str() == result.comment_char {
+    } else if result.ch.length == 1 && result.ch[0] == result.comment_char {
         // comments don't count as indentation points
         on_comment_line(result);
         result.tracking_indent = false;

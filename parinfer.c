@@ -108,6 +108,8 @@ typedef struct State
     _Bool success;
     _Bool partial_result;
     _Bool force_balance;
+
+    char comment_char;
 }
 State;
 
