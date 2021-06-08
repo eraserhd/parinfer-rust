@@ -110,6 +110,7 @@ typedef struct State
     _Bool force_balance;
 
     char comment_char;
+    Column max_indent;
 }
 State;
 

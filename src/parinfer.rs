@@ -334,7 +334,7 @@ struct State<'text, 'lines> {
 
     comment_char: libc::c_char,
 
-    max_indent: Option<Column>,
+    max_indent: Column,
     indent_delta: i64,
 
     tracking_arg_tab_stop: TrackingArgTabStop,
@@ -456,7 +456,7 @@ fn get_initial_result<'text, 'lines>(
 
         comment_char: options.comment_char as libc::c_char,
 
-        max_indent: None,
+        max_indent: NO_COLUMN,
         indent_delta: 0,
 
         tracking_arg_tab_stop: TrackingArgTabStop::NotSearching,
@@ -1617,7 +1617,7 @@ fn set_max_indent<'text, 'lines>(result: &mut State<'text, 'lines>, opener: &Par
     if let Some(parent) = result.paren_stack.last_mut() {
         parent.max_child_indent = Some(opener.x);
     } else {
-        result.max_indent = Some(opener.x);
+        result.max_indent = opener.x;
     }
 }
 
@@ -1706,7 +1706,11 @@ fn correct_indent<'text, 'lines>(result: &mut State<'text, 'lines>) {
     let orig_indent = result.x as Delta;
     let mut new_indent = orig_indent as Delta;
     let mut min_indent = 0;
-    let mut max_indent = result.max_indent.map(|x| x as Delta);
+    let mut max_indent : Option<Delta> = if result.max_indent == NO_COLUMN {
+        None
+    } else {
+        Some(result.max_indent as Delta)
+    };
 
     if let Some(opener) = peek(&result.paren_stack, 0) {
         min_indent = opener.x + 1;
