@@ -38,6 +38,7 @@ typedef struct State
     LineNumber line_no;
     Slice ch;
     Column x;
+    Column indent_x;
 }
 State;
 

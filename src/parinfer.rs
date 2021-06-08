@@ -284,7 +284,7 @@ struct State<'text, 'lines> {
     line_no: LineNumber,
     ch: Slice<'text, libc::c_char>,
     x: Column,
-    indent_x: Option<Column>,
+    indent_x: Column,
 
     paren_stack: Vec<Paren<'text>>,
 
@@ -392,7 +392,7 @@ fn get_initial_result<'text, 'lines>(
             phantom: std::marker::PhantomData,
         },
         x: 0,
-        indent_x: None,
+        indent_x: NO_COLUMN,
 
         paren_stack: vec![],
         tab_stops: vec![],
@@ -651,7 +651,7 @@ fn init_line<'text, 'lines>(result: &mut State<'text, 'lines>) {
     result.line_no = usize::wrapping_add(result.line_no, 1);
 
     // reset line-specific state
-    result.indent_x = None;
+    result.indent_x = NO_COLUMN;
     result.comment_x = None;
     result.indent_delta = 0;
 
@@ -881,7 +881,7 @@ fn in_code_on_unmatched_close_paren<'text, 'lines>(result: &mut State<'text, 'li
     match result.mode {
         Mode::Paren => {
             let in_leading_paren_trail = result.paren_trail.line_no == Some(result.line_no)
-                && result.paren_trail.start_x == result.indent_x;
+                && result.paren_trail.start_x == column_to_option(result.indent_x);
             let can_remove = result.smart && in_leading_paren_trail;
             if !can_remove {
                 error(result, ErrorName::UnmatchedCloseParen)?;
@@ -1672,7 +1672,7 @@ fn add_indent<'text, 'lines>(result: &mut State<'text, 'lines>, delta: Delta) {
     let line_no = result.line_no;
     replace_within_line(result, line_no, 0, orig_indent, &indent_str);
     result.x = new_indent;
-    result.indent_x = Some(new_indent);
+    result.indent_x = new_indent;
     result.indent_delta += delta;
 }
 
@@ -1704,7 +1704,7 @@ fn correct_indent<'text, 'lines>(result: &mut State<'text, 'lines>) {
 }
 
 fn on_indent<'text, 'lines>(result: &mut State<'text, 'lines>) -> Result<()> {
-    result.indent_x = Some(result.x);
+    result.indent_x = result.x;
     result.tracking_indent = false;
 
     if result.quote_danger {
