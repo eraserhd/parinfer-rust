@@ -184,6 +184,7 @@ enum TrackingArgTabStop {
     Arg,
 }
 
+#[repr(C)]
 #[derive(PartialEq, Eq)]
 enum Now {
     Normal,

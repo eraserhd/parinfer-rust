@@ -38,6 +38,14 @@ typedef enum InTag
 }
 InTag;
 
+typedef enum Now
+{
+    NOW_NORMAL,
+    NOW_ESCAPING,
+    NOW_ESCAPED,
+}
+Now;
+
 typedef union In
 {
     InTag tag;
@@ -85,6 +93,7 @@ typedef struct State
 
     In context;
     Column comment_x;
+    Now escape;
 }
 State;
 
