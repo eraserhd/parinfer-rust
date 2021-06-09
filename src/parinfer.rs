@@ -366,6 +366,14 @@ struct State<'text, 'lines> {
     error_pos_cache: HashMap<ErrorName, Error>,
 }
 
+impl<'text,'lines> Drop for State<'text,'lines> {
+    fn drop(&mut self) {
+        unsafe {
+            state_destroy(self)
+        }
+    }
+}
+
 fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
     InternalParenTrail {
         line_no: None,
@@ -765,6 +773,7 @@ extern "C" {
     fn is_close_paren(s: *const libc::c_char) -> bool;
 
     fn state_init(state: *mut State, orig_text: *const u8, orig_text_length: usize);
+    fn state_destroy(state: *mut State);
 }
 
 fn rust_is_close_paren(paren: &str) -> bool {

@@ -133,6 +133,10 @@ void state_init(State *state, const char* orig_text, size_t orig_text_length)
     state->orig_text.data = (void*)orig_text;
 }
 
+void state_destroy(State *state)
+{
+}
+
 _Bool is_close_paren(const char* s)
 {
     return *s && NULL != strchr(")]}", *s);
