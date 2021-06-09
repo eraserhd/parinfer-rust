@@ -227,13 +227,6 @@ impl<'a> serde::Deserialize<'a> for ErrorName {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ErrorExtra {
-    pub name: ErrorName,
-    pub line_no: LineNumber,
-    pub x: Column
-}
-
 #[derive(Debug, Default, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Error {
@@ -243,9 +236,6 @@ pub struct Error {
     pub line_no: LineNumber,
     pub input_x: Column,
     pub input_line_no: LineNumber,
-
-    #[serde(skip)]
-    pub extra: Option<ErrorExtra>
 }
 
 impl From<std::str::Utf8Error> for Error {
