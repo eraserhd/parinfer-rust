@@ -384,7 +384,6 @@ fn cache_error_pos(result: &mut State, name: ErrorName) {
         x: result.x,
         input_line_no: result.input_line_no,
         input_x: result.input_x,
-        extra: None
     };
     result.error_pos_cache.insert(name, error);
 }
@@ -404,25 +403,9 @@ fn error(result: &mut State, name: ErrorName) -> Result<()> {
         message: String::from(error_message(name)),
         input_line_no: result.input_line_no,
         input_x: result.input_x,
-        extra: None
     };
 
-    if name == ErrorName::UnmatchedCloseParen {
-        // extra error info for locating the open-paren that it should've matched
-        if let Some(cache) = result.error_pos_cache.get(&ErrorName::UnmatchedOpenParen) {
-            e.extra = Some(ErrorExtra {
-                name: ErrorName::UnmatchedOpenParen,
-                line_no: if result.partial_result { cache.line_no } else { cache.input_line_no },
-                x: if result.partial_result { cache.x } else { cache.input_x }
-            });
-        } else if let Some(opener) = peek(&result.paren_stack, 0) {
-            e.extra = Some(ErrorExtra {
-                name: ErrorName::UnmatchedOpenParen,
-                line_no: if result.partial_result { opener.line_no } else { opener.input_line_no },
-                x: if result.partial_result { opener.x } else { opener.input_x }
-            });
-        }
-    } else if name == ErrorName::UnclosedParen {
+    if name == ErrorName::UnclosedParen {
         if let Some(opener) = peek(&result.paren_stack, 0) {
             e.line_no = if result.partial_result {
                 opener.line_no
@@ -706,7 +689,6 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
                 input_x: 0,
                 line_no: 0,
                 message: String::new(),
-                extra: None
             });
         }
     }
