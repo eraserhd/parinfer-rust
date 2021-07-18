@@ -12,6 +12,7 @@ mod types;
 mod changes;
 
 #[macro_use]
+#[cfg(feature = "emacs")]
 extern crate emacs;
 // Native-specific stuff
 
@@ -28,9 +29,11 @@ pub use c_wrapper::run_parinfer;
 pub use c_wrapper::INITIALIZED;
 
 #[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "emacs")]
 mod emacs_wrapper;
 
 #[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "emacs")]
 pub use emacs_wrapper::init;
 
 // WebAssembly-specific stuff
