@@ -5,7 +5,7 @@ rustPlatform.buildRustPackage rec {
   version = "0.4.3";
 
   src = ./.;
-  cargoSha256 = "19rcxax8b1zmsfqnxf9v7rizfwyg3fw6pz7di40mw0i8cq9cpzhl";
+  cargoSha256 = "0rddfxbrf20xdgjn6jc7l30wj844vk3cb8y10rp0fzs2ccgpx6r3";
 
   buildInputs = [
     llvmPackages.libclang
