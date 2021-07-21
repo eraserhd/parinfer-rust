@@ -28,6 +28,12 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
   - `#;(S-expression comments)`
 * Support for Guile's `#!block comments!#`
 
+=== Emacs
+
+* Compilation for Emacs is now optional. To enable it, run
+`cargo build --release --features emacs`
+
+
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...v0.4.3[0.4.3]
 ------------------------------------------------------------------------
 
