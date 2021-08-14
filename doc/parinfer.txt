@@ -47,6 +47,12 @@ The mode used to process buffer changes: 'smart', 'indent', or 'paren'.
         " Default
         let g:parinfer_mode = 'smart'
 <
+				             *g:parinfer_additional_filetypes*
+Additional filetypes to enable parinfer in.
+>
+        " Default
+        let g:parinfer_additional_filetypes = []
+<
 						    *g:parinfer_force_balance*
 In smart mode and indent mode, parinfer will sometimes leave unbalanced
 brackets around the cursor and fix them when the cursor moves away.  When this
