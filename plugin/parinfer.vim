@@ -4,6 +4,9 @@ endif
 if !exists('g:parinfer_enabled')
   let g:parinfer_enabled = 1
 endif
+if !exists('g:parinfer_additional_filetypes')
+  let g:parinfer_additional_filetypes = []
+endif
 if !exists('g:parinfer_force_balance')
   let g:parinfer_force_balance = 0
 endif
@@ -281,11 +284,11 @@ function! s:initialize_buffer() abort
 endfunction
 
 augroup Parinfer
-  autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast call <SID>initialize_buffer()
+  execute "autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast," . join(g:parinfer_additional_filetypes, ",") . " call <SID>initialize_buffer()"
 augroup END
 
 " Handle the case where parinfer was lazy-loaded
-if (&filetype ==? 'clojure' || &filetype ==? 'scheme' || &filetype ==? 'lisp' || &filetype ==? 'racket' || &filetype ==? 'hy' || &filetype ==? 'fennel' || &filetype ==? 'janet' || &filetype ==? 'carp' || &filetype ==? 'wast')
+if (&filetype ==? 'clojure' || &filetype ==? 'scheme' || &filetype ==? 'lisp' || &filetype ==? 'racket' || &filetype ==? 'hy' || &filetype ==? 'fennel' || &filetype ==? 'janet' || &filetype ==? 'carp' || &filetype ==? 'wast' || index(g:parinfer_additional_filetypes, &filetype) >= 0)
   call <SID>initialize_buffer()
 endif
 
