@@ -10,6 +10,9 @@ endif
 if !exists('g:parinfer_comment_char')
   let g:parinfer_comment_char = ";"
 endif
+if !exists('g:parinfer_string_delimiters')
+  let g:parinfer_string_delimiters = ['"']
+endif
 if !exists('g:parinfer_lisp_vline_symbols')
   let g:parinfer_lisp_vline_symbols = 0
 endif
@@ -64,6 +67,9 @@ au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_scheme_sexp_comments
 
 " Comment settings
 au BufNewFile,BufRead *.janet let b:parinfer_comment_char = "#"
+
+" Quote settings
+au BufNewFile,BufRead *.yuck let b:parinfer_string_delimiters = ['"', "'", "`"]
 
 " Long strings settings
 au BufNewFile,BufRead *.janet let b:parinfer_janet_long_strings = 1
@@ -180,6 +186,9 @@ function! s:process_buffer() abort
   if !exists('b:parinfer_comment_char')
     let b:parinfer_comment_char = g:parinfer_comment_char
   endif
+  if !exists('b:parinfer_string_delimiters')
+    let b:parinfer_string_delimiters = g:parinfer_string_delimiters
+  endif
   if !exists('b:parinfer_lisp_vline_symbols')
     let b:parinfer_lisp_vline_symbols = g:parinfer_lisp_vline_symbols
   endif
@@ -202,6 +211,7 @@ function! s:process_buffer() abort
     let l:request = { "mode": g:parinfer_mode,
                     \ "text": l:orig_text,
                     \ "options": { "commentChar": b:parinfer_comment_char,
+                                 \ "stringDelimiters": b:parinfer_string_delimiters,
                                  \ "cursorX": l:cursor[2],
                                  \ "cursorLine": l:cursor[1],
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
@@ -281,11 +291,11 @@ function! s:initialize_buffer() abort
 endfunction
 
 augroup Parinfer
-  autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast call <SID>initialize_buffer()
+  autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast,yuck call <SID>initialize_buffer()
 augroup END
 
 " Handle the case where parinfer was lazy-loaded
-if (&filetype ==? 'clojure' || &filetype ==? 'scheme' || &filetype ==? 'lisp' || &filetype ==? 'racket' || &filetype ==? 'hy' || &filetype ==? 'fennel' || &filetype ==? 'janet' || &filetype ==? 'carp' || &filetype ==? 'wast')
+if (&filetype ==? 'clojure' || &filetype ==? 'scheme' || &filetype ==? 'lisp' || &filetype ==? 'racket' || &filetype ==? 'hy' || &filetype ==? 'fennel' || &filetype ==? 'janet' || &filetype ==? 'carp' || &filetype ==? 'wast' || &filetype ==? 'yuck')
   call <SID>initialize_buffer()
 endif
 

@@ -37,6 +37,8 @@ pub struct Options {
     pub return_parens: bool,
     #[serde(default = "Options::default_comment")]
     pub comment_char: char,
+    #[serde(default = "Options::default_string_delimiters")]
+    pub string_delimiters: Vec<String>,
     #[serde(default = "Options::default_false")]
     pub lisp_vline_symbols: bool,
     #[serde(default = "Options::default_false")]
@@ -60,6 +62,9 @@ impl Options {
 
     fn default_comment() -> char {
         ';'
+    }
+    fn default_string_delimiters() -> Vec<String> {
+        vec!["\"".to_string()]
     }
 }
 

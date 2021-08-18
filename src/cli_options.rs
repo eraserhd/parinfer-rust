@@ -67,6 +67,7 @@ const SCHEME_SEXP_COMMENTS : YesNoDefaultOption = YesNoDefaultOption {
 fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
     options.optopt(  ""    , "comment-char"         , "(default: ';')", "CC");
+    options.optopt(  ""    , "string-delimiters"    , "(default: '\"')", "DELIM");
     options.optflag("h"    , "help"                 , "show this help message");
     options.optopt( ""     , "input-format"         , "'json', 'text' (default: 'text')", "FMT");
     GUILE_BLOCK_COMMENTS_OPTION.add(&mut options);
@@ -203,6 +204,15 @@ impl Options {
         }
     }
 
+    fn string_delimiters(&self) -> Vec<String> {
+        let delims = self.matches.opt_strs("string-delimiters");
+        if delims.is_empty() {
+            vec!["\"".to_string()]
+        } else {
+            delims
+        }
+    }
+
     fn invertible_flag(&self, name: &str) -> Option<bool> {
         if self.matches.opt_present(name) {
             Some(true)
@@ -258,6 +268,7 @@ impl Options {
                         force_balance: false,
                         return_parens: false,
                         comment_char: char::from(self.comment_char()),
+                        string_delimiters: self.string_delimiters(),
                         partial_result: false,
                         selection_start_line: None,
                         lisp_vline_symbols: self.lisp_vline_symbols().unwrap_or(lisp_vline_symbols),
@@ -298,6 +309,7 @@ impl Options {
                         force_balance: false,
                         return_parens: false,
                         comment_char: char::from(self.comment_char()),
+                        string_delimiters: self.string_delimiters(),
                         partial_result: false,
                         selection_start_line: None,
                         lisp_vline_symbols,

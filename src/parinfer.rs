@@ -11,7 +11,6 @@ use changes;
 const BACKSLASH: &'static str = "\\";
 const BLANK_SPACE: &'static str = " ";
 const DOUBLE_SPACE: &'static str = "  ";
-const DOUBLE_QUOTE: &'static str = "\"";
 const VERTICAL_LINE: &'static str = "|";
 const BANG: &'static str = "!";
 const NUMBER_SIGN: &'static str = "#";
@@ -253,6 +252,7 @@ struct State<'a> {
     force_balance: bool,
 
     comment_char: String,
+    string_delimiters: Vec<String>,
 
     max_indent: Option<Column>,
     indent_delta: i64,
@@ -344,6 +344,7 @@ fn get_initial_result<'a>(
         force_balance: false,
 
         comment_char: options.comment_char.to_string(),
+        string_delimiters: options.string_delimiters.clone(),
 
         max_indent: None,
         indent_delta: 0,
@@ -940,24 +941,21 @@ fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
     let ch = result.ch;
     match result.context {
         In::Code => {
-            if ch == result.comment_char {
-                in_code_on_comment_char(result)
-            } else {
-                match ch {
-                    "(" | "[" | "{" => in_code_on_open_paren(result),
-                    ")" | "]" | "}" => in_code_on_close_paren(result)?,
-                    DOUBLE_QUOTE => in_code_on_quote(result),
-                    VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
-                    NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
-                    GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
-                    TAB => in_code_on_tab(result),
-                    _ => (),
-                }
+            match ch {
+                _ if ch == result.comment_char => in_code_on_comment_char(result),
+                _ if result.string_delimiters.contains(&ch.to_string()) => in_code_on_quote(result),
+                "(" | "[" | "{" => in_code_on_open_paren(result),
+                ")" | "]" | "}" => in_code_on_close_paren(result)?,
+                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
+                NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
+                GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
+                TAB => in_code_on_tab(result),
+                _ => (),
             }
         },
         In::Comment => {
             match ch {
-                DOUBLE_QUOTE => in_comment_on_quote(result),
+                _ if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
                 VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
                 GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
                 _ => (),
@@ -965,7 +963,7 @@ fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
         },
         In::String { delim } => {
             match ch {
-                DOUBLE_QUOTE => in_string_on_quote(result, delim),
+                _ if result.string_delimiters.contains(&ch.to_string()) => in_string_on_quote(result, delim),
                 VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
                 _ => (),
             }
