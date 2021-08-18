@@ -14,6 +14,9 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
 
 === Added
 
+* Added support for [Yuck](https://github.com/elkowar/eww)
+* String delimiters can now be explicitly configured with the 
+  `string_delimiters` option.
 * Added -l, --language LANG option to easily specify language defaults.
 * The user can now set the character used to denote comments. The
   character can be set on a global or per-buffer basis (using
