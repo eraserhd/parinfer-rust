@@ -5,7 +5,9 @@ rustPlatform.buildRustPackage rec {
   version = "0.4.3";
 
   src = ./.;
-  cargoSha256 = "0rddfxbrf20xdgjn6jc7l30wj844vk3cb8y10rp0fzs2ccgpx6r3";
+  cargoLock = {
+    lockFile = ./Cargo.lock;
+  };
 
   buildInputs = [
     llvmPackages.libclang
