@@ -168,6 +168,9 @@ enum In<'a> {
     GuileBlockCommentPost,
     JanetLongStringPre { open_delim_len: usize },
     JanetLongString { open_delim_len: usize, close_delim_len: usize },
+    HyBracketStringPre,
+    HyBracketString,
+    HyBracketStringPost,
 }
 
 impl<'a> State<'a> {
@@ -191,6 +194,9 @@ impl<'a> State<'a> {
             In::GuileBlockCommentPost => true,
             In::JanetLongStringPre {..} => true,
             In::JanetLongString {..} => true,
+            In::HyBracketStringPre {..} => true,
+            In::HyBracketString {..} => true,
+            In::HyBracketStringPost {..} => true,
             _ => false
         }
     }
@@ -243,6 +249,7 @@ struct State<'a> {
     guile_block_comments_enabled: bool,
     scheme_sexp_comments_enabled: bool,
     janet_long_strings_enabled: bool,
+    hy_bracket_strings_enabled: bool,
 
     quote_danger: bool,
     tracking_indent: bool,
@@ -258,6 +265,9 @@ struct State<'a> {
     indent_delta: i64,
 
     tracking_arg_tab_stop: TrackingArgTabStop,
+
+    hy_bracket_tag: Vec<&'a str>,
+    hy_bracket_tag_remaining: Vec<&'a str>,
 
     error: Option<Error>,
     error_pos_cache: HashMap<ErrorName, Error>,
@@ -287,6 +297,7 @@ fn get_initial_result<'a>(
         options.lisp_block_comments,
         options.guile_block_comments,
         options.scheme_sexp_comments,
+        options.hy_bracket_strings,
     ].iter().any(|is_true| *is_true);
 
     State {
@@ -335,6 +346,7 @@ fn get_initial_result<'a>(
         guile_block_comments_enabled: options.guile_block_comments,
         scheme_sexp_comments_enabled: options.scheme_sexp_comments,
         janet_long_strings_enabled: options.janet_long_strings,
+        hy_bracket_strings_enabled: options.hy_bracket_strings,
 
         quote_danger: false,
         tracking_indent: false,
@@ -350,6 +362,9 @@ fn get_initial_result<'a>(
         indent_delta: 0,
 
         tracking_arg_tab_stop: TrackingArgTabStop::NotSearching,
+
+        hy_bracket_tag: vec![],
+        hy_bracket_tag_remaining: vec![],
 
         error: None,
         error_pos_cache: HashMap::new(),
@@ -919,6 +934,38 @@ fn in_janet_long_string_on_else<'a>(result: &mut State<'a>, open_delim_len: usiz
     }
 }
 
+fn in_lisp_reader_syntax_on_open_brack<'a>(result: &mut State<'a>) {
+    result.hy_bracket_tag.clear();
+    result.context = In::HyBracketStringPre;
+}
+fn in_hy_bracket_string_pre_on_else<'a>(result: &mut State<'a>) {
+    result.hy_bracket_tag.push(result.ch);
+}
+fn in_hy_bracket_string_pre_on_open_brack<'a>(result: &mut State<'a>) {
+    result.context = In::HyBracketString;
+}
+fn in_hy_bracket_string_on_close_brack<'a>(result: &mut State<'a>) {
+    result.hy_bracket_tag_remaining = result.hy_bracket_tag.clone();
+    result.hy_bracket_tag_remaining.reverse();
+    result.context = In::HyBracketStringPost;
+}
+fn in_hy_bracket_string_post_on_else<'a>(result: &mut State<'a>) {
+    let next = result.hy_bracket_tag_remaining.last();
+    if Some(&result.ch) == next {
+        result.hy_bracket_tag_remaining.pop();
+    } else {
+        result.context = In::HyBracketString;
+    }
+}
+fn in_hy_bracket_string_post_on_close_brack<'a>(result: &mut State<'a>) {
+    if result.hy_bracket_tag_remaining.is_empty() {
+        result.context = In::Code;
+    } else {
+        result.hy_bracket_tag_remaining = result.hy_bracket_tag.clone();
+        result.hy_bracket_tag_remaining.reverse();
+    }
+}
+
 fn on_backslash<'a>(result: &mut State<'a>) {
     result.escape = Now::Escaping;
 }
@@ -973,6 +1020,7 @@ fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
                 VERTICAL_LINE if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
                 BANG if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
                 ";" if result.scheme_sexp_comments_enabled => in_lisp_reader_syntax_on_semicolon(result),
+                "[" if result.hy_bracket_strings_enabled => in_lisp_reader_syntax_on_open_brack(result),
                 _ => {
                     // Backtrack!
                     result.context = In::Code;
@@ -1021,6 +1069,24 @@ fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
             match ch {
                 GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
                 _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
+            }
+        },
+        In::HyBracketStringPre => {
+            match ch {
+                "[" => in_hy_bracket_string_pre_on_open_brack(result),
+                _ => in_hy_bracket_string_pre_on_else(result),
+            }
+        },
+        In::HyBracketString => {
+            match ch {
+                "]" => in_hy_bracket_string_on_close_brack(result),
+                _ => (),
+            }
+        },
+        In::HyBracketStringPost => {
+            match ch {
+                "]" => in_hy_bracket_string_post_on_close_brack(result),
+                _ => in_hy_bracket_string_post_on_else(result),
             }
         },
     }

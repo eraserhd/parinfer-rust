@@ -153,6 +153,8 @@ struct Options {
     scheme_sexp_comments: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     janet_long_strings: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    hy_bracket_strings: Option<bool>,
 }
 
 
@@ -289,6 +291,7 @@ pub fn composed_unicode_graphemes_count_as_a_single_character() {
             guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
+            hy_bracket_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -334,6 +337,7 @@ pub fn graphemes_in_changes_are_counted_correctly() {
             guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
+            hy_bracket_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -379,6 +383,7 @@ pub fn wide_characters() {
             guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
+            hy_bracket_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -417,6 +422,7 @@ pub fn lisp_vline_symbols() {
             guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
+            hy_bracket_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -455,6 +461,7 @@ pub fn lisp_sharp_syntax_backtrack() {
             guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
+            hy_bracket_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -493,6 +500,7 @@ pub fn lisp_block_comments() {
             guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: None,
+            hy_bracket_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -531,6 +539,7 @@ pub fn guile_block_comments() {
             guile_block_comments: Some(true),
             scheme_sexp_comments: None,
             janet_long_strings: None,
+            hy_bracket_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -569,6 +578,7 @@ pub fn scheme_sexp_comments() {
             guile_block_comments: None,
             scheme_sexp_comments: Some(true),
             janet_long_strings: None,
+            hy_bracket_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -607,6 +617,7 @@ pub fn janet_long_strings() {
             guile_block_comments: None,
             scheme_sexp_comments: None,
             janet_long_strings: Some(true),
+            hy_bracket_strings: None,
             prev_cursor_x: None,
             prev_cursor_line: None
         }
@@ -618,4 +629,46 @@ pub fn janet_long_strings() {
     }).to_string();
     let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
     case.check2(answer);
+}
+
+#[test]
+pub fn hy_bracket_strings() {
+    let strings = ["'(#[check[ this #[q[ is ]] a bracket ) comment ]check] passed through)"];
+    for &string in &strings {
+        let case = Case {
+            text: String::from(string),
+            result: CaseResult {
+                text: String::from(string),
+                success: true,
+                error: None,
+                cursor_x: None,
+                cursor_line: None,
+                tab_stops: None,
+                paren_trails: None
+            },
+            source: Source {
+                line_no: 0
+            },
+            options: Options {
+                cursor_x: None,
+                cursor_line: None,
+                changes: None,
+                lisp_vline_symbols: None,
+                lisp_block_comments: None,
+                guile_block_comments: None,
+                scheme_sexp_comments: None,
+                janet_long_strings: None,
+                hy_bracket_strings: Some(true),
+                prev_cursor_x: None,
+                prev_cursor_line: None
+            }
+        };
+        let input = json!({
+            "mode": "paren",
+            "text": &case.text,
+            "options": &case.options
+        }).to_string();
+        let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
+        case.check2(answer);
+    }
 }

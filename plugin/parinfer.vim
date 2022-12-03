@@ -28,6 +28,9 @@ endif
 if !exists('g:parinfer_janet_long_strings')
   let g:parinfer_janet_long_strings = 0
 endif
+if !exists('g:parinfer_hy_bracket_strings')
+  let g:parinfer_hy_bracket_strings = 0
+endif
 
 " Needs to be outside function because we want <sfile> to be the location of this file,
 " not where it is getting called from.
@@ -73,6 +76,7 @@ au BufNewFile,BufRead *.yuck let b:parinfer_string_delimiters = ['"', "'", "`"]
 
 " Long strings settings
 au BufNewFile,BufRead *.janet let b:parinfer_janet_long_strings = 1
+au BufNewFile,BufRead *.hy let b:parinfer_hy_bracket_strings = 1
 
 " Logging {{{1
 
@@ -204,6 +208,9 @@ function! s:process_buffer() abort
   if !exists('b:parinfer_janet_long_strings')
     let b:parinfer_janet_long_strings = g:parinfer_janet_long_strings
   endif
+  if !exists('b:parinfer_hy_bracket_strings')
+    let b:parinfer_hy_bracket_strings = g:parinfer_hy_bracket_strings
+  endif
   if b:parinfer_last_changedtick != b:changedtick
     let l:cursor = s:get_cursor_position()
     let l:orig_lines = getline(1,'$')
@@ -220,6 +227,7 @@ function! s:process_buffer() abort
                                  \ "guileBlockComments": b:parinfer_guile_block_comments ? v:true : v:false,
                                  \ "schemeSexpComments": b:parinfer_scheme_sexp_comments ? v:true : v:false,
                                  \ "janetLongStrings": b:parinfer_janet_long_strings ? v:true : v:false,
+                                 \ "hyBracketStrings": b:parinfer_hy_bracket_strings ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1],
                                  \ "prevText": b:parinfer_previous_text } }
