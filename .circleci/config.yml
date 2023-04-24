@@ -2,7 +2,7 @@ version: 2
 jobs:
   build-and-test:
     docker:
-      - image: nixpkgs/nix
+      - image: nixorg/nix:circleci
     steps:
       - checkout
       - run:
