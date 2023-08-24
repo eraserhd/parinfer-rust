@@ -103,7 +103,7 @@ fn execute(request: AliasedRequest) -> Result<WrappedAnswer> {
 #[defun(user_ptr, mod_in_name = false)]
 // Create an Options Structure
 // We need this because we can't pass in an optional variant of Options in the new_options function
-/// Returns an Option with nil data for all fields
+/// Returns an Option with nil/default data for all fields
 ///
 /// # Examples
 ///
@@ -111,25 +111,7 @@ fn execute(request: AliasedRequest) -> Result<WrappedAnswer> {
 /// (parinfer-make-option)
 /// ```
 fn make_option() -> Result<Options> {
-  Ok(Options {
-    cursor_x: None,
-    cursor_line: None,
-    prev_cursor_x: None,
-    prev_cursor_line: None,
-    prev_text: None,
-    selection_start_line: None,
-    changes: Vec::new(),
-    partial_result: false,
-    force_balance: false,
-    return_parens: false,
-    comment_char: ';',
-    string_delimiters: vec!["\"".to_string()],
-    lisp_vline_symbols: false,
-    lisp_block_comments: false,
-    guile_block_comments: false,
-    scheme_sexp_comments: false,
-    janet_long_strings: false,
-  })
+    Ok(Options::default())
 }
 
 #[defun(user_ptr, mod_in_name = false)]

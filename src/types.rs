@@ -51,6 +51,31 @@ pub struct Options {
     pub janet_long_strings: bool,
 }
 
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            cursor_x: None,
+            cursor_line: None,
+            prev_cursor_x: None,
+            prev_cursor_line: None,
+            prev_text: None,
+            selection_start_line: None,
+            changes: Self::default_changes(),
+            partial_result: false,
+            force_balance: false,
+            return_parens: false,
+            comment_char: Self::default_comment(),
+            string_delimiters: Self::default_string_delimiters(),
+            lisp_vline_symbols: false,
+            lisp_block_comments: false,
+            guile_block_comments: false,
+            scheme_sexp_comments: false,
+            janet_long_strings: false,
+        }
+    }
+}
+
+
 impl Options {
     fn default_changes() -> Vec<Change> {
         vec![]
