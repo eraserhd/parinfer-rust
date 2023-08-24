@@ -123,31 +123,154 @@ fn make_option() -> Result<Options> {
 /// (parinfer-new-option 1 1 nil options changes)
 /// ```
 fn new_options(
-  cursor_x: Option<i64>,
-  cursor_line: Option<i64>,
-  selection_start_line: Option<i64>,
-  old_options: &Options,
-  changes: &Vec<Change>,
+    cursor_x: Option<i64>,
+    cursor_line: Option<i64>,
+    selection_start_line: Option<i64>,
+    old_options: &Options,
+    changes: &Vec<Change>,
 ) -> Result<Options> {
-  Ok(Options {
-    cursor_x: to_usize(cursor_x),
-    cursor_line: to_usize(cursor_line),
-    prev_cursor_x: old_options.cursor_x,
-    prev_cursor_line: old_options.cursor_line,
-    selection_start_line: to_usize(selection_start_line),
-    changes: changes.clone(),
-    prev_text: None,
-    partial_result: false,
-    force_balance: false,
-    return_parens: false,
-    comment_char: ';',
-    string_delimiters: vec!["\"".to_string()],
-    lisp_vline_symbols: false,
-    lisp_block_comments: false,
-    guile_block_comments: false,
-    scheme_sexp_comments: false,
-    janet_long_strings: false,
-  })
+    Ok(Options {
+        cursor_x: to_usize(cursor_x),
+        cursor_line: to_usize(cursor_line),
+        prev_cursor_x: old_options.cursor_x,
+        prev_cursor_line: old_options.cursor_line,
+        selection_start_line: to_usize(selection_start_line),
+        changes: changes.clone(),
+        prev_text: None,
+        ..old_options
+    })
+}
+
+emacs::define_errors! {
+    unknown_option_error "This option name is unknown should not be negative" (error)
+}
+
+#[defun(user_ptr, mod_in_name = false)]
+/// Set a field within the passed options.
+///
+/// Valid field names are:
+/// - `partial-result'
+/// - `force-balance'
+/// - `return-parens'
+/// - `comment-char'
+/// - `string-delimiters'
+/// - `lisp-vline-symbols'
+/// - `lisp-block-comments'
+/// - `guile-block-comments'
+/// - `scheme-sexp-comments'
+/// - `janet-long-strings'
+///
+/// # Examples
+///
+/// ```elisp,no_run
+/// (parinfer-set-option options 'partial-result t)
+/// ```
+fn set_option<'a>(
+    options: &mut Options,
+    option_name: Value<'a>,
+    new_value: Option<Value<'a>>,
+) -> Result<()> {
+    let env = option_name.env;
+    if env.eq(option_name, env.intern("partial-result")?) {
+        options.partial_result = new_value.into_rust()?;
+        return Ok(());
+    }
+    if env.eq(option_name, env.intern("force-balance")?) {
+        options.force_balance = new_value.into_rust()?;
+        return Ok(());
+    }
+    if env.eq(option_name, env.intern("return-parens")?) {
+        options.return_parens = new_value.into_rust()?;
+        return Ok(());
+    }
+    if env.eq(option_name, env.intern("comment-char")?) {
+        options.comment_char = new_value.into_rust()?;
+        return Ok(());
+    }
+    if env.eq(option_name, env.intern("string-delimiters")?) {
+        options.string_delimiters = new_value.into_rust()?;
+        return Ok(());
+    }
+    if env.eq(option_name, env.intern("lisp-vline-symbols")?) {
+        options.lisp_vline_symbols = new_value.into_rust()?;
+        return Ok(());
+    }
+    if env.eq(option_name, env.intern("lisp-block-comments")?) {
+        options.lisp_block_comments = new_value.into_rust()?;
+        return Ok(());
+    }
+    if env.eq(option_name, env.intern("guile-block-comments")?) {
+        options.guile_block_comments = new_value.into_rust()?;
+        return Ok(());
+    }
+    if env.eq(option_name, env.intern("scheme-sexp-comments")?) {
+        options.scheme_sexp_comments = new_value.into_rust()?;
+        return Ok(());
+    }
+    if env.eq(option_name, env.intern("julia-long-strings")?) {
+        options.julia_long_strings = new_value.into_rust()?;
+        return Ok(());
+    }
+
+    env.signal(unknown_option_error, option_name)
+}
+
+#[defun(user_ptr, mod_in_name = false)]
+/// Get a field within the passed options.
+///
+/// Valid field names are:
+/// - `partial-result'
+/// - `force-balance'
+/// - `return-parens'
+/// - `comment-char'
+/// - `string-delimiters'
+/// - `lisp-vline-symbols'
+/// - `lisp-block-comments'
+/// - `guile-block-comments'
+/// - `scheme-sexp-comments'
+/// - `janet-long-strings'
+///
+/// # Examples
+///
+/// ```elisp,no_run
+/// (parinfer-get-option options 'partial-result)
+/// ```
+fn get_option<'a>(options: &Options, option_name: Value<'a>) -> Result<Value<'a>> {
+    // The function is returning a type-erased Value because it can either be a boolean
+    // or a list
+    let env = option_name.env;
+    if env.eq(option_name, env.intern("partial-result")?) {
+        return Ok(options.partial_result.into_lisp(env)?);
+    }
+    if env.eq(option_name, env.intern("force-balance")?) {
+        return Ok(options.force_balance.into_lisp(env)?);
+    }
+    if env.eq(option_name, env.intern("return-parens")?) {
+        return Ok(options.return_parens.into_lisp(env)?);
+    }
+    if env.eq(option_name, env.intern("comment-char")?) {
+        return Ok(options.comment_char.into_lisp(env)?);
+    }
+    if env.eq(option_name, env.intern("string-delimiters")?) {
+        return Ok(options.string_delimiters.into_lisp(env)?);
+    }
+    if env.eq(option_name, env.intern("lisp-vline-symbols")?) {
+        return Ok(options.lisp_vline_symbols.into_lisp(env)?);
+    }
+    if env.eq(option_name, env.intern("lisp-block-comments")?) {
+        return Ok(options.lisp_block_comments.into_lisp(env)?);
+    }
+    if env.eq(option_name, env.intern("guile-block-comments")?) {
+        return Ok(options.guile_block_comments.into_lisp(env)?);
+    }
+    if env.eq(option_name, env.intern("scheme-sexp-comments")?) {
+        return Ok(options.scheme_sexp_comments.into_lisp(env)?);
+    }
+    if env.eq(option_name, env.intern("julia-long-strings")?) {
+        return Ok(options.julia_long_strings.into_lisp(env)?);
+    }
+
+    env.signal(unknown_option_error, option_name)
 }
 
 #[defun(mod_in_name = false)]
