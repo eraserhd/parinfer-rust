@@ -2,11 +2,7 @@ use super::parinfer::rc_process;
 use emacs::{Env, IntoLisp, Result, Value};
 use types::{Change, Error, Options, Request, SharedRequest, WrappedAnswer};
 
-use std::{fs::OpenOptions,
-          io::Write,
-          convert::TryFrom,
-          cell::RefCell,
-          rc::Rc};
+use std::{cell::RefCell, convert::TryFrom, fs::OpenOptions, io::Write, rc::Rc};
 
 emacs::plugin_is_GPL_compatible!();
 
@@ -94,7 +90,7 @@ type AliasedRequest<'a> = &'a SharedRequest;
 /// ```
 fn execute(request: AliasedRequest) -> Result<WrappedAnswer> {
   let answer = rc_process(&request);
-  let wrapped_answer = unsafe{WrappedAnswer::new(request.clone(), answer)};
+  let wrapped_answer = unsafe { WrappedAnswer::new(request.clone(), answer) };
   Ok(wrapped_answer)
 }
 ////////////////////////////////
@@ -111,7 +107,7 @@ fn execute(request: AliasedRequest) -> Result<WrappedAnswer> {
 /// (parinfer-make-option)
 /// ```
 fn make_option() -> Result<Options> {
-    Ok(Options::default())
+  Ok(Options::default())
 }
 
 #[defun(user_ptr, mod_in_name = false)]
@@ -123,22 +119,22 @@ fn make_option() -> Result<Options> {
 /// (parinfer-new-option 1 1 nil options changes)
 /// ```
 fn new_options(
-    cursor_x: Option<i64>,
-    cursor_line: Option<i64>,
-    selection_start_line: Option<i64>,
-    old_options: &Options,
-    changes: &Vec<Change>,
+  cursor_x: Option<i64>,
+  cursor_line: Option<i64>,
+  selection_start_line: Option<i64>,
+  old_options: &Options,
+  changes: &Vec<Change>,
 ) -> Result<Options> {
-    Ok(Options {
-        cursor_x: to_usize(cursor_x),
-        cursor_line: to_usize(cursor_line),
-        prev_cursor_x: old_options.cursor_x,
-        prev_cursor_line: old_options.cursor_line,
-        selection_start_line: to_usize(selection_start_line),
-        changes: changes.clone(),
-        prev_text: None,
-        ..old_options
-    })
+  Ok(Options {
+    cursor_x: to_usize(cursor_x),
+    cursor_line: to_usize(cursor_line),
+    prev_cursor_x: old_options.cursor_x,
+    prev_cursor_line: old_options.cursor_line,
+    selection_start_line: to_usize(selection_start_line),
+    changes: changes.clone(),
+    prev_text: None,
+    ..old_options
+  })
 }
 
 emacs::define_errors! {
@@ -166,53 +162,53 @@ emacs::define_errors! {
 /// (parinfer-set-option options 'partial-result t)
 /// ```
 fn set_option<'a>(
-    options: &mut Options,
-    option_name: Value<'a>,
-    new_value: Option<Value<'a>>,
+  options: &mut Options,
+  option_name: Value<'a>,
+  new_value: Option<Value<'a>>,
 ) -> Result<()> {
-    let env = option_name.env;
-    if env.eq(option_name, env.intern("partial-result")?) {
-        options.partial_result = new_value.into_rust()?;
-        return Ok(());
-    }
-    if env.eq(option_name, env.intern("force-balance")?) {
-        options.force_balance = new_value.into_rust()?;
-        return Ok(());
-    }
-    if env.eq(option_name, env.intern("return-parens")?) {
-        options.return_parens = new_value.into_rust()?;
-        return Ok(());
-    }
-    if env.eq(option_name, env.intern("comment-char")?) {
-        options.comment_char = new_value.into_rust()?;
-        return Ok(());
-    }
-    if env.eq(option_name, env.intern("string-delimiters")?) {
-        options.string_delimiters = new_value.into_rust()?;
-        return Ok(());
-    }
-    if env.eq(option_name, env.intern("lisp-vline-symbols")?) {
-        options.lisp_vline_symbols = new_value.into_rust()?;
-        return Ok(());
-    }
-    if env.eq(option_name, env.intern("lisp-block-comments")?) {
-        options.lisp_block_comments = new_value.into_rust()?;
-        return Ok(());
-    }
-    if env.eq(option_name, env.intern("guile-block-comments")?) {
-        options.guile_block_comments = new_value.into_rust()?;
-        return Ok(());
-    }
-    if env.eq(option_name, env.intern("scheme-sexp-comments")?) {
-        options.scheme_sexp_comments = new_value.into_rust()?;
-        return Ok(());
-    }
-    if env.eq(option_name, env.intern("julia-long-strings")?) {
-        options.julia_long_strings = new_value.into_rust()?;
-        return Ok(());
-    }
+  let env = option_name.env;
+  if env.eq(option_name, env.intern("partial-result")?) {
+    options.partial_result = new_value.into_rust()?;
+    return Ok(());
+  }
+  if env.eq(option_name, env.intern("force-balance")?) {
+    options.force_balance = new_value.into_rust()?;
+    return Ok(());
+  }
+  if env.eq(option_name, env.intern("return-parens")?) {
+    options.return_parens = new_value.into_rust()?;
+    return Ok(());
+  }
+  if env.eq(option_name, env.intern("comment-char")?) {
+    options.comment_char = new_value.into_rust()?;
+    return Ok(());
+  }
+  if env.eq(option_name, env.intern("string-delimiters")?) {
+    options.string_delimiters = new_value.into_rust()?;
+    return Ok(());
+  }
+  if env.eq(option_name, env.intern("lisp-vline-symbols")?) {
+    options.lisp_vline_symbols = new_value.into_rust()?;
+    return Ok(());
+  }
+  if env.eq(option_name, env.intern("lisp-block-comments")?) {
+    options.lisp_block_comments = new_value.into_rust()?;
+    return Ok(());
+  }
+  if env.eq(option_name, env.intern("guile-block-comments")?) {
+    options.guile_block_comments = new_value.into_rust()?;
+    return Ok(());
+  }
+  if env.eq(option_name, env.intern("scheme-sexp-comments")?) {
+    options.scheme_sexp_comments = new_value.into_rust()?;
+    return Ok(());
+  }
+  if env.eq(option_name, env.intern("julia-long-strings")?) {
+    options.julia_long_strings = new_value.into_rust()?;
+    return Ok(());
+  }
 
-    env.signal(unknown_option_error, option_name)
+  env.signal(unknown_option_error, option_name)
 }
 
 #[defun(user_ptr, mod_in_name = false)]
@@ -236,41 +232,41 @@ fn set_option<'a>(
 /// (parinfer-get-option options 'partial-result)
 /// ```
 fn get_option<'a>(options: &Options, option_name: Value<'a>) -> Result<Value<'a>> {
-    // The function is returning a type-erased Value because it can either be a boolean
-    // or a list
-    let env = option_name.env;
-    if env.eq(option_name, env.intern("partial-result")?) {
-        return Ok(options.partial_result.into_lisp(env)?);
-    }
-    if env.eq(option_name, env.intern("force-balance")?) {
-        return Ok(options.force_balance.into_lisp(env)?);
-    }
-    if env.eq(option_name, env.intern("return-parens")?) {
-        return Ok(options.return_parens.into_lisp(env)?);
-    }
-    if env.eq(option_name, env.intern("comment-char")?) {
-        return Ok(options.comment_char.into_lisp(env)?);
-    }
-    if env.eq(option_name, env.intern("string-delimiters")?) {
-        return Ok(options.string_delimiters.into_lisp(env)?);
-    }
-    if env.eq(option_name, env.intern("lisp-vline-symbols")?) {
-        return Ok(options.lisp_vline_symbols.into_lisp(env)?);
-    }
-    if env.eq(option_name, env.intern("lisp-block-comments")?) {
-        return Ok(options.lisp_block_comments.into_lisp(env)?);
-    }
-    if env.eq(option_name, env.intern("guile-block-comments")?) {
-        return Ok(options.guile_block_comments.into_lisp(env)?);
-    }
-    if env.eq(option_name, env.intern("scheme-sexp-comments")?) {
-        return Ok(options.scheme_sexp_comments.into_lisp(env)?);
-    }
-    if env.eq(option_name, env.intern("julia-long-strings")?) {
-        return Ok(options.julia_long_strings.into_lisp(env)?);
-    }
+  // The function is returning a type-erased Value because it can either be a boolean
+  // or a list
+  let env = option_name.env;
+  if env.eq(option_name, env.intern("partial-result")?) {
+    return Ok(options.partial_result.into_lisp(env)?);
+  }
+  if env.eq(option_name, env.intern("force-balance")?) {
+    return Ok(options.force_balance.into_lisp(env)?);
+  }
+  if env.eq(option_name, env.intern("return-parens")?) {
+    return Ok(options.return_parens.into_lisp(env)?);
+  }
+  if env.eq(option_name, env.intern("comment-char")?) {
+    return Ok(options.comment_char.into_lisp(env)?);
+  }
+  if env.eq(option_name, env.intern("string-delimiters")?) {
+    return Ok(options.string_delimiters.into_lisp(env)?);
+  }
+  if env.eq(option_name, env.intern("lisp-vline-symbols")?) {
+    return Ok(options.lisp_vline_symbols.into_lisp(env)?);
+  }
+  if env.eq(option_name, env.intern("lisp-block-comments")?) {
+    return Ok(options.lisp_block_comments.into_lisp(env)?);
+  }
+  if env.eq(option_name, env.intern("guile-block-comments")?) {
+    return Ok(options.guile_block_comments.into_lisp(env)?);
+  }
+  if env.eq(option_name, env.intern("scheme-sexp-comments")?) {
+    return Ok(options.scheme_sexp_comments.into_lisp(env)?);
+  }
+  if env.eq(option_name, env.intern("julia-long-strings")?) {
+    return Ok(options.julia_long_strings.into_lisp(env)?);
+  }
 
-    env.signal(unknown_option_error, option_name)
+  env.signal(unknown_option_error, option_name)
 }
 
 #[defun(mod_in_name = false)]
@@ -404,13 +400,14 @@ fn get_in_answer<'a>(
     "error" => match unwrapped_answer.error.clone() {
       Some(error) => Ok(RefCell::new(error).into_lisp(env)?),
       None => ().into_lisp(env),
-    }
+    },
     // "tab_stops"
     // "paren_trails"
     // "parens"
     _ => {
       env.message(format!("Key '{}' unsupported", query))?;
-      ().into_lisp(env)},
+      ().into_lisp(env)
+    }
   }
 }
 
@@ -434,7 +431,12 @@ fn print_answer(answer: &WrappedAnswer) -> Result<String> {
 /// ```elisp,no_run
 /// (parinfer-rust-debug "/tmp/parinfer.txt" options answer)
 /// ```
-fn debug(env: &Env, filename: String, options: &Options, wrapped_answer: &WrappedAnswer) -> Result<()> {
+fn debug(
+  env: &Env,
+  filename: String,
+  options: &Options,
+  wrapped_answer: &WrappedAnswer,
+) -> Result<()> {
   let answer = wrapped_answer.inner();
   let file = match OpenOptions::new().append(true).create(true).open(&filename) {
     Ok(file) => file,
@@ -467,7 +469,7 @@ fn debug(env: &Env, filename: String, options: &Options, wrapped_answer: &Wrappe
 /// ```elisp,no_run
 /// (parinfer-get-in-error error "message")
 /// ```
-fn get_in_error<'a>(env: &'a Env, error: &Error, key: Option<String>)-> Result<Value<'a>> {
+fn get_in_error<'a>(env: &'a Env, error: &Error, key: Option<String>) -> Result<Value<'a>> {
   let query = match key {
     Some(key) => key,
     None => "".to_string(),
@@ -495,7 +497,7 @@ fn get_in_error<'a>(env: &'a Env, error: &Error, key: Option<String>)-> Result<V
 /// ```elisp,no_run
 /// (parinfer-rust-print-error error)
 /// ```
-fn print_error(error: &Error) -> Result<String>{
+fn print_error(error: &Error) -> Result<String> {
   Ok(format!("{:?}", error).to_string())
 }
 
