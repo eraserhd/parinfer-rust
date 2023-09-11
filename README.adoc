@@ -95,10 +95,10 @@ Add this to your `+kakrc+`
 
 [source,kak]
 ----
-plug "eraserhd/parinfer-rust" do %{
+plug "eraserhd/parinfer-rust" defer noload do %{
     cargo install --force --path .
 } config %{
-    hook global WinSetOption filetype=(clojure|lisp|scheme|racket) %{
+    hook global WinSetOption filetype=(clojure|lisp|scheme|racket|janet|fennel) %{
         parinfer-enable-window -smart
     }
 }
