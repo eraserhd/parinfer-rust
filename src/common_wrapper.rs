@@ -19,8 +19,6 @@ pub fn panic_result() -> String {
             line_no: 0,
             input_x: 0,
             input_line_no: 0,
-            extra: None
-
         }),
         cursor_x: None,
         cursor_line: None,

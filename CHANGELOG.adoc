@@ -4,15 +4,39 @@ ChangeLog
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
 ---------------------------------------------------------------------------
 
+* Support for Apple Silicon (by bumping dependency versions)
+
+=== Vim
+
+* Vim errors when opening an unmodifiable buffer.
+* Fix of E523 regression (often triggered by using `.`), because Vim
+  changed the error to E578
+* Add support for [Dune](https://github.com/ocaml/dune)
+
 === Added
 
+* Added support for [Yuck](https://github.com/elkowar/eww)
+* String delimiters can now be explicitly configured with the 
+  `string_delimiters` option.
+* Added -l, --language LANG option to easily specify language defaults.
 * The user can now set the character used to denote comments. The
   character can be set on a global or per-buffer basis (using
   `g:parinfer_comment_char` and `b:parinfer_comment_char` respectively).
   By default, the global character is `;` and the character for Janet
   buffers is `#`.
-* Add support for Janet's long strings.
+* Add support for Janet's multiple-backtick-enclosed long strings.
 * Support for WebAssembly
+* More support for Common Lisp and Scheme:
+  - `|Enclosed symbols|`
+  - `#|Block comments|#`
+  - `#;(S-expression comments)`
+* Support for Guile's `#!block comments!#`
+
+=== Emacs
+
+* Compilation for Emacs is now optional. To enable it, run
+`cargo build --release --features emacs`
+
 
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.2...v0.4.3[0.4.3]
 ------------------------------------------------------------------------

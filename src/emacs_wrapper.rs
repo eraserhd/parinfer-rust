@@ -123,6 +123,11 @@ fn make_option() -> Result<Options> {
     force_balance: false,
     return_parens: false,
     comment_char: ';',
+    string_delimiters: vec!["\"".to_string()],
+    lisp_vline_symbols: false,
+    lisp_block_comments: false,
+    guile_block_comments: false,
+    scheme_sexp_comments: false,
     janet_long_strings: false,
   })
 }
@@ -154,6 +159,11 @@ fn new_options(
     force_balance: false,
     return_parens: false,
     comment_char: ';',
+    string_delimiters: vec!["\"".to_string()],
+    lisp_vline_symbols: false,
+    lisp_block_comments: false,
+    guile_block_comments: false,
+    scheme_sexp_comments: false,
     janet_long_strings: false,
   })
 }

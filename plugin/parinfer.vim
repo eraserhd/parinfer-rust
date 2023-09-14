@@ -10,33 +10,66 @@ endif
 if !exists('g:parinfer_comment_char')
   let g:parinfer_comment_char = ";"
 endif
+if !exists('g:parinfer_string_delimiters')
+  let g:parinfer_string_delimiters = ['"']
+endif
+if !exists('g:parinfer_lisp_vline_symbols')
+  let g:parinfer_lisp_vline_symbols = 0
+endif
+if !exists('g:parinfer_lisp_block_comments')
+  let g:parinfer_lisp_block_comments = 0
+endif
+if !exists('g:parinfer_guile_block_comments')
+  let g:parinfer_guile_block_comments = 0
+endif
+if !exists('g:parinfer_scheme_sexp_comments')
+  let g:parinfer_scheme_sexp_comments = 0
+endif
 if !exists('g:parinfer_janet_long_strings')
   let g:parinfer_janet_long_strings = 0
 endif
 
-if !exists('g:parinfer_dylib_path')
-  let s:libdir = expand('<sfile>:p:h:h') . '/target/release'
+" Needs to be outside function because we want <sfile> to be the location of this file,
+" not where it is getting called from.
+let s:libdir = expand('<sfile>:p:h:h') . '/target/release'
+
+function! s:guess_dylib_path() abort
   if has('macunix')
-    let g:parinfer_dylib_path = s:libdir . '/libparinfer_rust.dylib'
+    return s:libdir . '/libparinfer_rust.dylib'
   elseif has('unix')
     let s:uname = system("uname")
     if s:uname == "Darwin\n"
-      let g:parinfer_dylib_path = s:libdir . '/libparinfer_rust.dylib'
+      return s:libdir . '/libparinfer_rust.dylib'
     else
-      let g:parinfer_dylib_path = s:libdir . '/libparinfer_rust.so'
+      return s:libdir . '/libparinfer_rust.so'
     endif
   elseif has('win32')
-    let g:parinfer_dylib_path = s:libdir . '/parinfer_rust.dll'
+    return s:libdir . '/parinfer_rust.dll'
   else
     " I hope we don't come here!
+    echoerr 'Parinfer was unable to guess its dynamic library path.'
   endif
-endif
+endfunction
 
 command! ParinferOn let g:parinfer_enabled = 1
 command! ParinferOff let g:parinfer_enabled = 0
 
+" Common Lisp and Scheme: ignore parens in symbols enclosed by ||
+au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_vline_symbols = 1
+au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_vline_symbols = 1
+
+" Common Lisp and Scheme: ignore parens in block comments
+au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_block_comments = 1
+au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_block_comments = 1
+
+" Scheme (SRFI-62): S-expression comment
+au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_scheme_sexp_comments = 1
+
 " Comment settings
 au BufNewFile,BufRead *.janet let b:parinfer_comment_char = "#"
+
+" Quote settings
+au BufNewFile,BufRead *.yuck let b:parinfer_string_delimiters = ['"', "'", "`"]
 
 " Long strings settings
 au BufNewFile,BufRead *.janet let b:parinfer_janet_long_strings = 1
@@ -117,7 +150,11 @@ endfunction
 function! s:set_cursor_position(position) abort
   let l:cursor = copy(a:position)
   let l:cursor[1] += 1
-  let l:cursor[2] = strlen(strcharpart(getline(l:cursor[1]), 0, l:cursor[2])) + 1
+  let l:cursor[2] += 1
+
+  let line = getline(l:cursor[1])
+  let head = matchstr(line, '.\+\%<' . (l:cursor[2] + 1) . 'v') " text before cursor
+  let l:cursor[2] = strlen(head) + 1
   call setpos('.', l:cursor)
 endfunction
 
@@ -140,7 +177,7 @@ function! s:enter_buffer() abort
 endfunction
 
 function! s:process_buffer() abort
-  if !g:parinfer_enabled || &paste
+  if !g:parinfer_enabled || &paste || !&modifiable
     return
   endif
   if !exists('b:parinfer_last_changedtick')
@@ -148,6 +185,21 @@ function! s:process_buffer() abort
   endif
   if !exists('b:parinfer_comment_char')
     let b:parinfer_comment_char = g:parinfer_comment_char
+  endif
+  if !exists('b:parinfer_string_delimiters')
+    let b:parinfer_string_delimiters = g:parinfer_string_delimiters
+  endif
+  if !exists('b:parinfer_lisp_vline_symbols')
+    let b:parinfer_lisp_vline_symbols = g:parinfer_lisp_vline_symbols
+  endif
+  if !exists('b:parinfer_lisp_block_comments')
+    let b:parinfer_lisp_block_comments = g:parinfer_lisp_block_comments
+  endif
+  if !exists('b:parinfer_guile_block_comments')
+    let b:parinfer_guile_block_comments = g:parinfer_guile_block_comments
+  endif
+  if !exists('b:parinfer_scheme_sexp_comments')
+    let b:parinfer_scheme_sexp_comments = g:parinfer_scheme_sexp_comments
   endif
   if !exists('b:parinfer_janet_long_strings')
     let b:parinfer_janet_long_strings = g:parinfer_janet_long_strings
@@ -159,13 +211,21 @@ function! s:process_buffer() abort
     let l:request = { "mode": g:parinfer_mode,
                     \ "text": l:orig_text,
                     \ "options": { "commentChar": b:parinfer_comment_char,
+                                 \ "stringDelimiters": b:parinfer_string_delimiters,
                                  \ "cursorX": l:cursor[2],
                                  \ "cursorLine": l:cursor[1],
                                  \ "forceBalance": g:parinfer_force_balance ? v:true : v:false,
+                                 \ "lispVlineSymbols": b:parinfer_lisp_vline_symbols ? v:true : v:false,
+                                 \ "lispBlockComments": b:parinfer_lisp_block_comments ? v:true : v:false,
+                                 \ "guileBlockComments": b:parinfer_guile_block_comments ? v:true : v:false,
+                                 \ "schemeSexpComments": b:parinfer_scheme_sexp_comments ? v:true : v:false,
                                  \ "janetLongStrings": b:parinfer_janet_long_strings ? v:true : v:false,
                                  \ "prevCursorX": w:parinfer_previous_cursor[2],
                                  \ "prevCursorLine": w:parinfer_previous_cursor[1],
                                  \ "prevText": b:parinfer_previous_text } }
+    if !exists('g:parinfer_dylib_path')
+      let g:parinfer_dylib_path = s:guess_dylib_path()
+    endif
     let l:response = json_decode(libcall(g:parinfer_dylib_path, "run_parinfer", json_encode(l:request)))
     if l:response["success"]
       if l:response["text"] !=# l:orig_text
@@ -177,7 +237,7 @@ function! s:process_buffer() abort
         silent! undojoin
         try
           call setline(l:changed[0]+1, l:lines[l:changed[0]:l:changed[-1]])
-        catch /E523:/ " not allowed here
+        catch /E5\(23\|78\|65\):/ " not allowed here / not allowed to change text here / not allowed to chnage text or change window
           " If an event doesn't allow us to modify the buffer, that's OK.
           " Usually another event will happen before a redraw.
           call s:log('not-allowed-here', {})
@@ -231,11 +291,11 @@ function! s:initialize_buffer() abort
 endfunction
 
 augroup Parinfer
-  autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast call <SID>initialize_buffer()
+  autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast,yuck,dune call <SID>initialize_buffer()
 augroup END
 
 " Handle the case where parinfer was lazy-loaded
-if (&filetype ==? 'clojure' || &filetype ==? 'scheme' || &filetype ==? 'lisp' || &filetype ==? 'racket' || &filetype ==? 'hy' || &filetype ==? 'fennel' || &filetype ==? 'janet' || &filetype ==? 'carp' || &filetype ==? 'wast')
+if (&filetype ==? 'clojure' || &filetype ==? 'scheme' || &filetype ==? 'lisp' || &filetype ==? 'racket' || &filetype ==? 'hy' || &filetype ==? 'fennel' || &filetype ==? 'janet' || &filetype ==? 'carp' || &filetype ==? 'wast' || &filetype ==? 'yuck' || &filetype ==? 'dune')
   call <SID>initialize_buffer()
 endif
 

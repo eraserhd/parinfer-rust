@@ -18,6 +18,7 @@ Dependencies:
 * https://www.rust-lang.org/en-US/install.html[rust] >= 1.36
 * `clang` and `libclang-dev` packages or equivalent for your OS
 
+
 === Stand-alone CLI
 
 If you just want to run `parinfer-rust` from the command-line:
@@ -25,6 +26,11 @@ If you just want to run `parinfer-rust` from the command-line:
 ....
 $ cargo build --release
 $ cargo install
+....
+
+If you use emacs add the corresponding feature flag during compilation
+....
+$ cargo build --release --features emacs
 ....
 
 === Vim and Neovim
@@ -62,12 +68,24 @@ Plug 'eraserhd/parinfer-rust', {'do':
         \  'cargo build --release'}
 ----
 
-If you are a NixOS user, you can use this command instead:
+If you are a NixOS user using Plug, you can use this command instead:
 [source,viml]
 ----
 Plug 'eraserhd/parinfer-rust', {'do':
         \ 'nix-shell --run \"cargo build --release \"'}
 ----
+
+==== `+Nix+`
+
+If you are a Nix user using Nix + Home Manager to build your vim plugins, you can add:
+
+[source,nix]
+----
+programs.neovim = {
+    [ pkgs.vimPlugins.parinfer-rust ];
+}
+----
+
 
 === Kakoune
 
@@ -201,6 +219,8 @@ This wouldn’t be possible without the work of others:
   inspiration was stolen.
 * Justin Barclay - Emacs module.
 * Michael Camilleri - User-defined comments.
+* Mitsuhiro Nakamura - Support for Common Lisp and Scheme.
+* ElKowar - User-defined string-delimiters and support for Yuck.
 
 == License
 

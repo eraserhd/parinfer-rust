@@ -37,6 +37,16 @@ pub struct Options {
     pub return_parens: bool,
     #[serde(default = "Options::default_comment")]
     pub comment_char: char,
+    #[serde(default = "Options::default_string_delimiters")]
+    pub string_delimiters: Vec<String>,
+    #[serde(default = "Options::default_false")]
+    pub lisp_vline_symbols: bool,
+    #[serde(default = "Options::default_false")]
+    pub lisp_block_comments: bool,
+    #[serde(default = "Options::default_false")]
+    pub guile_block_comments: bool,
+    #[serde(default = "Options::default_false")]
+    pub scheme_sexp_comments: bool,
     #[serde(default = "Options::default_false")]
     pub janet_long_strings: bool,
 }
@@ -52,6 +62,9 @@ impl Options {
 
     fn default_comment() -> char {
         ';'
+    }
+    fn default_string_delimiters() -> Vec<String> {
+        vec!["\"".to_string()]
     }
 }
 
@@ -219,13 +232,6 @@ impl<'a> serde::Deserialize<'a> for ErrorName {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ErrorExtra {
-    pub name: ErrorName,
-    pub line_no: LineNumber,
-    pub x: Column
-}
-
 #[derive(Debug, Default, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Error {
@@ -235,9 +241,6 @@ pub struct Error {
     pub line_no: LineNumber,
     pub input_x: Column,
     pub input_line_no: LineNumber,
-
-    #[serde(skip)]
-    pub extra: Option<ErrorExtra>
 }
 
 impl From<std::str::Utf8Error> for Error {
