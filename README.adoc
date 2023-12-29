@@ -75,6 +75,17 @@ Plug 'eraserhd/parinfer-rust', {'do':
         \ 'nix-shell --run \"cargo build --release \"'}
 ----
 
+==== `+lazy.nvim+`
+
+Add this to your `+init.lua+`:
+
+[source,viml]
+----
+require("lazy").setup({
+  {"eraserhd/parinfer-rust", build = "cargo build --release"}
+})
+----
+
 ==== `+Nix+`
 
 If you are a Nix user using Nix + Home Manager to build your vim plugins, you can add:
