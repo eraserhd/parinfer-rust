@@ -76,6 +76,7 @@
             nativeBuildInputs = [
               rustc
               cargo
+              rust-analyzer
               vim
               neovim
             ] ++ lib.optional stdenv.isDarwin libiconv;
