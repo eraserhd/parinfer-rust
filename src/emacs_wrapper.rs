@@ -1,5 +1,5 @@
 use super::parinfer::rc_process;
-use emacs::{Env, IntoLisp, Result, Value};
+use emacs::{Env, FromLisp, IntoLisp, Result, Value, Vector};
 use types::{Change, Error, Options, Request, SharedRequest, WrappedAnswer};
 
 use std::{cell::RefCell, convert::TryFrom, fs::OpenOptions, io::Write, rc::Rc};
@@ -133,12 +133,12 @@ fn new_options(
     selection_start_line: to_usize(selection_start_line),
     changes: changes.clone(),
     prev_text: None,
-    ..old_options
+    ..old_options.clone()
   })
 }
 
 emacs::define_errors! {
-    unknown_option_error "This option name is unknown should not be negative" (error)
+    unknown_option_error "This option name is unknown" (error)
 }
 
 #[defun(user_ptr, mod_in_name = false)]
@@ -167,48 +167,78 @@ fn set_option<'a>(
   new_value: Option<Value<'a>>,
 ) -> Result<()> {
   let env = option_name.env;
-  if env.eq(option_name, env.intern("partial-result")?) {
-    options.partial_result = new_value.into_rust()?;
+  if option_name.eq(env.intern("partial-result")?) {
+    options.partial_result = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
     return Ok(());
   }
-  if env.eq(option_name, env.intern("force-balance")?) {
-    options.force_balance = new_value.into_rust()?;
+  if option_name.eq(env.intern("force-balance")?) {
+    options.force_balance = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
     return Ok(());
   }
-  if env.eq(option_name, env.intern("return-parens")?) {
-    options.return_parens = new_value.into_rust()?;
+  if option_name.eq(env.intern("return-parens")?) {
+    options.return_parens = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
     return Ok(());
   }
-  if env.eq(option_name, env.intern("comment-char")?) {
-    options.comment_char = new_value.into_rust()?;
+  if option_name.eq(env.intern("comment-char")?) {
+    options.comment_char = new_value
+      .map(|val| String::from_lisp(val))
+      .transpose()?
+      .map(|char_as_str| char_as_str.chars().next())
+      .flatten()
+      .unwrap_or_else(Options::default_comment);
     return Ok(());
   }
-  if env.eq(option_name, env.intern("string-delimiters")?) {
-    options.string_delimiters = new_value.into_rust()?;
+  if option_name.eq(env.intern("string-delimiters")?) {
+    if let Some(new_value) = new_value {
+      let vector = Vector::from_lisp(new_value)?;
+      let rust_values = vector
+        .into_iter()
+        .map(|inner_value| String::from_lisp(inner_value))
+        .collect::<Result<Vec<String>>>()?;
+      options.string_delimiters = rust_values;
+    } else {
+      options.string_delimiters = Options::default_string_delimiters();
+    }
     return Ok(());
   }
-  if env.eq(option_name, env.intern("lisp-vline-symbols")?) {
-    options.lisp_vline_symbols = new_value.into_rust()?;
+  if option_name.eq(env.intern("lisp-vline-symbols")?) {
+    options.lisp_vline_symbols = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
     return Ok(());
   }
-  if env.eq(option_name, env.intern("lisp-block-comments")?) {
-    options.lisp_block_comments = new_value.into_rust()?;
+  if option_name.eq(env.intern("lisp-block-comments")?) {
+    options.lisp_block_comments = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
     return Ok(());
   }
-  if env.eq(option_name, env.intern("guile-block-comments")?) {
-    options.guile_block_comments = new_value.into_rust()?;
+  if option_name.eq(env.intern("guile-block-comments")?) {
+    options.guile_block_comments = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
     return Ok(());
   }
-  if env.eq(option_name, env.intern("scheme-sexp-comments")?) {
-    options.scheme_sexp_comments = new_value.into_rust()?;
+  if option_name.eq(env.intern("scheme-sexp-comments")?) {
+    options.scheme_sexp_comments = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
     return Ok(());
   }
-  if env.eq(option_name, env.intern("julia-long-strings")?) {
-    options.julia_long_strings = new_value.into_rust()?;
+  if option_name.eq(env.intern("julia-long-strings")?) {
+    options.janet_long_strings = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
     return Ok(());
   }
 
-  env.signal(unknown_option_error, option_name)
+  env.signal(unknown_option_error, [option_name])
 }
 
 #[defun(user_ptr, mod_in_name = false)]
@@ -235,38 +265,66 @@ fn get_option<'a>(options: &Options, option_name: Value<'a>) -> Result<Value<'a>
   // The function is returning a type-erased Value because it can either be a boolean
   // or a list
   let env = option_name.env;
-  if env.eq(option_name, env.intern("partial-result")?) {
+  if option_name.eq(env.intern("partial-result")?) {
     return Ok(options.partial_result.into_lisp(env)?);
   }
-  if env.eq(option_name, env.intern("force-balance")?) {
+  if option_name.eq(env.intern("force-balance")?) {
     return Ok(options.force_balance.into_lisp(env)?);
   }
-  if env.eq(option_name, env.intern("return-parens")?) {
+  if option_name.eq(env.intern("return-parens")?) {
     return Ok(options.return_parens.into_lisp(env)?);
   }
-  if env.eq(option_name, env.intern("comment-char")?) {
-    return Ok(options.comment_char.into_lisp(env)?);
+  if option_name.eq(env.intern("comment-char")?) {
+    return Ok(options.comment_char.to_string().into_lisp(env)?);
   }
-  if env.eq(option_name, env.intern("string-delimiters")?) {
-    return Ok(options.string_delimiters.into_lisp(env)?);
+  if option_name.eq(env.intern("string-delimiters")?) {
+    // return Ok(to_lisp_vec(env, options.string_delimiters.clone())?);
+    return Ok(VecToVector(options.string_delimiters.clone()).into_lisp(env)?);
   }
-  if env.eq(option_name, env.intern("lisp-vline-symbols")?) {
+  if option_name.eq(env.intern("lisp-vline-symbols")?) {
     return Ok(options.lisp_vline_symbols.into_lisp(env)?);
   }
-  if env.eq(option_name, env.intern("lisp-block-comments")?) {
+  if option_name.eq(env.intern("lisp-block-comments")?) {
     return Ok(options.lisp_block_comments.into_lisp(env)?);
   }
-  if env.eq(option_name, env.intern("guile-block-comments")?) {
+  if option_name.eq(env.intern("guile-block-comments")?) {
     return Ok(options.guile_block_comments.into_lisp(env)?);
   }
-  if env.eq(option_name, env.intern("scheme-sexp-comments")?) {
+  if option_name.eq(env.intern("scheme-sexp-comments")?) {
     return Ok(options.scheme_sexp_comments.into_lisp(env)?);
   }
-  if env.eq(option_name, env.intern("julia-long-strings")?) {
-    return Ok(options.julia_long_strings.into_lisp(env)?);
+  if option_name.eq(env.intern("julia-long-strings")?) {
+    return Ok(options.janet_long_strings.into_lisp(env)?);
   }
 
-  env.signal(unknown_option_error, option_name)
+  env.signal(unknown_option_error, [option_name])
+}
+
+fn to_lisp_vec(env: &Env, vec: Vec<String>) -> Result<Value> {
+  env.vector(
+    &vec
+      .into_iter()
+      .map(|s| s.into_lisp(env))
+      .collect::<Result<Vec<Value>>>()?,
+  )
+}
+
+// Make a wrapper type to convince the compiler that the
+// lifetimes of the associated lisp environment are going to be
+// fine
+struct VecToVector(Vec<String>);
+
+impl<'e> IntoLisp<'e> for VecToVector {
+  fn into_lisp(self, env: &'e Env) -> Result<Value<'e>> {
+    env.vector(
+      self
+        .0
+        .into_iter()
+        .map(|s| s.into_lisp(env))
+        .collect::<Result<Vec<Value>>>()?
+        .as_slice(),
+    )
+  }
 }
 
 #[defun(mod_in_name = false)]
