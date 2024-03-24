@@ -647,28 +647,10 @@ fn peek_works() {
   assert_eq!(peek(&empty, 1), None);
 }
 
-fn delta_to_column(delta: Delta) -> Column {
-  if delta >= 0 {
-    delta as Column
-  } else {
-    0 as Column
-  }
-}
-
-#[cfg(test)]
-#[test]
-fn delta_to_column_works() {
-  assert_eq!(delta_to_column(1), 1);
-  assert_eq!(delta_to_column(0), 0);
-  assert_eq!(delta_to_column(-1), 0);
-}
 // {{{1 Questions about characters
 
 fn is_close_paren(paren: &str) -> bool {
-  match paren {
-    "}" | "]" | ")" => true,
-    _ => false,
-  }
+  matches!(paren, "}" | "]" | ")")
 }
 
 fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren<'a>>, ch: &'a str) -> bool {
@@ -692,7 +674,8 @@ fn is_whitespace<'a>(result: &State<'a>) -> bool {
 fn is_closable<'a>(result: &State<'a>) -> bool {
   let ch = result.ch;
   let closer = is_close_paren(ch) && !result.is_escaped();
-  return result.is_in_code() && !is_whitespace(result) && ch != "" && !closer;
+
+  result.is_in_code() && !is_whitespace(result) && ch != "" && !closer
 }
 
 // {{{1 Advanced operations on characters
@@ -705,7 +688,7 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
   let holding = result.cursor_line == Some(opener.line_no)
     && result.cursor_x.map(|x| hold_min_x <= x).unwrap_or(false)
     && result.cursor_x.map(|x| x <= hold_max_x).unwrap_or(false);
-  let should_check_prev = result.changes.is_empty() && result.prev_cursor_line != None;
+  let should_check_prev = result.changes.is_empty() && result.prev_cursor_line.is_some();
   if should_check_prev {
     let prev_holding = result.prev_cursor_line == Some(opener.line_no)
       && result
@@ -736,12 +719,10 @@ fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
     if result.is_in_code() && is_whitespace(result) {
       result.tracking_arg_tab_stop = TrackingArgTabStop::Arg;
     }
-  } else if state == TrackingArgTabStop::Arg {
-    if !is_whitespace(result) {
-      let opener = result.paren_stack.last_mut().unwrap();
-      opener.arg_x = Some(result.x);
-      result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
-    }
+  } else if state == TrackingArgTabStop::Arg && !is_whitespace(result) {
+    let opener = result.paren_stack.last_mut().unwrap();
+    opener.arg_x = Some(result.x);
+    result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
   }
 }
 

@@ -241,7 +241,7 @@ fn set_option<'a>(
   env.signal(unknown_option_error, [option_name])
 }
 
-#[defun(user_ptr, mod_in_name = false)]
+#[defun(mod_in_name = false)]
 /// Get a field within the passed options.
 ///
 /// Valid field names are:
@@ -298,15 +298,6 @@ fn get_option<'a>(options: &Options, option_name: Value<'a>) -> Result<Value<'a>
   }
 
   env.signal(unknown_option_error, [option_name])
-}
-
-fn to_lisp_vec(env: &Env, vec: Vec<String>) -> Result<Value> {
-  env.vector(
-    &vec
-      .into_iter()
-      .map(|s| s.into_lisp(env))
-      .collect::<Result<Vec<Value>>>()?,
-  )
 }
 
 // Make a wrapper type to convince the compiler that the
