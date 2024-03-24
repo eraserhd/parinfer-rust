@@ -1,12 +1,8 @@
 use super::parinfer::rc_process;
-use emacs::{Env, IntoLisp, Result, Value};
+use emacs::{Env, FromLisp, IntoLisp, Result, Value, Vector};
 use types::{Change, Error, Options, Request, SharedRequest, WrappedAnswer};
 
-use std::{fs::OpenOptions,
-          io::Write,
-          convert::TryFrom,
-          cell::RefCell,
-          rc::Rc};
+use std::{cell::RefCell, convert::TryFrom, fs::OpenOptions, io::Write, rc::Rc};
 
 emacs::plugin_is_GPL_compatible!();
 
@@ -94,7 +90,7 @@ type AliasedRequest<'a> = &'a SharedRequest;
 /// ```
 fn execute(request: AliasedRequest) -> Result<WrappedAnswer> {
   let answer = rc_process(&request);
-  let wrapped_answer = unsafe{WrappedAnswer::new(request.clone(), answer)};
+  let wrapped_answer = unsafe { WrappedAnswer::new(request.clone(), answer) };
   Ok(wrapped_answer)
 }
 ////////////////////////////////
@@ -103,7 +99,7 @@ fn execute(request: AliasedRequest) -> Result<WrappedAnswer> {
 #[defun(user_ptr, mod_in_name = false)]
 // Create an Options Structure
 // We need this because we can't pass in an optional variant of Options in the new_options function
-/// Returns an Option with nil data for all fields
+/// Returns an Option with nil/default data for all fields
 ///
 /// # Examples
 ///
@@ -111,25 +107,7 @@ fn execute(request: AliasedRequest) -> Result<WrappedAnswer> {
 /// (parinfer-make-option)
 /// ```
 fn make_option() -> Result<Options> {
-  Ok(Options {
-    cursor_x: None,
-    cursor_line: None,
-    prev_cursor_x: None,
-    prev_cursor_line: None,
-    prev_text: None,
-    selection_start_line: None,
-    changes: Vec::new(),
-    partial_result: false,
-    force_balance: false,
-    return_parens: false,
-    comment_char: ';',
-    string_delimiters: vec!["\"".to_string()],
-    lisp_vline_symbols: false,
-    lisp_block_comments: false,
-    guile_block_comments: false,
-    scheme_sexp_comments: false,
-    janet_long_strings: false,
-  })
+  Ok(Options::default())
 }
 
 #[defun(user_ptr, mod_in_name = false)]
@@ -155,17 +133,189 @@ fn new_options(
     selection_start_line: to_usize(selection_start_line),
     changes: changes.clone(),
     prev_text: None,
-    partial_result: false,
-    force_balance: false,
-    return_parens: false,
-    comment_char: ';',
-    string_delimiters: vec!["\"".to_string()],
-    lisp_vline_symbols: false,
-    lisp_block_comments: false,
-    guile_block_comments: false,
-    scheme_sexp_comments: false,
-    janet_long_strings: false,
+    ..old_options.clone()
   })
+}
+
+emacs::define_errors! {
+    unknown_option_error "This option name is unknown" (error)
+}
+
+#[defun(user_ptr, mod_in_name = false)]
+/// Set a field within the passed options.
+///
+/// Valid field names are:
+/// - `partial-result'
+/// - `force-balance'
+/// - `return-parens'
+/// - `comment-char'
+/// - `string-delimiters'
+/// - `lisp-vline-symbols'
+/// - `lisp-block-comments'
+/// - `guile-block-comments'
+/// - `scheme-sexp-comments'
+/// - `janet-long-strings'
+///
+/// # Examples
+///
+/// ```elisp,no_run
+/// (parinfer-set-option options 'partial-result t)
+/// ```
+fn set_option<'a>(
+  options: &mut Options,
+  option_name: Value<'a>,
+  new_value: Option<Value<'a>>,
+) -> Result<()> {
+  let env = option_name.env;
+  if option_name.eq(env.intern("partial-result")?) {
+    options.partial_result = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
+    return Ok(());
+  }
+  if option_name.eq(env.intern("force-balance")?) {
+    options.force_balance = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
+    return Ok(());
+  }
+  if option_name.eq(env.intern("return-parens")?) {
+    options.return_parens = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
+    return Ok(());
+  }
+  if option_name.eq(env.intern("comment-char")?) {
+    options.comment_char = new_value
+      .map(|val| String::from_lisp(val))
+      .transpose()?
+      .map(|char_as_str| char_as_str.chars().next())
+      .flatten()
+      .unwrap_or_else(Options::default_comment);
+    return Ok(());
+  }
+  if option_name.eq(env.intern("string-delimiters")?) {
+    if let Some(new_value) = new_value {
+      let vector = Vector::from_lisp(new_value)?;
+      let rust_values = vector
+        .into_iter()
+        .map(|inner_value| String::from_lisp(inner_value))
+        .collect::<Result<Vec<String>>>()?;
+      options.string_delimiters = rust_values;
+    } else {
+      options.string_delimiters = Options::default_string_delimiters();
+    }
+    return Ok(());
+  }
+  if option_name.eq(env.intern("lisp-vline-symbols")?) {
+    options.lisp_vline_symbols = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
+    return Ok(());
+  }
+  if option_name.eq(env.intern("lisp-block-comments")?) {
+    options.lisp_block_comments = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
+    return Ok(());
+  }
+  if option_name.eq(env.intern("guile-block-comments")?) {
+    options.guile_block_comments = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
+    return Ok(());
+  }
+  if option_name.eq(env.intern("scheme-sexp-comments")?) {
+    options.scheme_sexp_comments = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
+    return Ok(());
+  }
+  if option_name.eq(env.intern("julia-long-strings")?) {
+    options.janet_long_strings = new_value
+      .map(|val| val.is_not_nil())
+      .unwrap_or_else(Options::default_false);
+    return Ok(());
+  }
+
+  env.signal(unknown_option_error, [option_name])
+}
+
+#[defun(mod_in_name = false)]
+/// Get a field within the passed options.
+///
+/// Valid field names are:
+/// - `partial-result'
+/// - `force-balance'
+/// - `return-parens'
+/// - `comment-char'
+/// - `string-delimiters'
+/// - `lisp-vline-symbols'
+/// - `lisp-block-comments'
+/// - `guile-block-comments'
+/// - `scheme-sexp-comments'
+/// - `janet-long-strings'
+///
+/// # Examples
+///
+/// ```elisp,no_run
+/// (parinfer-get-option options 'partial-result)
+/// ```
+fn get_option<'a>(options: &Options, option_name: Value<'a>) -> Result<Value<'a>> {
+  // The function is returning a type-erased Value because it can either be a boolean
+  // or a list
+  let env = option_name.env;
+  if option_name.eq(env.intern("partial-result")?) {
+    return Ok(options.partial_result.into_lisp(env)?);
+  }
+  if option_name.eq(env.intern("force-balance")?) {
+    return Ok(options.force_balance.into_lisp(env)?);
+  }
+  if option_name.eq(env.intern("return-parens")?) {
+    return Ok(options.return_parens.into_lisp(env)?);
+  }
+  if option_name.eq(env.intern("comment-char")?) {
+    return Ok(options.comment_char.to_string().into_lisp(env)?);
+  }
+  if option_name.eq(env.intern("string-delimiters")?) {
+    // return Ok(to_lisp_vec(env, options.string_delimiters.clone())?);
+    return Ok(VecToVector(options.string_delimiters.clone()).into_lisp(env)?);
+  }
+  if option_name.eq(env.intern("lisp-vline-symbols")?) {
+    return Ok(options.lisp_vline_symbols.into_lisp(env)?);
+  }
+  if option_name.eq(env.intern("lisp-block-comments")?) {
+    return Ok(options.lisp_block_comments.into_lisp(env)?);
+  }
+  if option_name.eq(env.intern("guile-block-comments")?) {
+    return Ok(options.guile_block_comments.into_lisp(env)?);
+  }
+  if option_name.eq(env.intern("scheme-sexp-comments")?) {
+    return Ok(options.scheme_sexp_comments.into_lisp(env)?);
+  }
+  if option_name.eq(env.intern("julia-long-strings")?) {
+    return Ok(options.janet_long_strings.into_lisp(env)?);
+  }
+
+  env.signal(unknown_option_error, [option_name])
+}
+
+// Make a wrapper type to convince the compiler that the
+// lifetimes of the associated lisp environment are going to be
+// fine
+struct VecToVector(Vec<String>);
+
+impl<'e> IntoLisp<'e> for VecToVector {
+  fn into_lisp(self, env: &'e Env) -> Result<Value<'e>> {
+    env.vector(
+      self
+        .0
+        .into_iter()
+        .map(|s| s.into_lisp(env))
+        .collect::<Result<Vec<Value>>>()?
+        .as_slice(),
+    )
+  }
 }
 
 #[defun(mod_in_name = false)]
@@ -299,13 +449,14 @@ fn get_in_answer<'a>(
     "error" => match unwrapped_answer.error.clone() {
       Some(error) => Ok(RefCell::new(error).into_lisp(env)?),
       None => ().into_lisp(env),
-    }
+    },
     // "tab_stops"
     // "paren_trails"
     // "parens"
     _ => {
       env.message(format!("Key '{}' unsupported", query))?;
-      ().into_lisp(env)},
+      ().into_lisp(env)
+    }
   }
 }
 
@@ -329,7 +480,12 @@ fn print_answer(answer: &WrappedAnswer) -> Result<String> {
 /// ```elisp,no_run
 /// (parinfer-rust-debug "/tmp/parinfer.txt" options answer)
 /// ```
-fn debug(env: &Env, filename: String, options: &Options, wrapped_answer: &WrappedAnswer) -> Result<()> {
+fn debug(
+  env: &Env,
+  filename: String,
+  options: &Options,
+  wrapped_answer: &WrappedAnswer,
+) -> Result<()> {
   let answer = wrapped_answer.inner();
   let file = match OpenOptions::new().append(true).create(true).open(&filename) {
     Ok(file) => file,
@@ -362,7 +518,7 @@ fn debug(env: &Env, filename: String, options: &Options, wrapped_answer: &Wrappe
 /// ```elisp,no_run
 /// (parinfer-get-in-error error "message")
 /// ```
-fn get_in_error<'a>(env: &'a Env, error: &Error, key: Option<String>)-> Result<Value<'a>> {
+fn get_in_error<'a>(env: &'a Env, error: &Error, key: Option<String>) -> Result<Value<'a>> {
   let query = match key {
     Some(key) => key,
     None => "".to_string(),
@@ -390,7 +546,7 @@ fn get_in_error<'a>(env: &'a Env, error: &Error, key: Option<String>)-> Result<V
 /// ```elisp,no_run
 /// (parinfer-rust-print-error error)
 /// ```
-fn print_error(error: &Error) -> Result<String>{
+fn print_error(error: &Error) -> Result<String> {
   Ok(format!("{:?}", error).to_string())
 }
 
