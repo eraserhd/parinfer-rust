@@ -16,7 +16,7 @@ pub struct Change {
   pub new_text: String,
 }
 
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
   pub cursor_x: Option<Column>,
@@ -336,5 +336,34 @@ impl Drop for WrappedAnswer {
   fn drop(&mut self) {
     let ptr = (&mut self.raw as *mut RawAnswer) as *mut Answer;
     unsafe { ptr.read() };
+  }
+}
+#[cfg(tests)]
+mod tests {
+  use super::Options;
+  #[test]
+  fn options_produces_a_stable_default() {
+    assert_eq!(
+      Options::default(),
+      Options {
+        cursor_x: None,
+        cursor_line: None,
+        prev_cursor_x: None,
+        prev_cursor_line: None,
+        prev_text: None,
+        selection_start_line: None,
+        changes: vec![],
+        partial_result: false,
+        force_balance: false,
+        return_parens: false,
+        comment_char: ';',
+        string_delimiters: vec!["\"".to_string()],
+        lisp_vline_symbols: false,
+        lisp_block_comments: false,
+        guile_block_comments: false,
+        scheme_sexp_comments: false,
+        janet_long_strings: false,
+      }
+    )
   }
 }

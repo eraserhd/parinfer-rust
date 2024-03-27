@@ -104,10 +104,10 @@ fn execute(request: AliasedRequest) -> Result<WrappedAnswer> {
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-make-option)
+/// (parinfer-rust-make-option)
 /// ```
 fn make_option() -> Result<Options> {
-  Ok(Options::default())
+  Ok(Default::default())
 }
 
 #[defun(user_ptr, mod_in_name = false)]
@@ -116,7 +116,7 @@ fn make_option() -> Result<Options> {
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-new-option 1 1 nil options changes)
+/// (parinfer-rust-new-option 1 1 nil options changes)
 /// ```
 fn new_options(
   cursor_x: Option<i64>,
@@ -159,7 +159,7 @@ emacs::define_errors! {
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-set-option options 'partial-result t)
+/// (parinfer-rust-set-option options 'partial-result t)
 /// ```
 fn set_option<'a>(
   options: &mut Options,
@@ -259,7 +259,7 @@ fn set_option<'a>(
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-get-option options 'partial-result)
+/// (parinfer-rust-get-option options 'partial-result)
 /// ```
 fn get_option<'a>(options: &Options, option_name: Value<'a>) -> Result<Value<'a>> {
   // The function is returning a type-erased Value because it can either be a boolean
@@ -324,7 +324,7 @@ impl<'e> IntoLisp<'e> for VecToVector {
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-print-option options)
+/// (parinfer-rust-print-option options)
 /// ```
 fn print_options<'a>(options: &Options) -> Result<String> {
   Ok(format!("{:?}", options.clone()).to_string())
@@ -340,7 +340,7 @@ fn print_options<'a>(options: &Options) -> Result<String> {
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-make-changes)
+/// (parinfer-rust-make-changes)
 /// ```
 fn make_changes() -> Result<Vec<Change>> {
   Ok(Vec::new())
@@ -364,7 +364,7 @@ fn new_change(line_number: i64, x: i64, old_text: String, new_text: String) -> R
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-make-changes)
+/// (parinfer-rust-make-changes)
 /// ```
 fn add_change(changes: &mut Vec<Change>, change: &Change) -> Result<()> {
   Ok(changes.push(change.clone()))
@@ -376,7 +376,7 @@ fn add_change(changes: &mut Vec<Change>, change: &Change) -> Result<()> {
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-print-changes changes)
+/// (parinfer-rust-print-changes changes)
 /// ```
 fn print_changes<'a>(env: &'a Env, changes: &mut Vec<Change>) -> Result<Value<'a>> {
   format!("{:?}", changes).into_lisp(env)
@@ -392,7 +392,7 @@ fn print_changes<'a>(env: &'a Env, changes: &mut Vec<Change>) -> Result<Value<'a
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-make-request "paren" (buffer-substring-no-properties) options)
+/// (parinfer-rust-make-request "paren" (buffer-substring-no-properties) options)
 /// ```
 //
 fn make_request(mode: String, text: String, options: &mut Options) -> Result<SharedRequest> {
@@ -409,7 +409,7 @@ fn make_request(mode: String, text: String, options: &mut Options) -> Result<Sha
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-print-request request)
+/// (parinfer--rust-print-request request)
 /// ```
 //
 #[defun(mod_in_name = false)]
@@ -426,7 +426,7 @@ fn print_request(request: AliasedRequest) -> Result<String> {
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-get-in-answer answer "success")
+/// (parinfer-rust-get-in-answer answer "success")
 /// ```
 fn get_in_answer<'a>(
   env: &'a Env,
@@ -516,7 +516,7 @@ fn debug(
 /// # Examples
 ///
 /// ```elisp,no_run
-/// (parinfer-get-in-error error "message")
+/// (parinfer-rust-get-in-error error "message")
 /// ```
 fn get_in_error<'a>(env: &'a Env, error: &Error, key: Option<String>) -> Result<Value<'a>> {
   let query = match key {

@@ -77,6 +77,7 @@
               rustc
               cargo
               rust-analyzer
+              rustfmt
               vim
               neovim
             ] ++ lib.optional stdenv.isDarwin libiconv;
