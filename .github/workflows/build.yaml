@@ -16,6 +16,8 @@ jobs:
         uses: actions/checkout@v1
       - name: Check Nix flake inputs
         uses: DeterminateSystems/flake-checker-action@v2
+        with:
+          fail-mode: true
       - name: Build and run tests
         run: nix flake check
 
