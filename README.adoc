@@ -207,14 +207,11 @@ reproducible build and test environments.  It's a good idea to run tests with
 it.
 
 ....
-$ nix-build release.nix                  # Build and test everything
+$ nix flake check                        # Build and test everything
 $ cargo test                             # Run the native tests
 $ cargo +nightly web test                # Test the WebAssembly version
 $ vim --clean -u tests/vim/run.vim       # Test against locally-installed Vim
 $ ( cd tests/kakoune && ./run.sh )       # Test against locally-installed Kakoune
-$ nix-build release.nix -A vim-tests     # Test against Nix Vim package
-$ nix-build release.nix -A neovim-tests  # Test against Nix Neovim package
-$ nix-build release.nix -A kakoune-tests # Test against Nix Kakoune package
 ....
 
 Vim tests are in a nice, readable format in `+tests/vim/test-cases.md+`.

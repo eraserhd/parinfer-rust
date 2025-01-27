@@ -3,12 +3,26 @@ on:
   pull_request:
   push:
 jobs:
-  test:
+  test-non-windows:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         rust: [stable]
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest]
+    steps:
+      - name: Check Nix flake inputs
+        uses: DeterminateSystems/flake-checker-action@v2
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v3
+      - name: Build and run tests
+        run: nix flake check
+
+  test-windows:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        rust: [stable]
+        os: [windows-latest]
     steps:
       - name: Setup Rust
         uses: hecrj/setup-rust-action@master
@@ -17,12 +31,10 @@ jobs:
           components: rustfmt, clippy
       - name: Installing LibClang on Windows
         shell: pwsh
-        if: matrix.os == 'windows-latest'
         run: choco install -y llvm
       - name: Checkout
         uses: actions/checkout@v1
       - name: Build the crate
         run: cargo build --release
-      - name: Run tests
-        if: matrix.os != 'windows-latest'
-        run: cargo test --verbose
+      - name: Run Tests
+        run: cargo test
