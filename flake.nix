@@ -19,6 +19,12 @@
             : ${parinfer-rust}
           '';
         };
+        devShells.default = parinfer-rust.overrideAttrs (oldAttrs: {
+          nativeBuildInputs = oldAttrs.nativeBuildInputs ++ (with pkgs; [
+            vim
+            neovim
+          ]);
+        });
     })) // {
       overlays.default = final: prev: {
         parinfer-rust = prev.callPackage ./derivation.nix {};
