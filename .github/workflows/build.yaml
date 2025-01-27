@@ -10,12 +10,12 @@ jobs:
         rust: [stable]
         os: [ubuntu-latest, macOS-latest]
     steps:
-      - name: Check Nix flake inputs
-        uses: DeterminateSystems/flake-checker-action@v2
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v3
       - name: Checkout
         uses: actions/checkout@v1
+      - name: Check Nix flake inputs
+        uses: DeterminateSystems/flake-checker-action@v2
       - name: Build and run tests
         run: nix flake check
 
