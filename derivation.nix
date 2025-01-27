@@ -9,7 +9,7 @@ rustPlatform.buildRustPackage rec {
     lockFile = ./Cargo.lock;
   };
 
-  buildInputs = [
+  nativeBuildInputs = [
     llvmPackages.libclang
     llvmPackages.clang
     libiconv
