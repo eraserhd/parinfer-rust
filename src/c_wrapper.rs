@@ -22,7 +22,7 @@ mod reference_hack {
 
     pub static mut INITIALIZED: bool = false;
 
-    #[cfg(any(target_os = "netbsd", target_os = "openbsd", target_os = "bitrig"))]
+    #[cfg(any(target_os = "netbsd", target_os = "openbsd"))]
     mod netbsdlike {
         use libc::{RTLD_GLOBAL, RTLD_LAZY};
 
@@ -34,10 +34,10 @@ mod reference_hack {
         }
     }
 
-    #[cfg(any(target_os = "netbsd", target_os = "openbsd", target_os = "bitrig"))]
+    #[cfg(any(target_os = "netbsd", target_os = "openbsd"))]
     use self::netbsdlike::*;
 
-    #[cfg(not(any(target_os = "netbsd", target_os = "openbsd", target_os = "bitrig")))]
+    #[cfg(not(any(target_os = "netbsd", target_os = "openbsd")))]
     mod default {
         use libc::{RTLD_GLOBAL, RTLD_LAZY, RTLD_NODELETE, RTLD_NOLOAD};
 
@@ -49,7 +49,7 @@ mod reference_hack {
         }
     }
 
-    #[cfg(not(any(target_os = "netbsd", target_os = "openbsd", target_os = "bitrig")))]
+    #[cfg(not(any(target_os = "netbsd", target_os = "openbsd")))]
     use self::default::*;
 
     pub unsafe fn initialize() {
