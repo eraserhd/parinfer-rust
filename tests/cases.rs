@@ -9,9 +9,9 @@ extern crate serde_derive;
 #[cfg(not(target_arch = "wasm32"))]
 use std::ffi::{CStr, CString};
 
-const INDENT_MODE_CASES: &'static str = include_str!("cases/indent-mode.json");
-const PAREN_MODE_CASES: &'static str = include_str!("cases/paren-mode.json");
-const SMART_MODE_CASES: &'static str = include_str!("cases/smart-mode.json");
+const INDENT_MODE_CASES: &str = include_str!("cases/indent-mode.json");
+const PAREN_MODE_CASES: &str = include_str!("cases/paren-mode.json");
+const SMART_MODE_CASES: &str = include_str!("cases/smart-mode.json");
 
 type LineNumber = usize;
 type Column = usize;

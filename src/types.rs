@@ -1,6 +1,3 @@
-use serde;
-use serde_json;
-use std;
 use std::{fmt, mem, rc::Rc};
 
 pub type LineNumber = usize;
@@ -27,12 +24,6 @@ pub struct Options {
     pub selection_start_line: Option<LineNumber>,
     #[serde(default = "Options::default_changes")]
     pub changes: Vec<Change>,
-    #[serde(default = "Options::default_false")]
-    pub partial_result: bool,
-    #[serde(default = "Options::default_false")]
-    pub force_balance: bool,
-    #[serde(default = "Options::default_false")]
-    pub return_parens: bool,
     #[serde(default = "Options::default_comment")]
     pub comment_char: char,
     #[serde(default = "Options::default_string_delimiters")]
@@ -92,10 +83,7 @@ pub struct ParenTrail {
 }
 
 #[derive(Clone, Debug)]
-pub struct Closer<'a> {
-    pub line_no: LineNumber,
-    pub x: Column,
-    pub ch: &'a str,
+pub struct Closer {
     pub trail: Option<ParenTrail>,
 }
 
@@ -112,7 +100,7 @@ pub struct Paren<'a> {
     pub input_x: Column,
 
     #[serde(skip)]
-    pub closer: Option<Closer<'a>>,
+    pub closer: Option<Closer>,
     #[serde(skip)]
     pub children: Vec<Paren<'a>>,
 }
@@ -145,7 +133,7 @@ impl<'a> From<Error> for Answer<'a> {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Default)]
 pub enum ErrorName {
     QuoteDanger,
     EolBackslash,
@@ -159,30 +147,25 @@ pub enum ErrorName {
     JsonEncodingError,
     Panic,
 
+    #[default]
     Restart,
 }
 
-impl Default for ErrorName {
-    fn default() -> ErrorName {
-        ErrorName::Restart
-    }
-}
-
-impl ToString for ErrorName {
-    fn to_string(&self) -> String {
-        String::from(match self {
-            &ErrorName::QuoteDanger => "quote-danger",
-            &ErrorName::EolBackslash => "eol-backslash",
-            &ErrorName::UnclosedQuote => "unclosed-quote",
-            &ErrorName::UnclosedParen => "unclosed-paren",
-            &ErrorName::UnmatchedCloseParen => "unmatched-close-paren",
-            &ErrorName::UnmatchedOpenParen => "unmatched-open-paren",
-            &ErrorName::LeadingCloseParen => "leading-close-paren",
-            &ErrorName::Utf8EncodingError => "utf8-error",
-            &ErrorName::JsonEncodingError => "json-error",
-            &ErrorName::Panic => "panic",
-            _ => "??",
-        })
+impl fmt::Display for ErrorName {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            ErrorName::QuoteDanger => f.write_str("quote-danger"),
+            ErrorName::EolBackslash => f.write_str("eol-backslash"),
+            ErrorName::UnclosedQuote => f.write_str("unclosed-quote"),
+            ErrorName::UnclosedParen => f.write_str("unclosed-paren"),
+            ErrorName::UnmatchedCloseParen => f.write_str("unmatched-close-paren"),
+            ErrorName::UnmatchedOpenParen => f.write_str("unmatched-open-paren"),
+            ErrorName::LeadingCloseParen => f.write_str("leading-close-paren"),
+            ErrorName::Utf8EncodingError => f.write_str("utf8-error"),
+            ErrorName::JsonEncodingError => f.write_str("json-error"),
+            ErrorName::Panic => f.write_str("panic"),
+            _ => f.write_str("??"),
+        }
     }
 }
 
@@ -202,7 +185,7 @@ impl<'a> serde::Deserialize<'a> for ErrorName {
     {
         struct Visitor;
 
-        impl<'de> serde::de::Visitor<'de> for Visitor {
+        impl serde::de::Visitor<'_> for Visitor {
             type Value = ErrorName;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

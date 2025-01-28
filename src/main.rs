@@ -59,7 +59,7 @@ pub fn main() {
             OutputType::Text => text_output(&request, answer),
         };
         io::stdout()
-            .write(output.as_bytes())
+            .write_all(output.as_bytes())
             .expect("unable to write output");
         std::process::exit(error_code);
     }

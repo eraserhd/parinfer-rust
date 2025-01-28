@@ -5,7 +5,7 @@ use types::*;
 pub fn internal_run(json_str: &str) -> Result<String, Error> {
     let request: Request = serde_json::from_str(json_str)?;
     let answer = parinfer::process(&request);
-    Ok(serde_json::to_string(&Answer::from(answer))?)
+    Ok(serde_json::to_string(&answer)?)
 }
 
 pub fn panic_result() -> String {

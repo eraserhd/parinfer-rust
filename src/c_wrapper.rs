@@ -13,7 +13,7 @@ use types::*;
 /// Here we reference ourselves and throw the handle away to prevent
 /// ourselves from being unloaded (and also set RTLD_NODELETE and
 /// RTLD_GLOBAL to make extra sure).
-#[cfg(all(unix))]
+#[cfg(unix)]
 mod reference_hack {
     use libc::Dl_info;
     use libc::{c_void, dladdr, dlerror, dlopen};
@@ -73,11 +73,11 @@ mod reference_hack {
         // Mac).  dlerror() is unhelfully NULL at that point, so try to
         // *really* load ourselves, then report if that fails.
         let handle = dlopen(info.dli_fname, first_attempt_flags());
-        if handle == ptr::null_mut() {
+        if handle.is_null() {
             let handle = dlopen(info.dli_fname, second_attempt_flags());
-            if handle == ptr::null_mut() {
+            if handle.is_null() {
                 let error = dlerror();
-                if error == ptr::null_mut() {
+                if error.is_null() {
                     panic!(
                         "Could not reference parinfer_rust library {:?}.",
                         CStr::from_ptr(info.dli_fname)
@@ -151,7 +151,7 @@ unsafe fn unwrap_c_pointers(json: *const c_char) -> Result<CString, Error> {
     Ok(CString::new(response)?)
 }
 
-thread_local!(static BUFFER: RefCell<Option<CString>> = RefCell::new(None));
+thread_local!(static BUFFER: RefCell<Option<CString>> = const { RefCell::new(None) });
 
 #[cfg(not(target_arch = "wasm32"))]
 #[no_mangle]

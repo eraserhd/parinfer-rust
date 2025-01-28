@@ -74,7 +74,7 @@ pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
             result
                 .deletions
                 .push(Selection::new(line, 1, line, a_line.chars().count()));
-            if b_line != "" {
+            if !b_line.is_empty() {
                 result.insertions.push(Insertion::new(line, 1, b_line));
             }
         }
@@ -164,7 +164,7 @@ pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
             "{}\n{}\n{}",
             delete_script(&fixes),
             insert_script(&fixes),
-            cursor_script(&request, &answer)
+            cursor_script(request, &answer)
         );
 
         (script, 0)
