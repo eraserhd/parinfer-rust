@@ -5,29 +5,31 @@ use std::env;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Coord {
     pub line: LineNumber,
-    pub column: Column
+    pub column: Column,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Selection {
     pub anchor: Coord,
-    pub cursor: Coord
+    pub cursor: Coord,
 }
 
 impl Selection {
     fn new(
-        anchor_line: LineNumber, anchor_column: Column, cursor_line: LineNumber,
-        cursor_column: Column) -> Selection
-    {
+        anchor_line: LineNumber,
+        anchor_column: Column,
+        cursor_line: LineNumber,
+        cursor_column: Column,
+    ) -> Selection {
         Selection {
             anchor: Coord {
                 line: anchor_line,
-                column: anchor_column
+                column: anchor_column,
             },
             cursor: Coord {
                 line: cursor_line,
-                column: cursor_column
-            }
+                column: cursor_column,
+            },
         }
     }
 }
@@ -35,7 +37,7 @@ impl Selection {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Insertion {
     pub cursor: Coord,
-    pub text: String
+    pub text: String,
 }
 
 impl Insertion {
@@ -43,9 +45,9 @@ impl Insertion {
         Insertion {
             cursor: Coord {
                 line: cursor_line,
-                column: cursor_column
+                column: cursor_column,
             },
-            text: text.to_string()
+            text: text.to_string(),
         }
     }
 }
@@ -53,19 +55,25 @@ impl Insertion {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Fixes {
     pub deletions: Vec<Selection>,
-    pub insertions: Vec<Insertion>
+    pub insertions: Vec<Insertion>,
 }
 
 pub fn fixes<'a>(from: &'a str, to: &'a str) -> Fixes {
     let mut result = Fixes {
         insertions: vec![],
-        deletions: vec![]
+        deletions: vec![],
     };
 
     let mut line: LineNumber = 1;
-    for (a_line, b_line) in from.split('\n').map(chomp_cr).zip(to.split('\n').map(chomp_cr)) {
+    for (a_line, b_line) in from
+        .split('\n')
+        .map(chomp_cr)
+        .zip(to.split('\n').map(chomp_cr))
+    {
         if a_line != b_line {
-            result.deletions.push(Selection::new(line, 1, line, a_line.chars().count()));
+            result
+                .deletions
+                .push(Selection::new(line, 1, line, a_line.chars().count()));
             if b_line != "" {
                 result.insertions.push(Insertion::new(line, 1, b_line));
             }
@@ -93,10 +101,7 @@ fn delete_script(fixes: &Fixes) -> String {
                 .map(|d| {
                     format!(
                         "{}.{},{}.{}",
-                        d.anchor.line,
-                        d.anchor.column,
-                        d.cursor.line,
-                        d.cursor.column
+                        d.anchor.line, d.anchor.column, d.cursor.line, d.cursor.column
                     )
                 })
                 .fold(String::new(), |acc, s| acc + " " + &s)
@@ -119,48 +124,57 @@ fn insert_script(fixes: &Fixes) -> String {
                 .map(|i| {
                     format!(
                         "{}.{},{}.{}",
-                        i.cursor.line,
-                        i.cursor.column,
-                        i.cursor.line,
-                        i.cursor.column
+                        i.cursor.line, i.cursor.column, i.cursor.line, i.cursor.column
                     )
                 })
                 .fold(String::new(), |acc, s| acc + " " + &s),
             fixes
                 .insertions
                 .iter()
-                .map(|i| {
-                    format!("'{}'", escape(&i.text))
-                })
+                .map(|i| { format!("'{}'", escape(&i.text)) })
                 .fold(String::new(), |acc, s| acc + " " + &s)
         )
     }
 }
 
 fn cursor_script(request: &Request, answer: &Answer) -> String {
-    match (request.options.cursor_line, request.options.cursor_x, answer.cursor_line, answer.cursor_x) {
-        (Some(r_line), Some(r_x), Some(a_line), Some(a_x)) if r_line == a_line && r_x == a_x => String::new(),
-        (_, _, Some(line), Some(x)) => format!("set buffer parinfer_cursor_char_column {}
+    match (
+        request.options.cursor_line,
+        request.options.cursor_x,
+        answer.cursor_line,
+        answer.cursor_x,
+    ) {
+        (Some(r_line), Some(r_x), Some(a_line), Some(a_x)) if r_line == a_line && r_x == a_x => {
+            String::new()
+        }
+        (_, _, Some(line), Some(x)) => format!(
+            "set buffer parinfer_cursor_char_column {}
                                                 set buffer parinfer_cursor_line {}",
-                                               x + 1, line + 1),
-        _ => String::new()
+            x + 1,
+            line + 1
+        ),
+        _ => String::new(),
     }
 }
 
 pub fn kakoune_output(request: &Request, answer: Answer) -> (String, i32) {
     if answer.success {
         let fixes = fixes(&request.text, &answer.text);
-        let script = format!("{}\n{}\n{}", delete_script(&fixes), insert_script(&fixes),
-                             cursor_script(&request, &answer));
+        let script = format!(
+            "{}\n{}\n{}",
+            delete_script(&fixes),
+            insert_script(&fixes),
+            cursor_script(&request, &answer)
+        );
 
-        ( script, 0 )
+        (script, 0)
     } else {
         let error_msg = match answer.error {
             None => String::from("unknown error."),
-            Some(e) => e.message
+            Some(e) => e.message,
         };
 
-        ( format!("fail '{}'\n", escape(&error_msg)), 0 )
+        (format!("fail '{}'\n", escape(&error_msg)), 0)
     }
 }
 
@@ -181,21 +195,15 @@ mod test {
         assert_eq!(
             fixes("abcd", "axcy"),
             Fixes {
-                deletions: vec![
-                    Selection::new(1,1,1,4),
-                ],
-                insertions: vec![
-                    Insertion::new(1,1,"axcy"),
-                ]
+                deletions: vec![Selection::new(1, 1, 1, 4),],
+                insertions: vec![Insertion::new(1, 1, "axcy"),]
             },
             "it can produce a replacement for a single changed letter"
         );
         assert_eq!(
             fixes("hello, worxxyz", ""),
             Fixes {
-                deletions: vec![
-                    Selection::new(1,1,1,14)
-                ],
+                deletions: vec![Selection::new(1, 1, 1, 14)],
                 insertions: vec![]
             },
             "it can produce a longer deletion"

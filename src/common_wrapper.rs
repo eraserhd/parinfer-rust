@@ -24,7 +24,7 @@ pub fn panic_result() -> String {
         cursor_line: None,
         tab_stops: vec![],
         paren_trails: vec![],
-        parens: vec![]
+        parens: vec![],
     };
 
     serde_json::to_string(&answer).unwrap()

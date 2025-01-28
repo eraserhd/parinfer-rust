@@ -24,7 +24,11 @@ pub fn compute_text_changes<'a>(prev_text: &'a str, text: &'a str) -> Vec<Change
         }
     }
 
-    for ((i, pc), (j, c)) in prev_text.char_indices().rev().zip(text.char_indices().rev()) {
+    for ((i, pc), (j, c)) in prev_text
+        .char_indices()
+        .rev()
+        .zip(text.char_indices().rev())
+    {
         if pc != c || i < start_prev || j < start_text {
             end_prev = i + pc.len_utf8();
             end_text = j + c.len_utf8();
@@ -37,7 +41,7 @@ pub fn compute_text_changes<'a>(prev_text: &'a str, text: &'a str) -> Vec<Change
             x,
             line_no,
             old_text: String::from(&prev_text[start_prev..end_prev]),
-            new_text: String::from(&text[start_text..end_text])
+            new_text: String::from(&text[start_text..end_text]),
         }]
     } else {
         vec![]
@@ -48,28 +52,40 @@ pub fn compute_text_changes<'a>(prev_text: &'a str, text: &'a str) -> Vec<Change
 #[test]
 fn compute_text_changes_works() {
     assert!(compute_text_changes("hello", "hello").is_empty());
-    assert_eq!(vec![Change {
-        x: 2,
-        line_no: 0,
-        old_text: String::from("l"),
-        new_text: String::from("x")
-    }], compute_text_changes("hello", "hexlo"));
-    assert_eq!(vec![Change {
-        x: 0,
-        line_no: 1,
-        old_text: String::from("l"),
-        new_text: String::from("x")
-    }], compute_text_changes("he\nllo", "he\nxlo"));
-    assert_eq!(vec![Change {
-        x: 4,
-        line_no: 0,
-        old_text: String::from(""),
-        new_text: String::from("l")
-    }], compute_text_changes("hello", "helllo"));
-    assert_eq!(vec![Change {
-        x: 4,
-        line_no: 0,
-        old_text: String::from("l"),
-        new_text: String::from("")
-    }], compute_text_changes("helllo", "hello"));
+    assert_eq!(
+        vec![Change {
+            x: 2,
+            line_no: 0,
+            old_text: String::from("l"),
+            new_text: String::from("x")
+        }],
+        compute_text_changes("hello", "hexlo")
+    );
+    assert_eq!(
+        vec![Change {
+            x: 0,
+            line_no: 1,
+            old_text: String::from("l"),
+            new_text: String::from("x")
+        }],
+        compute_text_changes("he\nllo", "he\nxlo")
+    );
+    assert_eq!(
+        vec![Change {
+            x: 4,
+            line_no: 0,
+            old_text: String::from(""),
+            new_text: String::from("l")
+        }],
+        compute_text_changes("hello", "helllo")
+    );
+    assert_eq!(
+        vec![Change {
+            x: 4,
+            line_no: 0,
+            old_text: String::from("l"),
+            new_text: String::from("")
+        }],
+        compute_text_changes("helllo", "hello")
+    );
 }

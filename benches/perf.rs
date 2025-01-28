@@ -1,7 +1,7 @@
 #![feature(test)]
 
-extern crate test;
 extern crate parinfer_rust;
+extern crate test;
 
 #[macro_use]
 extern crate serde_json;
@@ -9,21 +9,27 @@ extern crate serde_json;
 use std::ffi::CString;
 use test::Bencher;
 
-const LONG_MAP_WITH_STRINGS : &str = include_str!("perf/long_map_with_strings");
-const REALLY_LONG_FILE : &str = include_str!("perf/really_long_file");
-const REALLY_LONG_FILE_WITH_UNCLOSED_PAREN : &str = include_str!("perf/really_long_file_with_unclosed_paren");
-const REALLY_LONG_FILE_WITH_UNCLOSED_QUOTE : &str = include_str!("perf/really_long_file_with_unclosed_quote");
+const LONG_MAP_WITH_STRINGS: &str = include_str!("perf/long_map_with_strings");
+const REALLY_LONG_FILE: &str = include_str!("perf/really_long_file");
+const REALLY_LONG_FILE_WITH_UNCLOSED_PAREN: &str =
+    include_str!("perf/really_long_file_with_unclosed_paren");
+const REALLY_LONG_FILE_WITH_UNCLOSED_QUOTE: &str =
+    include_str!("perf/really_long_file_with_unclosed_quote");
 
 fn build_case(mode: &str, text: &str) -> CString {
-    CString::new(json!({
-        "mode": mode,
-        "text": text,
-        "options": {
-            "forceBalance": false,
-            "partialResult": false,
-            "returnParens": false
-        }
-    }).to_string()).unwrap()
+    CString::new(
+        json!({
+            "mode": mode,
+            "text": text,
+            "options": {
+                "forceBalance": false,
+                "partialResult": false,
+                "returnParens": false
+            }
+        })
+        .to_string(),
+    )
+    .unwrap()
 }
 
 #[bench]

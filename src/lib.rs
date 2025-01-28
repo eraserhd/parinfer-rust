@@ -7,9 +7,9 @@ extern crate serde_derive;
 extern crate unicode_segmentation;
 extern crate unicode_width;
 
+mod changes;
 mod parinfer;
 mod types;
-mod changes;
 
 #[macro_use]
 #[cfg(feature = "emacs")]

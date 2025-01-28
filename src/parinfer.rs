@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use crate::changes;
+use crate::types::*;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use crate::types::*;
-use crate::changes;
 
 // {{{1 Constants / Predicates
 
@@ -147,10 +147,16 @@ enum Now {
 
 impl<'a> State<'a> {
     fn is_escaping(&self) -> bool {
-        match self.escape { Now::Escaping => true, _ => false }
+        match self.escape {
+            Now::Escaping => true,
+            _ => false,
+        }
     }
     fn is_escaped(&self) -> bool {
-        match self.escape { Now::Escaped => true, _ => false }
+        match self.escape {
+            Now::Escaped => true,
+            _ => false,
+        }
     }
 }
 
@@ -158,15 +164,28 @@ impl<'a> State<'a> {
 enum In<'a> {
     Code,
     Comment,
-    String { delim: &'a str },
+    String {
+        delim: &'a str,
+    },
     LispReaderSyntax,
-    LispBlockCommentPre { depth: usize },
-    LispBlockComment { depth: usize },
-    LispBlockCommentPost { depth: usize },
+    LispBlockCommentPre {
+        depth: usize,
+    },
+    LispBlockComment {
+        depth: usize,
+    },
+    LispBlockCommentPost {
+        depth: usize,
+    },
     GuileBlockComment,
     GuileBlockCommentPost,
-    JanetLongStringPre { open_delim_len: usize },
-    JanetLongString { open_delim_len: usize, close_delim_len: usize },
+    JanetLongStringPre {
+        open_delim_len: usize,
+    },
+    JanetLongString {
+        open_delim_len: usize,
+        close_delim_len: usize,
+    },
 }
 
 impl<'a> State<'a> {
@@ -174,23 +193,26 @@ impl<'a> State<'a> {
         match self.context {
             In::Code => true,
             In::LispReaderSyntax => true,
-            _ => false
+            _ => false,
         }
     }
     fn is_in_comment(&self) -> bool {
-        match self.context { In::Comment => true, _ => false }
+        match self.context {
+            In::Comment => true,
+            _ => false,
+        }
     }
     fn is_in_stringish(&self) -> bool {
         match self.context {
-            In::String {..} => true,
-            In::LispBlockCommentPre {..} => true,
-            In::LispBlockComment {..} => true,
-            In::LispBlockCommentPost {..} => true,
+            In::String { .. } => true,
+            In::LispBlockCommentPre { .. } => true,
+            In::LispBlockComment { .. } => true,
+            In::LispBlockCommentPost { .. } => true,
             In::GuileBlockComment => true,
             In::GuileBlockCommentPost => true,
-            In::JanetLongStringPre {..} => true,
-            In::JanetLongString {..} => true,
-            _ => false
+            In::JanetLongStringPre { .. } => true,
+            In::JanetLongString { .. } => true,
+            _ => false,
         }
     }
 }
@@ -276,17 +298,14 @@ fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
     }
 }
 
-fn get_initial_result<'a>(
-    text: &'a str,
-    options: &Options,
-    mode: Mode,
-    smart: bool,
-) -> State<'a> {
+fn get_initial_result<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -> State<'a> {
     let lisp_reader_syntax_enabled = [
         options.lisp_block_comments,
         options.guile_block_comments,
         options.scheme_sexp_comments,
-    ].iter().any(|is_true| *is_true);
+    ]
+    .iter()
+    .any(|is_true| *is_true);
 
     State {
         mode: mode,
@@ -433,7 +452,7 @@ fn column_byte_index(s: &str, x: usize) -> usize {
             Some((start_column, (idx, ch)))
         })
         .filter_map(|(n, (idx, _))| if n == x { Some(idx) } else { None })
-        .nth(0) 
+        .nth(0)
         .unwrap_or_else(|| s.len())
 }
 
@@ -659,7 +678,6 @@ fn is_closable<'a>(result: &State<'a>) -> bool {
     return result.is_in_code() && !is_whitespace(result) && ch != "" && !closer;
 }
 
-
 // {{{1 Advanced operations on characters
 
 fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
@@ -726,7 +744,7 @@ fn in_code_on_open_paren<'a>(result: &mut State<'a>) {
         arg_x: None,
 
         closer: None,
-        children: vec![]
+        children: vec![],
     };
 
     if result.return_parens {
@@ -899,22 +917,41 @@ fn in_code_on_grave<'a>(result: &mut State<'a>) {
     cache_error_pos(result, ErrorName::UnclosedQuote);
 }
 fn in_janet_long_string_pre_on_grave<'a>(result: &mut State<'a>, open_delim_len: usize) {
-    result.context = In::JanetLongStringPre { open_delim_len: open_delim_len + 1 };
+    result.context = In::JanetLongStringPre {
+        open_delim_len: open_delim_len + 1,
+    };
 }
 fn in_janet_long_string_pre_on_else<'a>(result: &mut State<'a>, open_delim_len: usize) {
-    result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
+    result.context = In::JanetLongString {
+        open_delim_len,
+        close_delim_len: 0,
+    };
 }
-fn in_janet_long_string_on_grave<'a>(result: &mut State<'a>, open_delim_len: usize, close_delim_len: usize) {
+fn in_janet_long_string_on_grave<'a>(
+    result: &mut State<'a>,
+    open_delim_len: usize,
+    close_delim_len: usize,
+) {
     let close_delim_len = close_delim_len + 1;
     if open_delim_len == close_delim_len {
         result.context = In::Code;
     } else {
-        result.context = In::JanetLongString { open_delim_len, close_delim_len };
+        result.context = In::JanetLongString {
+            open_delim_len,
+            close_delim_len,
+        };
     }
 }
-fn in_janet_long_string_on_else<'a>(result: &mut State<'a>, open_delim_len: usize, close_delim_len: usize) {
+fn in_janet_long_string_on_else<'a>(
+    result: &mut State<'a>,
+    open_delim_len: usize,
+    close_delim_len: usize,
+) {
     if close_delim_len > 0 {
-        result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
+        result.context = In::JanetLongString {
+            open_delim_len,
+            close_delim_len: 0,
+        };
     }
 }
 
@@ -939,88 +976,79 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
 fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
     let ch = result.ch;
     match result.context {
-        In::Code => {
-            match ch {
-                _ if ch == result.comment_char => in_code_on_comment_char(result),
-                _ if result.string_delimiters.contains(&ch.to_string()) => in_code_on_quote(result),
-                "(" | "[" | "{" => in_code_on_open_paren(result),
-                ")" | "]" | "}" => in_code_on_close_paren(result)?,
-                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
-                NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
-                GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
-                TAB => in_code_on_tab(result),
-                _ => (),
-            }
+        In::Code => match ch {
+            _ if ch == result.comment_char => in_code_on_comment_char(result),
+            _ if result.string_delimiters.contains(&ch.to_string()) => in_code_on_quote(result),
+            "(" | "[" | "{" => in_code_on_open_paren(result),
+            ")" | "]" | "}" => in_code_on_close_paren(result)?,
+            VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
+            NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
+            GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
+            TAB => in_code_on_tab(result),
+            _ => (),
         },
-        In::Comment => {
-            match ch {
-                _ if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
-                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
-                GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
-                _ => (),
-            }
+        In::Comment => match ch {
+            _ if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
+            VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
+            GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
+            _ => (),
         },
-        In::String { delim } => {
-            match ch {
-                _ if result.string_delimiters.contains(&ch.to_string()) => in_string_on_quote(result, delim),
-                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
-                _ => (),
+        In::String { delim } => match ch {
+            _ if result.string_delimiters.contains(&ch.to_string()) => {
+                in_string_on_quote(result, delim)
             }
+            VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
+            _ => (),
         },
         In::LispReaderSyntax => {
             match ch {
-                VERTICAL_LINE if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
-                BANG if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
-                ";" if result.scheme_sexp_comments_enabled => in_lisp_reader_syntax_on_semicolon(result),
+                VERTICAL_LINE if result.lisp_block_comments_enabled => {
+                    in_lisp_reader_syntax_on_vline(result)
+                }
+                BANG if result.guile_block_comments_enabled => {
+                    in_lisp_reader_syntax_on_bang(result)
+                }
+                ";" if result.scheme_sexp_comments_enabled => {
+                    in_lisp_reader_syntax_on_semicolon(result)
+                }
                 _ => {
                     // Backtrack!
                     result.context = In::Code;
                     on_context(result)?
-                },
+                }
             }
+        }
+        In::LispBlockCommentPre { depth } => match ch {
+            VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
+            _ => in_lisp_block_comment_pre_on_else(result, depth),
         },
-        In::LispBlockCommentPre { depth } => {
-            match ch {
-                VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
-                _ => in_lisp_block_comment_pre_on_else(result, depth),
-            }
+        In::LispBlockComment { depth } => match ch {
+            NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
+            VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
+            _ => (),
         },
-        In::LispBlockComment { depth } => {
-            match ch {
-                NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
-                VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
-                _ => (),
-            }
+        In::LispBlockCommentPost { depth } => match ch {
+            NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
+            _ => in_lisp_block_comment_post_on_else(result, depth),
         },
-        In::LispBlockCommentPost { depth } => {
-            match ch {
-                NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
-                _ => in_lisp_block_comment_post_on_else(result, depth),
-            }
+        In::GuileBlockComment => match ch {
+            BANG => in_guile_block_comment_on_bang(result),
+            _ => (),
         },
-        In::GuileBlockComment => {
-            match ch {
-                BANG => in_guile_block_comment_on_bang(result),
-                _ => (),
-            }
+        In::GuileBlockCommentPost => match ch {
+            NUMBER_SIGN => in_guile_block_comment_post_on_nsign(result),
+            _ => in_guile_block_comment_post_on_else(result),
         },
-        In::GuileBlockCommentPost => {
-            match ch {
-                NUMBER_SIGN => in_guile_block_comment_post_on_nsign(result),
-                _ => in_guile_block_comment_post_on_else(result),
-            }
+        In::JanetLongStringPre { open_delim_len } => match ch {
+            GRAVE => in_janet_long_string_pre_on_grave(result, open_delim_len),
+            _ => in_janet_long_string_pre_on_else(result, open_delim_len),
         },
-        In::JanetLongStringPre { open_delim_len } => {
-            match ch {
-                GRAVE => in_janet_long_string_pre_on_grave(result, open_delim_len),
-                _ => in_janet_long_string_pre_on_else(result, open_delim_len),
-            }
-        },
-        In::JanetLongString { open_delim_len, close_delim_len } => {
-            match ch {
-                GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
-                _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
-            }
+        In::JanetLongString {
+            open_delim_len,
+            close_delim_len,
+        } => match ch {
+            GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
+            _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
         },
     }
 
@@ -1140,14 +1168,11 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
 
         let line = &result.lines[result.line_no];
         let mut remove_count = 0;
-        for (x, ch) in line
-            .graphemes(true)
-            .scan(0, |column, ch| {
-                let start_column = *column;
-                *column = *column + UnicodeWidthStr::width(ch);
-                Some((start_column, ch))
-            })
-        {
+        for (x, ch) in line.graphemes(true).scan(0, |column, ch| {
+            let start_column = *column;
+            *column = *column + UnicodeWidthStr::width(ch);
+            Some((start_column, ch))
+        }) {
             if x < start_x || x >= new_start_x {
                 continue;
             }
@@ -1380,12 +1405,11 @@ fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
                 line_no: result.paren_trail.line_no.unwrap(),
                 x: result.paren_trail.start_x.unwrap() + i,
                 ch: close_ch,
-                trail: None
+                trail: None,
             });
         }
         result.paren_trail.openers.push(opener);
         parens.push_str(close_ch);
-
     }
 
     if let Some(line_no) = result.paren_trail.line_no {
@@ -1411,12 +1435,12 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
     let mut new_trail = String::new();
     let mut space_count = 0;
     for (x, ch) in result.lines[result.line_no]
-                    .graphemes(true)
-                    .scan(0, |column, ch| {
-                        let start_column = *column;
-                        *column = *column + UnicodeWidthStr::width(ch);
-                        Some((start_column, ch))
-                    })
+        .graphemes(true)
+        .scan(0, |column, ch| {
+            let start_column = *column;
+            *column = *column + UnicodeWidthStr::width(ch);
+            Some((start_column, ch))
+        })
     {
         if x < start_x || x >= end_x {
             continue;
@@ -1437,14 +1461,24 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
 }
 
 fn set_closer<'a>(opener: &mut Paren<'a>, line_no: LineNumber, x: Column, ch: &'a str) {
-    opener.closer = Some(Closer { line_no, x, ch, trail: None })
+    opener.closer = Some(Closer {
+        line_no,
+        x,
+        ch,
+        trail: None,
+    })
 }
 
 fn append_paren_trail<'a>(result: &mut State<'a>) {
     let mut opener = result.paren_stack.pop().unwrap().clone();
     let close_ch = match_paren(opener.ch).unwrap();
     if result.return_parens {
-        set_closer(&mut opener, result.paren_trail.line_no.unwrap(), result.paren_trail.end_x.unwrap(), close_ch);
+        set_closer(
+            &mut opener,
+            result.paren_trail.line_no.unwrap(),
+            result.paren_trail.end_x.unwrap(),
+            close_ch,
+        );
     }
 
     set_max_indent(result, &opener);
@@ -1498,12 +1532,14 @@ fn remember_paren_trail<'a>(result: &mut State<'a>) {
                 result.paren_trail.clamped.start_x
             } else {
                 result.paren_trail.start_x
-            }.unwrap(),
+            }
+            .unwrap(),
             end_x: if is_clamped {
                 result.paren_trail.clamped.end_x
             } else {
                 result.paren_trail.end_x
-            }.unwrap(),
+            }
+            .unwrap(),
         };
 
         result.paren_trails.push(short_trail.clone());
@@ -1956,22 +1992,22 @@ pub fn process(request: &Request) -> Answer {
 // This is like the process function above, but uses a reference counted version of Request
 #[allow(dead_code)]
 pub fn rc_process<'a>(request: &'a SharedRequest) -> Answer<'a> {
-  let mut options = request.options.clone();
+    let mut options = request.options.clone();
 
-  if let Some(ref prev_text) = request.options.prev_text {
-    options.changes = changes::compute_text_changes(prev_text, &request.text);
-  }
+    if let Some(ref prev_text) = request.options.prev_text {
+        options.changes = changes::compute_text_changes(prev_text, &request.text);
+    }
 
-  if request.mode == "paren" {
-    Answer::from(paren_mode(&request.text, &options))
-  } else if request.mode == "indent" {
-    Answer::from(indent_mode(&request.text, &options))
-  } else if request.mode == "smart" {
-    Answer::from(smart_mode(&request.text, &options))
-  } else {
-    Answer::from(Error {
-      message: String::from("Bad value specified for `mode`"),
-      ..Error::default()
-    })
-  }
+    if request.mode == "paren" {
+        Answer::from(paren_mode(&request.text, &options))
+    } else if request.mode == "indent" {
+        Answer::from(indent_mode(&request.text, &options))
+    } else if request.mode == "smart" {
+        Answer::from(smart_mode(&request.text, &options))
+    } else {
+        Answer::from(Error {
+            message: String::from("Bad value specified for `mode`"),
+            ..Error::default()
+        })
+    }
 }
