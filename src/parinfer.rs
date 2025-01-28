@@ -1,10 +1,9 @@
-use super::std;
 use std::collections::HashMap;
 use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use types::*;
-use changes;
+use crate::types::*;
+use crate::changes;
 
 // {{{1 Constants / Predicates
 
