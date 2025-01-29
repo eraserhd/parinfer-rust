@@ -2,7 +2,7 @@
 
 rustPlatform.buildRustPackage rec {
   name = "parinfer-rust-${version}";
-  version = "0.4.3";
+  version = "0.5.0";
 
   src = ./.;
   cargoLock = {

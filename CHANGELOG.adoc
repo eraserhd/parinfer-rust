@@ -1,8 +1,8 @@
 ChangeLog
 =========
 
-https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
----------------------------------------------------------------------------
+https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[v0.5.0]
+-----------------------------------------------------------------------
 
 * Support for Apple Silicon (by bumping dependency versions)
 * Update to Rust edition 2021
