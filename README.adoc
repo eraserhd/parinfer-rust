@@ -208,7 +208,6 @@ it.
 
 ....
 $ nix flake check                        # Build and test everything
-$ cargo test                             # Run the native tests
 $ cargo +nightly web test                # Test the WebAssembly version
 $ vim --clean -u tests/vim/run.vim       # Test against locally-installed Vim
 $ ( cd tests/kakoune && ./run.sh )       # Test against locally-installed Kakoune
