@@ -1,22 +1,21 @@
-use super::std;
-use std::collections::HashMap;
+use crate::changes;
+use crate::types::*;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use types::*;
-use changes;
 
 // {{{1 Constants / Predicates
 
-const BACKSLASH: &'static str = "\\";
-const BLANK_SPACE: &'static str = " ";
-const DOUBLE_SPACE: &'static str = "  ";
-const VERTICAL_LINE: &'static str = "|";
-const BANG: &'static str = "!";
-const NUMBER_SIGN: &'static str = "#";
-const NEWLINE: &'static str = "\n";
-const TAB: &'static str = "\t";
-const GRAVE: &'static str = "`";
+const BACKSLASH: &str = "\\";
+const BLANK_SPACE: &str = " ";
+const DOUBLE_SPACE: &str = "  ";
+const VERTICAL_LINE: &str = "|";
+const BANG: &str = "!";
+const NUMBER_SIGN: &str = "#";
+const NEWLINE: &str = "\n";
+const TAB: &str = "\t";
+const GRAVE: &str = "`";
 
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
@@ -46,15 +45,15 @@ struct TransformedChange {
     lookup_x: Column,
 }
 
-pub fn chomp_cr<'a>(text: &'a str) -> &'a str {
-    if text.chars().last() == Some('\r') {
+pub fn chomp_cr(text: &str) -> &str {
+    if text.ends_with('\r') {
         &text[0..text.len() - 1]
     } else {
         text
     }
 }
 
-fn split_lines<'a>(text: &'a str) -> Vec<&'a str> {
+fn split_lines(text: &str) -> Vec<&str> {
     text.split('\n').map(chomp_cr).collect()
 }
 
@@ -91,9 +90,7 @@ fn transform_change<'a>(change: &'a Change) -> TransformedChange {
     }
 }
 
-fn transform_changes<'a>(
-    changes: &Vec<Change>,
-) -> HashMap<(LineNumber, Column), TransformedChange> {
+fn transform_changes(changes: &Vec<Change>) -> HashMap<(LineNumber, Column), TransformedChange> {
     let mut lines: HashMap<(LineNumber, Column), TransformedChange> = HashMap::new();
     for change in changes {
         let transformed_change = transform_change(change);
@@ -146,12 +143,12 @@ enum Now {
     Escaped,
 }
 
-impl<'a> State<'a> {
+impl State<'_> {
     fn is_escaping(&self) -> bool {
-        match self.escape { Now::Escaping => true, _ => false }
+        matches!(self.escape, Now::Escaping)
     }
     fn is_escaped(&self) -> bool {
-        match self.escape { Now::Escaped => true, _ => false }
+        matches!(self.escape, Now::Escaped)
     }
 }
 
@@ -159,40 +156,49 @@ impl<'a> State<'a> {
 enum In<'a> {
     Code,
     Comment,
-    String { delim: &'a str },
+    String {
+        delim: &'a str,
+    },
     LispReaderSyntax,
-    LispBlockCommentPre { depth: usize },
-    LispBlockComment { depth: usize },
-    LispBlockCommentPost { depth: usize },
+    LispBlockCommentPre {
+        depth: usize,
+    },
+    LispBlockComment {
+        depth: usize,
+    },
+    LispBlockCommentPost {
+        depth: usize,
+    },
     GuileBlockComment,
     GuileBlockCommentPost,
-    JanetLongStringPre { open_delim_len: usize },
-    JanetLongString { open_delim_len: usize, close_delim_len: usize },
+    JanetLongStringPre {
+        open_delim_len: usize,
+    },
+    JanetLongString {
+        open_delim_len: usize,
+        close_delim_len: usize,
+    },
 }
 
-impl<'a> State<'a> {
+impl State<'_> {
     fn is_in_code(&self) -> bool {
-        match self.context {
-            In::Code => true,
-            In::LispReaderSyntax => true,
-            _ => false
-        }
+        matches!(self.context, In::Code | In::LispReaderSyntax)
     }
     fn is_in_comment(&self) -> bool {
-        match self.context { In::Comment => true, _ => false }
+        matches!(self.context, In::Comment)
     }
     fn is_in_stringish(&self) -> bool {
-        match self.context {
-            In::String {..} => true,
-            In::LispBlockCommentPre {..} => true,
-            In::LispBlockComment {..} => true,
-            In::LispBlockCommentPost {..} => true,
-            In::GuileBlockComment => true,
-            In::GuileBlockCommentPost => true,
-            In::JanetLongStringPre {..} => true,
-            In::JanetLongString {..} => true,
-            _ => false
-        }
+        matches!(
+            self.context,
+            In::String { .. }
+                | In::LispBlockCommentPre { .. }
+                | In::LispBlockComment { .. }
+                | In::LispBlockCommentPost { .. }
+                | In::GuileBlockComment
+                | In::GuileBlockCommentPost
+                | In::JanetLongStringPre { .. }
+                | In::JanetLongString { .. }
+        )
     }
 }
 
@@ -277,21 +283,18 @@ fn initial_paren_trail<'a>() -> InternalParenTrail<'a> {
     }
 }
 
-fn get_initial_result<'a>(
-    text: &'a str,
-    options: &Options,
-    mode: Mode,
-    smart: bool,
-) -> State<'a> {
+fn get_initial_result<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -> State<'a> {
     let lisp_reader_syntax_enabled = [
         options.lisp_block_comments,
         options.guile_block_comments,
         options.scheme_sexp_comments,
-    ].iter().any(|is_true| *is_true);
+    ]
+    .iter()
+    .any(|is_true| *is_true);
 
     State {
-        mode: mode,
-        smart: smart,
+        mode,
+        smart,
 
         orig_text: text,
         orig_cursor_x: options.cursor_x,
@@ -302,7 +305,7 @@ fn get_initial_result<'a>(
         input_x: 0,
 
         lines: vec![],
-        line_no: usize::max_value(),
+        line_no: usize::MAX,
         ch: &text[0..0],
         x: 0,
         indent_x: None,
@@ -430,12 +433,12 @@ fn column_byte_index(s: &str, x: usize) -> usize {
     s.grapheme_indices(true)
         .scan(0, |column, (idx, ch)| {
             let start_column = *column;
-            *column = *column + UnicodeWidthStr::width(ch);
+            *column += UnicodeWidthStr::width(ch);
             Some((start_column, (idx, ch)))
         })
         .filter_map(|(n, (idx, _))| if n == x { Some(idx) } else { None })
-        .nth(0) 
-        .unwrap_or_else(|| s.len())
+        .next()
+        .unwrap_or(s.len())
 }
 
 #[cfg(test)]
@@ -500,7 +503,7 @@ fn get_line_ending_works() {
 
 // {{{1 Line operations
 
-fn is_cursor_affected<'a>(result: &State<'a>, start: Column, end: Column) -> bool {
+fn is_cursor_affected(result: &State<'_>, start: Column, end: Column) -> bool {
     match result.cursor_x {
         Some(x) if x == start && x == end => x == 0,
         Some(x) => x >= end,
@@ -508,8 +511,8 @@ fn is_cursor_affected<'a>(result: &State<'a>, start: Column, end: Column) -> boo
     }
 }
 
-fn shift_cursor_on_edit<'a>(
-    result: &mut State<'a>,
+fn shift_cursor_on_edit(
+    result: &mut State<'_>,
     line_no: LineNumber,
     start: Column,
     end: Column,
@@ -526,8 +529,8 @@ fn shift_cursor_on_edit<'a>(
     }
 }
 
-fn replace_within_line<'a>(
-    result: &mut State<'a>,
+fn replace_within_line(
+    result: &mut State<'_>,
     line_no: LineNumber,
     start: Column,
     end: Column,
@@ -540,11 +543,11 @@ fn replace_within_line<'a>(
     shift_cursor_on_edit(result, line_no, start, end, replace);
 }
 
-fn insert_within_line<'a>(result: &mut State<'a>, line_no: LineNumber, idx: Column, insert: &str) {
+fn insert_within_line(result: &mut State<'_>, line_no: LineNumber, idx: Column, insert: &str) {
     replace_within_line(result, line_no, idx, idx, insert);
 }
 
-fn init_line<'a>(result: &mut State<'a>) {
+fn init_line(result: &mut State<'_>) {
     result.x = 0;
     result.line_no = usize::wrapping_add(result.line_no, 1);
 
@@ -606,7 +609,7 @@ fn clamp_works() {
     assert_eq!(clamp(1, None, None), 1);
 }
 
-fn peek<T>(array: &Vec<T>, i: usize) -> Option<&T> {
+fn peek<T>(array: &[T], i: usize) -> Option<&T> {
     if i >= array.len() {
         None
     } else {
@@ -617,11 +620,11 @@ fn peek<T>(array: &Vec<T>, i: usize) -> Option<&T> {
 #[cfg(test)]
 #[test]
 fn peek_works() {
-    assert_eq!(peek(&vec!['a'], 0), Some(&'a'));
-    assert_eq!(peek(&vec!['a'], 1), None);
-    assert_eq!(peek(&vec!['a', 'b', 'c'], 0), Some(&'c'));
-    assert_eq!(peek(&vec!['a', 'b', 'c'], 1), Some(&'b'));
-    assert_eq!(peek(&vec!['a', 'b', 'c'], 5), None);
+    assert_eq!(peek(&['a'], 0), Some(&'a'));
+    assert_eq!(peek(&['a'], 1), None);
+    assert_eq!(peek(&['a', 'b', 'c'], 0), Some(&'c'));
+    assert_eq!(peek(&['a', 'b', 'c'], 1), Some(&'b'));
+    assert_eq!(peek(&['a', 'b', 'c'], 5), None);
     let empty: Vec<char> = vec![];
     assert_eq!(peek(&empty, 0), None);
     assert_eq!(peek(&empty, 1), None);
@@ -630,10 +633,7 @@ fn peek_works() {
 // {{{1 Questions about characters
 
 fn is_close_paren(paren: &str) -> bool {
-    match paren {
-        "}" | "]" | ")" => true,
-        _ => false,
-    }
+    matches!(paren, "}" | "]" | ")")
 }
 
 fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren<'a>>, ch: &'a str) -> bool {
@@ -650,20 +650,19 @@ fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren<'a>>, ch: &'a str) -> bool {
     false
 }
 
-fn is_whitespace<'a>(result: &State<'a>) -> bool {
+fn is_whitespace(result: &State<'_>) -> bool {
     !result.is_escaped() && (result.ch == BLANK_SPACE || result.ch == DOUBLE_SPACE)
 }
 
-fn is_closable<'a>(result: &State<'a>) -> bool {
+fn is_closable(result: &State<'_>) -> bool {
     let ch = result.ch;
     let closer = is_close_paren(ch) && !result.is_escaped();
-    return result.is_in_code() && !is_whitespace(result) && ch != "" && !closer;
+    result.is_in_code() && !is_whitespace(result) && !ch.is_empty() && !closer
 }
-
 
 // {{{1 Advanced operations on characters
 
-fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
+fn check_cursor_holding(result: &State<'_>) -> Result<bool> {
     let opener = peek(&result.paren_stack, 0).unwrap();
     let hold_min_x = peek(&result.paren_stack, 1).map(|p| p.x + 1).unwrap_or(0);
     let hold_max_x = opener.x;
@@ -671,7 +670,7 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
     let holding = result.cursor_line == Some(opener.line_no)
         && result.cursor_x.map(|x| hold_min_x <= x).unwrap_or(false)
         && result.cursor_x.map(|x| x <= hold_max_x).unwrap_or(false);
-    let should_check_prev = result.changes.is_empty() && result.prev_cursor_line != None;
+    let should_check_prev = result.changes.is_empty() && result.prev_cursor_line.is_some();
     if should_check_prev {
         let prev_holding = result.prev_cursor_line == Some(opener.line_no)
             && result
@@ -697,23 +696,21 @@ fn check_cursor_holding<'a>(result: &State<'a>) -> Result<bool> {
     Ok(holding)
 }
 
-fn track_arg_tab_stop<'a>(result: &mut State<'a>, state: TrackingArgTabStop) {
+fn track_arg_tab_stop(result: &mut State<'_>, state: TrackingArgTabStop) {
     if state == TrackingArgTabStop::Space {
         if result.is_in_code() && is_whitespace(result) {
             result.tracking_arg_tab_stop = TrackingArgTabStop::Arg;
         }
-    } else if state == TrackingArgTabStop::Arg {
-        if !is_whitespace(result) {
-            let opener = result.paren_stack.last_mut().unwrap();
-            opener.arg_x = Some(result.x);
-            result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
-        }
+    } else if state == TrackingArgTabStop::Arg && !is_whitespace(result) {
+        let opener = result.paren_stack.last_mut().unwrap();
+        opener.arg_x = Some(result.x);
+        result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
     }
 }
 
 // {{{1 Literal character events
 
-fn in_code_on_open_paren<'a>(result: &mut State<'a>) {
+fn in_code_on_open_paren(result: &mut State<'_>) {
     let opener = Paren {
         input_line_no: result.input_line_no,
         input_x: result.input_x,
@@ -727,7 +724,7 @@ fn in_code_on_open_paren<'a>(result: &mut State<'a>) {
         arg_x: None,
 
         closer: None,
-        children: vec![]
+        children: vec![],
     };
 
     if result.return_parens {
@@ -741,10 +738,10 @@ fn in_code_on_open_paren<'a>(result: &mut State<'a>) {
     result.tracking_arg_tab_stop = TrackingArgTabStop::Space;
 }
 
-fn in_code_on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn in_code_on_matched_close_paren(result: &mut State<'_>) -> Result<()> {
     let mut opener = (*peek(&result.paren_stack, 0).unwrap()).clone();
     if result.return_parens {
-        set_closer(&mut opener, result.line_no, result.x, result.ch);
+        set_closer(&mut opener);
     }
 
     result.paren_trail.end_x = Some(result.x + 1);
@@ -769,7 +766,7 @@ fn in_code_on_matched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn in_code_on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn in_code_on_unmatched_close_paren(result: &mut State<'_>) -> Result<()> {
     match result.mode {
         Mode::Paren => {
             let in_leading_paren_trail = result.paren_trail.line_no == Some(result.line_no)
@@ -804,7 +801,7 @@ fn in_code_on_unmatched_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn in_code_on_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn in_code_on_close_paren(result: &mut State<'_>) -> Result<()> {
     if is_valid_close_paren(&result.paren_stack, result.ch) {
         in_code_on_matched_close_paren(result)?;
     } else {
@@ -814,28 +811,28 @@ fn in_code_on_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn in_code_on_tab<'a>(result: &mut State<'a>) {
+fn in_code_on_tab(result: &mut State<'_>) {
     result.ch = DOUBLE_SPACE;
 }
 
-fn in_code_on_comment_char<'a>(result: &mut State<'a>) {
+fn in_code_on_comment_char(result: &mut State<'_>) {
     result.context = In::Comment;
     result.comment_x = Some(result.x);
     result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
 }
 
-fn on_newline<'a>(result: &mut State<'a>) {
+fn on_newline(result: &mut State<'_>) {
     if result.is_in_comment() {
         result.context = In::Code;
     }
     result.ch = "";
 }
 
-fn in_code_on_quote<'a>(result: &mut State<'a>) {
+fn in_code_on_quote(result: &mut State<'_>) {
     result.context = In::String { delim: result.ch };
     cache_error_pos(result, ErrorName::UnclosedQuote);
 }
-fn in_comment_on_quote<'a>(result: &mut State<'a>) {
+fn in_comment_on_quote(result: &mut State<'_>) {
     result.quote_danger = !result.quote_danger;
     if result.quote_danger {
         cache_error_pos(result, ErrorName::QuoteDanger);
@@ -847,33 +844,33 @@ fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
     }
 }
 
-fn in_code_on_nsign<'a>(result: &mut State<'a>) {
+fn in_code_on_nsign(result: &mut State<'_>) {
     result.context = In::LispReaderSyntax;
 }
 
-fn in_lisp_reader_syntax_on_vline<'a>(result: &mut State<'a>) {
+fn in_lisp_reader_syntax_on_vline(result: &mut State<'_>) {
     result.context = In::LispBlockComment { depth: 1 };
 }
-fn in_lisp_reader_syntax_on_bang<'a>(result: &mut State<'a>) {
+fn in_lisp_reader_syntax_on_bang(result: &mut State<'_>) {
     result.context = In::GuileBlockComment;
 }
-fn in_lisp_reader_syntax_on_semicolon<'a>(result: &mut State<'a>) {
+fn in_lisp_reader_syntax_on_semicolon(result: &mut State<'_>) {
     result.context = In::Code;
 }
 
-fn in_lisp_block_comment_pre_on_vline<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_pre_on_vline(result: &mut State<'_>, depth: usize) {
     result.context = In::LispBlockComment { depth: depth + 1 };
 }
-fn in_lisp_block_comment_pre_on_else<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_pre_on_else(result: &mut State<'_>, depth: usize) {
     result.context = In::LispBlockComment { depth };
 }
-fn in_lisp_block_comment_on_nsign<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_on_nsign(result: &mut State<'_>, depth: usize) {
     result.context = In::LispBlockCommentPre { depth };
 }
-fn in_lisp_block_comment_on_vline<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_on_vline(result: &mut State<'_>, depth: usize) {
     result.context = In::LispBlockCommentPost { depth };
 }
-fn in_lisp_block_comment_post_on_nsign<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_post_on_nsign(result: &mut State<'_>, depth: usize) {
     let depth = depth - 1;
     if depth > 0 {
         result.context = In::LispBlockComment { depth };
@@ -881,55 +878,72 @@ fn in_lisp_block_comment_post_on_nsign<'a>(result: &mut State<'a>, depth: usize)
         result.context = In::Code;
     }
 }
-fn in_lisp_block_comment_post_on_else<'a>(result: &mut State<'a>, depth: usize) {
+fn in_lisp_block_comment_post_on_else(result: &mut State<'_>, depth: usize) {
     result.context = In::LispBlockComment { depth };
 }
 
-fn in_guile_block_comment_on_bang<'a>(result: &mut State<'a>) {
+fn in_guile_block_comment_on_bang(result: &mut State<'_>) {
     result.context = In::GuileBlockCommentPost;
 }
-fn in_guile_block_comment_post_on_nsign<'a>(result: &mut State<'a>) {
+fn in_guile_block_comment_post_on_nsign(result: &mut State<'_>) {
     result.context = In::Code;
 }
-fn in_guile_block_comment_post_on_else<'a>(result: &mut State<'a>) {
+fn in_guile_block_comment_post_on_else(result: &mut State<'_>) {
     result.context = In::GuileBlockComment;
 }
 
-fn in_code_on_grave<'a>(result: &mut State<'a>) {
+fn in_code_on_grave(result: &mut State<'_>) {
     result.context = In::JanetLongStringPre { open_delim_len: 1 };
     cache_error_pos(result, ErrorName::UnclosedQuote);
 }
-fn in_janet_long_string_pre_on_grave<'a>(result: &mut State<'a>, open_delim_len: usize) {
-    result.context = In::JanetLongStringPre { open_delim_len: open_delim_len + 1 };
+fn in_janet_long_string_pre_on_grave(result: &mut State<'_>, open_delim_len: usize) {
+    result.context = In::JanetLongStringPre {
+        open_delim_len: open_delim_len + 1,
+    };
 }
-fn in_janet_long_string_pre_on_else<'a>(result: &mut State<'a>, open_delim_len: usize) {
-    result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
+fn in_janet_long_string_pre_on_else(result: &mut State<'_>, open_delim_len: usize) {
+    result.context = In::JanetLongString {
+        open_delim_len,
+        close_delim_len: 0,
+    };
 }
-fn in_janet_long_string_on_grave<'a>(result: &mut State<'a>, open_delim_len: usize, close_delim_len: usize) {
+fn in_janet_long_string_on_grave(
+    result: &mut State<'_>,
+    open_delim_len: usize,
+    close_delim_len: usize,
+) {
     let close_delim_len = close_delim_len + 1;
     if open_delim_len == close_delim_len {
         result.context = In::Code;
     } else {
-        result.context = In::JanetLongString { open_delim_len, close_delim_len };
+        result.context = In::JanetLongString {
+            open_delim_len,
+            close_delim_len,
+        };
     }
 }
-fn in_janet_long_string_on_else<'a>(result: &mut State<'a>, open_delim_len: usize, close_delim_len: usize) {
+fn in_janet_long_string_on_else(
+    result: &mut State<'_>,
+    open_delim_len: usize,
+    close_delim_len: usize,
+) {
     if close_delim_len > 0 {
-        result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
+        result.context = In::JanetLongString {
+            open_delim_len,
+            close_delim_len: 0,
+        };
     }
 }
 
-fn on_backslash<'a>(result: &mut State<'a>) {
+fn on_backslash(result: &mut State<'_>) {
     result.escape = Now::Escaping;
 }
 
-fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
+fn after_backslash(result: &mut State<'_>) -> Result<()> {
     result.escape = Now::Escaped;
 
-    if result.ch == NEWLINE {
-        if result.is_in_code() {
-            return error(result, ErrorName::EolBackslash);
-        }
+    if result.ch == NEWLINE && result.is_in_code() {
+        return error(result, ErrorName::EolBackslash);
     }
 
     Ok(())
@@ -937,98 +951,90 @@ fn after_backslash<'a>(result: &mut State<'a>) -> Result<()> {
 
 // {{{1 Character dispatch
 
-fn on_context<'a>(result: &mut State<'a>) -> Result<()> {
+fn on_context(result: &mut State<'_>) -> Result<()> {
     let ch = result.ch;
     match result.context {
-        In::Code => {
-            match ch {
-                _ if ch == result.comment_char => in_code_on_comment_char(result),
-                _ if result.string_delimiters.contains(&ch.to_string()) => in_code_on_quote(result),
-                "(" | "[" | "{" => in_code_on_open_paren(result),
-                ")" | "]" | "}" => in_code_on_close_paren(result)?,
-                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
-                NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
-                GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
-                TAB => in_code_on_tab(result),
-                _ => (),
-            }
+        In::Code => match ch {
+            _ if ch == result.comment_char => in_code_on_comment_char(result),
+            _ if result.string_delimiters.contains(&ch.to_string()) => in_code_on_quote(result),
+            "(" | "[" | "{" => in_code_on_open_paren(result),
+            ")" | "]" | "}" => in_code_on_close_paren(result)?,
+            VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
+            NUMBER_SIGN if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
+            GRAVE if result.janet_long_strings_enabled => in_code_on_grave(result),
+            TAB => in_code_on_tab(result),
+            _ => (),
         },
-        In::Comment => {
-            match ch {
-                _ if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
-                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
-                GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
-                _ => (),
-            }
+        In::Comment => match ch {
+            _ if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
+            VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
+            GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
+            _ => (),
         },
-        In::String { delim } => {
-            match ch {
-                _ if result.string_delimiters.contains(&ch.to_string()) => in_string_on_quote(result, delim),
-                VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
-                _ => (),
+        In::String { delim } => match ch {
+            _ if result.string_delimiters.contains(&ch.to_string()) => {
+                in_string_on_quote(result, delim)
             }
+            VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
+            _ => (),
         },
         In::LispReaderSyntax => {
             match ch {
-                VERTICAL_LINE if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
-                BANG if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
-                ";" if result.scheme_sexp_comments_enabled => in_lisp_reader_syntax_on_semicolon(result),
+                VERTICAL_LINE if result.lisp_block_comments_enabled => {
+                    in_lisp_reader_syntax_on_vline(result)
+                }
+                BANG if result.guile_block_comments_enabled => {
+                    in_lisp_reader_syntax_on_bang(result)
+                }
+                ";" if result.scheme_sexp_comments_enabled => {
+                    in_lisp_reader_syntax_on_semicolon(result)
+                }
                 _ => {
                     // Backtrack!
                     result.context = In::Code;
                     on_context(result)?
-                },
+                }
             }
+        }
+        In::LispBlockCommentPre { depth } => match ch {
+            VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
+            _ => in_lisp_block_comment_pre_on_else(result, depth),
         },
-        In::LispBlockCommentPre { depth } => {
-            match ch {
-                VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
-                _ => in_lisp_block_comment_pre_on_else(result, depth),
-            }
+        In::LispBlockComment { depth } => match ch {
+            NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
+            VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
+            _ => (),
         },
-        In::LispBlockComment { depth } => {
-            match ch {
-                NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
-                VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
-                _ => (),
-            }
-        },
-        In::LispBlockCommentPost { depth } => {
-            match ch {
-                NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
-                _ => in_lisp_block_comment_post_on_else(result, depth),
-            }
+        In::LispBlockCommentPost { depth } => match ch {
+            NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
+            _ => in_lisp_block_comment_post_on_else(result, depth),
         },
         In::GuileBlockComment => {
-            match ch {
-                BANG => in_guile_block_comment_on_bang(result),
-                _ => (),
+            if ch == BANG {
+                in_guile_block_comment_on_bang(result)
             }
+        }
+        In::GuileBlockCommentPost => match ch {
+            NUMBER_SIGN => in_guile_block_comment_post_on_nsign(result),
+            _ => in_guile_block_comment_post_on_else(result),
         },
-        In::GuileBlockCommentPost => {
-            match ch {
-                NUMBER_SIGN => in_guile_block_comment_post_on_nsign(result),
-                _ => in_guile_block_comment_post_on_else(result),
-            }
+        In::JanetLongStringPre { open_delim_len } => match ch {
+            GRAVE => in_janet_long_string_pre_on_grave(result, open_delim_len),
+            _ => in_janet_long_string_pre_on_else(result, open_delim_len),
         },
-        In::JanetLongStringPre { open_delim_len } => {
-            match ch {
-                GRAVE => in_janet_long_string_pre_on_grave(result, open_delim_len),
-                _ => in_janet_long_string_pre_on_else(result, open_delim_len),
-            }
-        },
-        In::JanetLongString { open_delim_len, close_delim_len } => {
-            match ch {
-                GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
-                _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
-            }
+        In::JanetLongString {
+            open_delim_len,
+            close_delim_len,
+        } => match ch {
+            GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
+            _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
         },
     }
 
     Ok(())
 }
 
-fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
+fn on_char(result: &mut State<'_>) -> Result<()> {
     let mut ch = result.ch;
     if result.is_escaped() {
         result.escape = Now::Normal;
@@ -1062,7 +1068,7 @@ fn on_char<'a>(result: &mut State<'a>) -> Result<()> {
 
 // {{{1 Cursor functions
 
-fn is_cursor_left_of<'a>(
+fn is_cursor_left_of(
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
     x: Option<Column>,
@@ -1075,7 +1081,7 @@ fn is_cursor_left_of<'a>(
     }
 }
 
-fn is_cursor_right_of<'a>(
+fn is_cursor_right_of(
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
     x: Option<Column>,
@@ -1088,15 +1094,15 @@ fn is_cursor_right_of<'a>(
     }
 }
 
-fn is_cursor_in_comment<'a>(
-    result: &State<'a>,
+fn is_cursor_in_comment(
+    result: &State<'_>,
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
 ) -> bool {
     is_cursor_right_of(cursor_x, cursor_line, result.comment_x, result.line_no)
 }
 
-fn handle_change_delta<'a>(result: &mut State<'a>) {
+fn handle_change_delta(result: &mut State<'_>) {
     if !result.changes.is_empty() && (result.smart || result.mode == Mode::Paren) {
         if let Some(change) = result.changes.get(&(result.input_line_no, result.input_x)) {
             result.indent_delta += change.new_end_x as Delta - change.old_end_x as Delta;
@@ -1106,7 +1112,7 @@ fn handle_change_delta<'a>(result: &mut State<'a>) {
 
 // {{{1 Paren Trail functions
 
-fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column) {
+fn reset_paren_trail(result: &mut State<'_>, line_no: LineNumber, x: Column) {
     result.paren_trail.line_no = Some(line_no);
     result.paren_trail.start_x = Some(x);
     result.paren_trail.end_x = Some(x);
@@ -1116,8 +1122,8 @@ fn reset_paren_trail<'a>(result: &mut State<'a>, line_no: LineNumber, x: Column)
     result.paren_trail.clamped.openers = vec![];
 }
 
-fn is_cursor_clamping_paren_trail<'a>(
-    result: &State<'a>,
+fn is_cursor_clamping_paren_trail(
+    result: &State<'_>,
     cursor_x: Option<Column>,
     cursor_line: Option<LineNumber>,
 ) -> bool {
@@ -1130,7 +1136,7 @@ fn is_cursor_clamping_paren_trail<'a>(
 }
 
 // INDENT MODE: allow the cursor to clamp the paren trail
-fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
+fn clamp_paren_trail_to_cursor(result: &mut State<'_>) {
     let clamping = is_cursor_clamping_paren_trail(result, result.cursor_x, result.cursor_line);
     if clamping {
         let start_x = result.paren_trail.start_x.unwrap();
@@ -1141,14 +1147,11 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
 
         let line = &result.lines[result.line_no];
         let mut remove_count = 0;
-        for (x, ch) in line
-            .graphemes(true)
-            .scan(0, |column, ch| {
-                let start_column = *column;
-                *column = *column + UnicodeWidthStr::width(ch);
-                Some((start_column, ch))
-            })
-        {
+        for (x, ch) in line.graphemes(true).scan(0, |column, ch| {
+            let start_column = *column;
+            *column += UnicodeWidthStr::width(ch);
+            Some((start_column, ch))
+        }) {
             if x < start_x || x >= new_start_x {
                 continue;
             }
@@ -1159,17 +1162,17 @@ fn clamp_paren_trail_to_cursor<'a>(result: &mut State<'a>) {
 
         let openers = result.paren_trail.openers.clone();
 
-        result.paren_trail.openers = (&openers[remove_count..]).to_vec();
+        result.paren_trail.openers = openers[remove_count..].to_vec();
         result.paren_trail.start_x = Some(new_start_x);
         result.paren_trail.end_x = Some(new_end_x);
 
-        result.paren_trail.clamped.openers = (&openers[..remove_count]).to_vec();
+        result.paren_trail.clamped.openers = openers[..remove_count].to_vec();
         result.paren_trail.clamped.start_x = Some(start_x);
         result.paren_trail.clamped.end_x = Some(end_x);
     }
 }
 
-fn pop_paren_trail<'a>(result: &mut State<'a>) {
+fn pop_paren_trail(result: &mut State<'_>) {
     let start_x = result.paren_trail.start_x;
     let end_x = result.paren_trail.end_x;
 
@@ -1182,7 +1185,8 @@ fn pop_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
-fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize {
+#[allow(clippy::if_same_then_else)]
+fn get_parent_opener_index(result: &mut State<'_>, indent_x: usize) -> usize {
     for i in 0..result.paren_stack.len() {
         let opener = peek(&result.paren_stack, i).unwrap().clone();
         let opener_index = result.paren_stack.len() - i - 1;
@@ -1280,11 +1284,8 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
                 {
                     // we can only disallow adoption if nextOpener.indentDelta will actually
                     // prevent the indentX from being in the opener's threshold.
-                    if indent_x as Delta + next_opener.unwrap().indent_delta > opener.x as Delta {
-                        is_parent = true;
-                    } else {
-                        is_parent = false;
-                    }
+                    is_parent =
+                        indent_x as Delta + next_opener.unwrap().indent_delta > opener.x as Delta;
                 }
                 // 2. ALLOW ADOPTION
                 // ```in
@@ -1369,24 +1370,18 @@ fn get_parent_opener_index<'a>(result: &mut State<'a>, indent_x: usize) -> usize
 }
 
 // INDENT MODE: correct paren trail from indentation
-fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
+fn correct_paren_trail(result: &mut State<'_>, indent_x: usize) {
     let mut parens = String::new();
 
     let index = get_parent_opener_index(result, indent_x);
-    for i in 0..index {
+    for _ in 0..index {
         let mut opener = result.paren_stack.pop().unwrap();
         let close_ch = match_paren(opener.ch).unwrap();
         if result.return_parens {
-            opener.closer = Some(Closer {
-                line_no: result.paren_trail.line_no.unwrap(),
-                x: result.paren_trail.start_x.unwrap() + i,
-                ch: close_ch,
-                trail: None
-            });
+            opener.closer = Some(Closer { trail: None });
         }
         result.paren_trail.openers.push(opener);
         parens.push_str(close_ch);
-
     }
 
     if let Some(line_no) = result.paren_trail.line_no {
@@ -1398,7 +1393,7 @@ fn correct_paren_trail<'a>(result: &mut State<'a>, indent_x: usize) {
     }
 }
 
-fn clean_paren_trail<'a>(result: &mut State<'a>) {
+fn clean_paren_trail(result: &mut State<'_>) {
     let start_x = result.paren_trail.start_x;
     let end_x = result.paren_trail.end_x;
 
@@ -1412,12 +1407,12 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
     let mut new_trail = String::new();
     let mut space_count = 0;
     for (x, ch) in result.lines[result.line_no]
-                    .graphemes(true)
-                    .scan(0, |column, ch| {
-                        let start_column = *column;
-                        *column = *column + UnicodeWidthStr::width(ch);
-                        Some((start_column, ch))
-                    })
+        .graphemes(true)
+        .scan(0, |column, ch| {
+            let start_column = *column;
+            *column += UnicodeWidthStr::width(ch);
+            Some((start_column, ch))
+        })
     {
         if x < start_x || x >= end_x {
             continue;
@@ -1437,15 +1432,15 @@ fn clean_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
-fn set_closer<'a>(opener: &mut Paren<'a>, line_no: LineNumber, x: Column, ch: &'a str) {
-    opener.closer = Some(Closer { line_no, x, ch, trail: None })
+fn set_closer(opener: &mut Paren<'_>) {
+    opener.closer = Some(Closer { trail: None })
 }
 
-fn append_paren_trail<'a>(result: &mut State<'a>) {
+fn append_paren_trail(result: &mut State<'_>) {
     let mut opener = result.paren_stack.pop().unwrap().clone();
     let close_ch = match_paren(opener.ch).unwrap();
     if result.return_parens {
-        set_closer(&mut opener, result.paren_trail.line_no.unwrap(), result.paren_trail.end_x.unwrap(), close_ch);
+        set_closer(&mut opener);
     }
 
     set_max_indent(result, &opener);
@@ -1458,11 +1453,11 @@ fn append_paren_trail<'a>(result: &mut State<'a>) {
     update_remembered_paren_trail(result);
 }
 
-fn invalidate_paren_trail<'a>(result: &mut State<'a>) {
+fn invalidate_paren_trail(result: &mut State<'_>) {
     result.paren_trail = initial_paren_trail();
 }
 
-fn check_unmatched_outside_paren_trail<'a>(result: &mut State<'a>) -> Result<()> {
+fn check_unmatched_outside_paren_trail(result: &mut State<'_>) -> Result<()> {
     let mut do_error = false;
     if let Some(cache) = result.error_pos_cache.get(&ErrorName::UnmatchedCloseParen) {
         if result
@@ -1490,21 +1485,23 @@ fn set_max_indent<'a>(result: &mut State<'a>, opener: &Paren<'a>) {
     }
 }
 
-fn remember_paren_trail<'a>(result: &mut State<'a>) {
-    if result.paren_trail.clamped.openers.len() > 0 || result.paren_trail.openers.len() > 0 {
-        let is_clamped = result.paren_trail.clamped.start_x != None;
+fn remember_paren_trail(result: &mut State<'_>) {
+    if !result.paren_trail.clamped.openers.is_empty() || !result.paren_trail.openers.is_empty() {
+        let is_clamped = result.paren_trail.clamped.start_x.is_some();
         let short_trail = ParenTrail {
             line_no: result.paren_trail.line_no.unwrap(),
             start_x: if is_clamped {
                 result.paren_trail.clamped.start_x
             } else {
                 result.paren_trail.start_x
-            }.unwrap(),
+            }
+            .unwrap(),
             end_x: if is_clamped {
                 result.paren_trail.clamped.end_x
             } else {
                 result.paren_trail.end_x
-            }.unwrap(),
+            }
+            .unwrap(),
         };
 
         result.paren_trails.push(short_trail.clone());
@@ -1517,7 +1514,7 @@ fn remember_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
-fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
+fn update_remembered_paren_trail(result: &mut State<'_>) {
     if result.paren_trails.is_empty()
         || Some(result.paren_trails[result.paren_trails.len() - 1].line_no)
             != result.paren_trail.line_no
@@ -1535,14 +1532,14 @@ fn update_remembered_paren_trail<'a>(result: &mut State<'a>) {
     }
 }
 
-fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
+fn finish_new_paren_trail(result: &mut State<'_>) {
     if result.is_in_stringish() {
         invalidate_paren_trail(result);
     } else if result.mode == Mode::Indent {
         clamp_paren_trail_to_cursor(result);
         pop_paren_trail(result);
     } else if result.mode == Mode::Paren {
-        if let Some(paren) = peek(&result.paren_trail.openers, 0).map(Clone::clone) {
+        if let Some(paren) = peek(&result.paren_trail.openers, 0).cloned() {
             set_max_indent(result, &paren);
         }
         if Some(result.line_no) != result.cursor_line {
@@ -1554,7 +1551,7 @@ fn finish_new_paren_trail<'a>(result: &mut State<'a>) {
 
 // {{{1 Indentation functions
 
-fn add_indent<'a>(result: &mut State<'a>, delta: Delta) {
+fn add_indent(result: &mut State<'_>, delta: Delta) {
     let orig_indent = result.x;
     let new_indent = (orig_indent as Delta + delta) as Column;
     let indent_str = repeat_string(BLANK_SPACE, new_indent);
@@ -1571,7 +1568,7 @@ fn should_add_opener_indent<'a>(result: &State<'a>, opener: &Paren<'a>) -> bool 
     opener.indent_delta != result.indent_delta
 }
 
-fn correct_indent<'a>(result: &mut State<'a>) {
+fn correct_indent(result: &mut State<'_>) {
     let orig_indent = result.x as Delta;
     let mut new_indent = orig_indent as Delta;
     let mut min_indent = 0;
@@ -1592,7 +1589,7 @@ fn correct_indent<'a>(result: &mut State<'a>) {
     }
 }
 
-fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
+fn on_indent(result: &mut State<'_>) -> Result<()> {
     result.indent_x = Some(result.x);
     result.tracking_indent = false;
 
@@ -1622,7 +1619,7 @@ fn on_indent<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn check_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn check_leading_close_paren(result: &mut State<'_>) -> Result<()> {
     if result
         .error_pos_cache
         .contains_key(&ErrorName::LeadingCloseParen)
@@ -1634,7 +1631,7 @@ fn check_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
+fn on_leading_close_paren(result: &mut State<'_>) -> Result<()> {
     match result.mode {
         Mode::Indent => {
             if !result.force_balance {
@@ -1677,7 +1674,7 @@ fn on_leading_close_paren<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn on_comment_line<'a>(result: &mut State<'a>) {
+fn on_comment_line(result: &mut State<'_>) {
     let paren_trail_length = result.paren_trail.openers.len();
 
     // restore the openers matching the previous paren trail
@@ -1711,7 +1708,7 @@ fn on_comment_line<'a>(result: &mut State<'a>) {
     }
 }
 
-fn check_indent<'a>(result: &mut State<'a>) -> Result<()> {
+fn check_indent(result: &mut State<'_>) -> Result<()> {
     if is_close_paren(result.ch) {
         on_leading_close_paren(result)?;
     } else if result.ch == result.comment_char {
@@ -1734,11 +1731,11 @@ fn make_tab_stop<'a>(opener: &Paren<'a>) -> TabStop<'a> {
     }
 }
 
-fn get_tab_stop_line<'a>(result: &State<'a>) -> Option<LineNumber> {
+fn get_tab_stop_line(result: &State<'_>) -> Option<LineNumber> {
     result.selection_start_line.or(result.cursor_line)
 }
 
-fn set_tab_stops<'a>(result: &mut State<'a>) {
+fn set_tab_stops(result: &mut State<'_>) {
     if get_tab_stop_line(result) != Some(result.line_no) {
         return;
     }
@@ -1792,7 +1789,7 @@ fn process_char<'a>(result: &mut State<'a>, ch: &'a str) -> Result<()> {
     Ok(())
 }
 
-fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
+fn process_line(result: &mut State<'_>, line_no: usize) -> Result<()> {
     init_line(result);
     result.lines.push(Cow::from(result.input_lines[line_no]));
 
@@ -1802,7 +1799,7 @@ fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
         .graphemes(true)
         .scan(0, |column, ch| {
             let start_column = *column;
-            *column = *column + UnicodeWidthStr::width(ch);
+            *column += UnicodeWidthStr::width(ch);
             Some((start_column, ch))
         })
     {
@@ -1823,7 +1820,7 @@ fn process_line<'a>(result: &mut State<'a>, line_no: usize) -> Result<()> {
     Ok(())
 }
 
-fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
+fn finalize_result(result: &mut State<'_>) -> Result<()> {
     if result.quote_danger {
         error(result, ErrorName::QuoteDanger)?;
     }
@@ -1831,10 +1828,8 @@ fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
         error(result, ErrorName::UnclosedQuote)?;
     }
 
-    if result.paren_stack.len() != 0 {
-        if result.mode == Mode::Paren {
-            error(result, ErrorName::UnclosedParen)?;
-        }
+    if !result.paren_stack.is_empty() && result.mode == Mode::Paren {
+        error(result, ErrorName::UnclosedParen)?;
     }
     if result.mode == Mode::Indent {
         init_line(result);
@@ -1845,24 +1840,24 @@ fn finalize_result<'a>(result: &mut State<'a>) -> Result<()> {
     Ok(())
 }
 
-fn process_error<'a>(result: &mut State<'a>, e: Error) {
+fn process_error(result: &mut State<'_>, e: Error) {
     result.success = false;
     result.error = Some(e);
 }
 
 fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -> State<'a> {
-    let mut result = get_initial_result(text, &options, mode, smart);
+    let mut result = get_initial_result(text, options, mode, smart);
 
     let mut process_result: Result<()> = Ok(());
     for i in 0..result.input_lines.len() {
         result.input_line_no = i;
         process_result = process_line(&mut result, i);
-        if let Err(_) = process_result {
+        if process_result.is_err() {
             break;
         }
     }
 
-    if let Ok(_) = process_result {
+    if process_result.is_ok() {
         process_result = finalize_result(&mut result);
     }
 
@@ -1870,7 +1865,7 @@ fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -
         Err(Error {
             name: ErrorName::Restart,
             ..
-        }) => process_text(text, &options, Mode::Paren, smart),
+        }) => process_text(text, options, Mode::Paren, smart),
         Err(e) => {
             process_error(&mut result, e);
             result
@@ -1881,7 +1876,7 @@ fn process_text<'a>(text: &'a str, options: &Options, mode: Mode, smart: bool) -
 
 // {{{1 Public API
 
-fn public_result<'a>(result: State<'a>) -> Answer<'a> {
+fn public_result(result: State<'_>) -> Answer<'_> {
     let line_ending = get_line_ending(result.orig_text);
     if result.success {
         Answer {
@@ -1929,7 +1924,7 @@ pub fn paren_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
 }
 
 pub fn smart_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
-    let smart = options.selection_start_line == None;
+    let smart = options.selection_start_line.is_none();
     public_result(process_text(text, options, Mode::Indent, smart))
 }
 
@@ -1941,11 +1936,11 @@ pub fn process(request: &Request) -> Answer {
     }
 
     if request.mode == "paren" {
-        Answer::from(paren_mode(&request.text, &options))
+        paren_mode(&request.text, &options)
     } else if request.mode == "indent" {
-        Answer::from(indent_mode(&request.text, &options))
+        indent_mode(&request.text, &options)
     } else if request.mode == "smart" {
-        Answer::from(smart_mode(&request.text, &options))
+        smart_mode(&request.text, &options)
     } else {
         Answer::from(Error {
             message: String::from("Bad value specified for `mode`"),
@@ -1956,23 +1951,23 @@ pub fn process(request: &Request) -> Answer {
 
 // This is like the process function above, but uses a reference counted version of Request
 #[allow(dead_code)]
-pub fn rc_process<'a>(request: &'a SharedRequest) -> Answer<'a> {
-  let mut options = request.options.clone();
+pub fn rc_process(request: &SharedRequest) -> Answer<'_> {
+    let mut options = request.options.clone();
 
-  if let Some(ref prev_text) = request.options.prev_text {
-    options.changes = changes::compute_text_changes(prev_text, &request.text);
-  }
+    if let Some(ref prev_text) = request.options.prev_text {
+        options.changes = changes::compute_text_changes(prev_text, &request.text);
+    }
 
-  if request.mode == "paren" {
-    Answer::from(paren_mode(&request.text, &options))
-  } else if request.mode == "indent" {
-    Answer::from(indent_mode(&request.text, &options))
-  } else if request.mode == "smart" {
-    Answer::from(smart_mode(&request.text, &options))
-  } else {
-    Answer::from(Error {
-      message: String::from("Bad value specified for `mode`"),
-      ..Error::default()
-    })
-  }
+    if request.mode == "paren" {
+        paren_mode(&request.text, &options)
+    } else if request.mode == "indent" {
+        indent_mode(&request.text, &options)
+    } else if request.mode == "smart" {
+        smart_mode(&request.text, &options)
+    } else {
+        Answer::from(Error {
+            message: String::from("Bad value specified for `mode`"),
+            ..Error::default()
+        })
+    }
 }
