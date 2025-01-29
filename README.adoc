@@ -229,6 +229,7 @@ This wouldn’t be possible without the work of others:
 * Michael Camilleri - User-defined comments.
 * Mitsuhiro Nakamura - Support for Common Lisp and Scheme.
 * ElKowar - User-defined string-delimiters and support for Yuck.
+* Graham Enos - Updating Rust edition
 
 == License
 

@@ -5,6 +5,7 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[Unreleased]
 ---------------------------------------------------------------------------
 
 * Support for Apple Silicon (by bumping dependency versions)
+* Update to Rust edition 2021
 
 === Vim
 
