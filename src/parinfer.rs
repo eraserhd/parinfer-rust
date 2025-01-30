@@ -820,12 +820,6 @@ fn in_code_on_tab(result: &mut State<'_>) {
     result.ch = "  ";
 }
 
-fn in_code_on_comment_char(result: &mut State<'_>) {
-    result.context = In::Comment;
-    result.comment_x = Some(result.x);
-    result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
-}
-
 fn on_newline(result: &mut State<'_>) {
     if result.is_in_comment() {
         result.context = In::Code;
@@ -833,10 +827,6 @@ fn on_newline(result: &mut State<'_>) {
     result.ch = "";
 }
 
-fn in_code_on_quote(result: &mut State<'_>) {
-    result.context = In::String { delim: result.ch };
-    cache_error_pos(result, ErrorName::UnclosedQuote);
-}
 fn in_comment_on_quote(result: &mut State<'_>) {
     result.quote_danger = !result.quote_danger;
     if result.quote_danger {
@@ -847,10 +837,6 @@ fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
     if delim == result.ch {
         result.context = In::Code;
     }
-}
-
-fn in_code_on_nsign(result: &mut State<'_>) {
-    result.context = In::LispReaderSyntax;
 }
 
 fn in_lisp_reader_syntax_on_vline(result: &mut State<'_>) {
@@ -893,10 +879,6 @@ fn in_guile_block_comment_on_bang(result: &mut State<'_>) {
 fn in_guile_block_comment_post_on_nsign(result: &mut State<'_>) {
     result.context = In::Code;
 }
-fn in_guile_block_comment_post_on_else(result: &mut State<'_>) {
-    result.context = In::GuileBlockComment;
-}
-
 fn in_code_on_grave(result: &mut State<'_>) {
     result.context = In::JanetLongStringPre { open_delim_len: 1 };
     cache_error_pos(result, ErrorName::UnclosedQuote);
@@ -912,43 +894,9 @@ fn in_janet_long_string_pre_on_else(result: &mut State<'_>, open_delim_len: usiz
         close_delim_len: 0,
     };
 }
-fn in_janet_long_string_on_grave(
-    result: &mut State<'_>,
-    open_delim_len: usize,
-    close_delim_len: usize,
-) {
-    let close_delim_len = close_delim_len + 1;
-    if open_delim_len == close_delim_len {
-        result.context = In::Code;
-    } else {
-        result.context = In::JanetLongString {
-            open_delim_len,
-            close_delim_len,
-        };
-    }
-}
-fn in_janet_long_string_on_else(
-    result: &mut State<'_>,
-    open_delim_len: usize,
-    close_delim_len: usize,
-) {
-    if close_delim_len > 0 {
-        result.context = In::JanetLongString {
-            open_delim_len,
-            close_delim_len: 0,
-        };
-    }
-}
-
 fn in_lisp_reader_syntax_on_open_brack<'a>(result: &mut State<'a>) {
     result.hy_bracket_tag.clear();
     result.context = In::HyBracketStringPre;
-}
-fn in_hy_bracket_string_pre_on_else<'a>(result: &mut State<'a>) {
-    result.hy_bracket_tag.push(result.ch);
-}
-fn in_hy_bracket_string_pre_on_open_brack<'a>(result: &mut State<'a>) {
-    result.context = In::HyBracketString;
 }
 fn in_hy_bracket_string_on_close_brack<'a>(result: &mut State<'a>) {
     result.hy_bracket_tag_remaining = result.hy_bracket_tag.clone();
@@ -990,12 +938,24 @@ fn after_backslash(result: &mut State<'_>) -> Result<()> {
 
 fn on_context(result: &mut State<'_>) -> Result<()> {
     match (result.context, result.ch) {
-        (In::Code, ch) if ch == result.comment_char => in_code_on_comment_char(result),
-        (In::Code, ch) if result.string_delimiters.contains(&ch.to_string()) => in_code_on_quote(result),
+        (In::Code, ch) if ch == result.comment_char => {
+            result.context = In::Comment;
+            result.comment_x = Some(result.x);
+            result.tracking_arg_tab_stop = TrackingArgTabStop::NotSearching;
+        },
+        (In::Code, ch) if result.string_delimiters.contains(&ch.to_string()) => {
+            result.context = In::String { delim: result.ch };
+            cache_error_pos(result, ErrorName::UnclosedQuote);
+        },
         (In::Code, "(" | "[" | "{") => in_code_on_open_paren(result),
         (In::Code, ")" | "]" | "}") => in_code_on_close_paren(result)?,
-        (In::Code, "|") if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
-        (In::Code, "#") if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
+        (In::Code, "|") if result.lisp_vline_symbols_enabled => {
+            result.context = In::String { delim: result.ch };
+            cache_error_pos(result, ErrorName::UnclosedQuote);
+        },
+        (In::Code, "#") if result.lisp_reader_syntax_enabled => {
+            result.context = In::LispReaderSyntax;
+        },
         (In::Code, "`") if result.janet_long_strings_enabled => in_code_on_grave(result),
         (In::Code, "\t") => in_code_on_tab(result),
         (In::Code, _) => (),
@@ -1025,19 +985,34 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::GuileBlockComment, "!") => in_guile_block_comment_on_bang(result),
         (In::GuileBlockComment, _) => (),
         (In::GuileBlockCommentPost, "#") => in_guile_block_comment_post_on_nsign(result),
-        (In::GuileBlockCommentPost, _) => in_guile_block_comment_post_on_else(result),
+        (In::GuileBlockCommentPost, _) => {
+            result.context = In::GuileBlockComment;
+        },
         (In::JanetLongStringPre { open_delim_len }, "`") => in_janet_long_string_pre_on_grave(result, open_delim_len),
         (In::JanetLongStringPre { open_delim_len }, _) => in_janet_long_string_pre_on_else(result, open_delim_len),
         (In::JanetLongString { open_delim_len, close_delim_len }, "`") => {
-            in_janet_long_string_on_grave(result, open_delim_len, close_delim_len)
+            let close_delim_len = close_delim_len + 1;
+            if open_delim_len == close_delim_len {
+                result.context = In::Code;
+            } else {
+                result.context = In::JanetLongString {
+                    open_delim_len,
+                    close_delim_len,
+                };
+            }
         },
         (In::JanetLongString { open_delim_len, close_delim_len }, _) => {
-            in_janet_long_string_on_else(result, open_delim_len, close_delim_len)
+            if close_delim_len > 0 {
+                result.context = In::JanetLongString {
+                    open_delim_len,
+                    close_delim_len: 0,
+                };
+            }
         },
-        (In::HyBracketStringPre, "[") => in_hy_bracket_string_pre_on_open_brack(result),
-        (In::HyBracketStringPre, _) => in_hy_bracket_string_pre_on_else(result),
+        (In::HyBracketStringPre, "[") => { result.context = In::HyBracketString; },
+        (In::HyBracketStringPre, _) => { result.hy_bracket_tag.push(result.ch); },
         (In::HyBracketString, "]") => in_hy_bracket_string_on_close_brack(result),
-        (In::HyBracketString, _) => in_hy_bracket_string_on_close_brack(result),
+        (In::HyBracketString, _) => (),
         (In::HyBracketStringPost, "]") => in_hy_bracket_string_post_on_close_brack(result),
         (In::HyBracketStringPost, _) => in_hy_bracket_string_post_on_else(result),
     }
