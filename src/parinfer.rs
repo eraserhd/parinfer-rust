@@ -834,14 +834,6 @@ fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
         result.context = In::Code;
     }
 }
-fn in_hy_bracket_string_post_on_close_brack<'a>(result: &mut State<'a>) {
-    if result.hy_bracket_tag_remaining.is_empty() {
-        result.context = In::Code;
-    } else {
-        result.hy_bracket_tag_remaining = result.hy_bracket_tag.clone();
-        result.hy_bracket_tag_remaining.reverse();
-    }
-}
 
 fn on_backslash(result: &mut State<'_>) {
     result.escape = Now::Escaping;
@@ -963,7 +955,14 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
             result.context = In::HyBracketStringPost;
         },
         (In::HyBracketString, _) => (),
-        (In::HyBracketStringPost, "]") => in_hy_bracket_string_post_on_close_brack(result),
+        (In::HyBracketStringPost, "]") => {
+            if result.hy_bracket_tag_remaining.is_empty() {
+                result.context = In::Code;
+            } else {
+                result.hy_bracket_tag_remaining = result.hy_bracket_tag.clone();
+                result.hy_bracket_tag_remaining.reverse();
+            }
+        },
         (In::HyBracketStringPost, ch) => {
             let next = result.hy_bracket_tag_remaining.last();
             if Some(&ch) == next {
