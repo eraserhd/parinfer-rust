@@ -806,16 +806,6 @@ fn in_code_on_unmatched_close_paren(result: &mut State<'_>) -> Result<()> {
     Ok(())
 }
 
-fn in_code_on_close_paren(result: &mut State<'_>) -> Result<()> {
-    if is_valid_close_paren(&result.paren_stack, result.ch) {
-        in_code_on_matched_close_paren(result)?;
-    } else {
-        in_code_on_unmatched_close_paren(result)?;
-    }
-
-    Ok(())
-}
-
 fn on_newline(result: &mut State<'_>) {
     if result.is_in_comment() {
         result.context = In::Code;
@@ -863,7 +853,13 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
             cache_error_pos(result, ErrorName::UnclosedQuote);
         },
         (In::Code, "(" | "[" | "{") => in_code_on_open_paren(result),
-        (In::Code, ")" | "]" | "}") => in_code_on_close_paren(result)?,
+        (In::Code, ")" | "]" | "}") => {
+            if is_valid_close_paren(&result.paren_stack, result.ch) {
+                in_code_on_matched_close_paren(result)?;
+            } else {
+                in_code_on_unmatched_close_paren(result)?;
+            }
+        },
         (In::Code, "|") if result.lisp_vline_symbols_enabled => {
             result.context = In::String { delim: result.ch };
             cache_error_pos(result, ErrorName::UnclosedQuote);
