@@ -816,10 +816,6 @@ fn in_code_on_close_paren(result: &mut State<'_>) -> Result<()> {
     Ok(())
 }
 
-fn in_code_on_tab(result: &mut State<'_>) {
-    result.ch = "  ";
-}
-
 fn on_newline(result: &mut State<'_>) {
     if result.is_in_comment() {
         result.context = In::Code;
@@ -932,7 +928,9 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
             result.context = In::JanetLongStringPre { open_delim_len: 1 };
             cache_error_pos(result, ErrorName::UnclosedQuote);
         },
-        (In::Code, "\t") => in_code_on_tab(result),
+        (In::Code, "\t") => {
+            result.ch = "  ";
+        },
         (In::Code, _) => (),
         (In::Comment, ch) if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
         (In::Comment, "|") if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
