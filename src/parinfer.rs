@@ -7,16 +7,6 @@ use unicode_width::UnicodeWidthStr;
 
 // {{{1 Constants / Predicates
 
-const BACKSLASH: &str = "\\";
-const BLANK_SPACE: &str = " ";
-const DOUBLE_SPACE: &str = "  ";
-const VERTICAL_LINE: &str = "|";
-const BANG: &str = "!";
-const NUMBER_SIGN: &str = "#";
-const NEWLINE: &str = "\n";
-const TAB: &str = "\t";
-const GRAVE: &str = "`";
-
 fn match_paren(paren: &str) -> Option<&'static str> {
     match paren {
         "{" => Some("}"),
@@ -666,7 +656,7 @@ fn is_valid_close_paren<'a>(paren_stack: &Vec<Paren<'a>>, ch: &'a str) -> bool {
 }
 
 fn is_whitespace(result: &State<'_>) -> bool {
-    !result.is_escaped() && (result.ch == BLANK_SPACE || result.ch == DOUBLE_SPACE)
+    !result.is_escaped() && (result.ch == " " || result.ch == "  ")
 }
 
 fn is_closable(result: &State<'_>) -> bool {
@@ -827,7 +817,7 @@ fn in_code_on_close_paren(result: &mut State<'_>) -> Result<()> {
 }
 
 fn in_code_on_tab(result: &mut State<'_>) {
-    result.ch = DOUBLE_SPACE;
+    result.ch = "  ";
 }
 
 fn in_code_on_comment_char(result: &mut State<'_>) {
@@ -989,7 +979,7 @@ fn on_backslash(result: &mut State<'_>) {
 fn after_backslash(result: &mut State<'_>) -> Result<()> {
     result.escape = Now::Escaped;
 
-    if result.ch == NEWLINE && result.is_in_code() {
+    if result.ch == "\n" && result.is_in_code() {
         return error(result, ErrorName::EolBackslash);
     }
 
@@ -1004,20 +994,20 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::Code, ch) if result.string_delimiters.contains(&ch.to_string()) => in_code_on_quote(result),
         (In::Code, "(" | "[" | "{") => in_code_on_open_paren(result),
         (In::Code, ")" | "]" | "}") => in_code_on_close_paren(result)?,
-        (In::Code, VERTICAL_LINE) if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
-        (In::Code, NUMBER_SIGN) if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
-        (In::Code, GRAVE) if result.janet_long_strings_enabled => in_code_on_grave(result),
-        (In::Code, TAB) => in_code_on_tab(result),
+        (In::Code, "|") if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
+        (In::Code, "#") if result.lisp_reader_syntax_enabled => in_code_on_nsign(result),
+        (In::Code, "`") if result.janet_long_strings_enabled => in_code_on_grave(result),
+        (In::Code, "\t") => in_code_on_tab(result),
         (In::Code, _) => (),
         (In::Comment, ch) if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
-        (In::Comment, VERTICAL_LINE) if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
-        (In::Comment, GRAVE) if result.janet_long_strings_enabled => in_comment_on_quote(result),
+        (In::Comment, "|") if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
+        (In::Comment, "`") if result.janet_long_strings_enabled => in_comment_on_quote(result),
         (In::Comment, _) => (),
         (In::String { delim }, ch) if result.string_delimiters.contains(&ch.to_string()) => in_string_on_quote(result, delim),
-        (In::String { delim }, VERTICAL_LINE) if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
+        (In::String { delim }, "|") if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
         (In::String { .. }, _) => (),
-        (In::LispReaderSyntax, VERTICAL_LINE) if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
-        (In::LispReaderSyntax, BANG) if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
+        (In::LispReaderSyntax, "|") if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
+        (In::LispReaderSyntax, "!") if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
         (In::LispReaderSyntax, ";") if result.scheme_sexp_comments_enabled => in_lisp_reader_syntax_on_semicolon(result),
         (In::LispReaderSyntax, "[") if result.hy_bracket_strings_enabled => in_lisp_reader_syntax_on_open_brack(result),
         (In::LispReaderSyntax, _) => {
@@ -1025,20 +1015,20 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
             result.context = In::Code;
             on_context(result)?
         },
-        (In::LispBlockCommentPre { depth }, VERTICAL_LINE) => in_lisp_block_comment_pre_on_vline(result, depth),
+        (In::LispBlockCommentPre { depth }, "|") => in_lisp_block_comment_pre_on_vline(result, depth),
         (In::LispBlockCommentPre { depth }, _) => in_lisp_block_comment_pre_on_else(result, depth),
-        (In::LispBlockComment { depth }, NUMBER_SIGN) => in_lisp_block_comment_on_nsign(result, depth),
-        (In::LispBlockComment { depth }, VERTICAL_LINE) => in_lisp_block_comment_on_vline(result, depth),
+        (In::LispBlockComment { depth }, "#") => in_lisp_block_comment_on_nsign(result, depth),
+        (In::LispBlockComment { depth }, "|") => in_lisp_block_comment_on_vline(result, depth),
         (In::LispBlockComment { .. }, _) => (),
-        (In::LispBlockCommentPost { depth }, NUMBER_SIGN) => in_lisp_block_comment_post_on_nsign(result, depth),
+        (In::LispBlockCommentPost { depth }, "#") => in_lisp_block_comment_post_on_nsign(result, depth),
         (In::LispBlockCommentPost { depth }, _) => in_lisp_block_comment_post_on_else(result, depth),
-        (In::GuileBlockComment, BANG) => in_guile_block_comment_on_bang(result),
+        (In::GuileBlockComment, "!") => in_guile_block_comment_on_bang(result),
         (In::GuileBlockComment, _) => (),
-        (In::GuileBlockCommentPost, NUMBER_SIGN) => in_guile_block_comment_post_on_nsign(result),
+        (In::GuileBlockCommentPost, "#") => in_guile_block_comment_post_on_nsign(result),
         (In::GuileBlockCommentPost, _) => in_guile_block_comment_post_on_else(result),
-        (In::JanetLongStringPre { open_delim_len }, GRAVE) => in_janet_long_string_pre_on_grave(result, open_delim_len),
+        (In::JanetLongStringPre { open_delim_len }, "`") => in_janet_long_string_pre_on_grave(result, open_delim_len),
         (In::JanetLongStringPre { open_delim_len }, _) => in_janet_long_string_pre_on_else(result, open_delim_len),
-        (In::JanetLongString { open_delim_len, close_delim_len }, GRAVE) => {
+        (In::JanetLongString { open_delim_len, close_delim_len }, "`") => {
             in_janet_long_string_on_grave(result, open_delim_len, close_delim_len)
         },
         (In::JanetLongString { open_delim_len, close_delim_len }, _) => {
@@ -1063,9 +1053,9 @@ fn on_char(result: &mut State<'_>) -> Result<()> {
 
     if result.is_escaping() {
         after_backslash(result)?;
-    } else if ch == BACKSLASH {
+    } else if ch == "\\" {
         on_backslash(result);
-    } else if ch == NEWLINE {
+    } else if ch == "\n" {
         on_newline(result);
     } else {
         on_context(result)?;
@@ -1575,7 +1565,7 @@ fn finish_new_paren_trail(result: &mut State<'_>) {
 fn add_indent(result: &mut State<'_>, delta: Delta) {
     let orig_indent = result.x;
     let new_indent = (orig_indent as Delta + delta) as Column;
-    let indent_str = repeat_string(BLANK_SPACE, new_indent);
+    let indent_str = repeat_string(" ", new_indent);
     let line_no = result.line_no;
     replace_within_line(result, line_no, 0, orig_indent, &indent_str);
     result.x = new_indent;
@@ -1736,7 +1726,7 @@ fn check_indent(result: &mut State<'_>) -> Result<()> {
         // comments don't count as indentation points
         on_comment_line(result);
         result.tracking_indent = false;
-    } else if result.ch != NEWLINE && result.ch != BLANK_SPACE && result.ch != TAB {
+    } else if result.ch != "\n" && result.ch != " " && result.ch != "\t" {
         on_indent(result)?;
     }
 
@@ -1827,7 +1817,7 @@ fn process_line(result: &mut State<'_>, line_no: usize) -> Result<()> {
         result.input_x = x;
         process_char(result, ch)?;
     }
-    process_char(result, NEWLINE)?;
+    process_char(result, "\n")?;
 
     if !result.force_balance {
         check_unmatched_outside_paren_trail(result)?;
