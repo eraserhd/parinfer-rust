@@ -897,13 +897,9 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::LispBlockComment { depth }, "#") => { result.context = In::LispBlockCommentPre { depth }; },
         (In::LispBlockComment { depth }, "|") => { result.context = In::LispBlockCommentPost { depth }; },
         (In::LispBlockComment { .. }, _) => (),
+        (In::LispBlockCommentPost { depth: 1 }, "#") => { result.context = In::Code; },
         (In::LispBlockCommentPost { depth }, "#") => {
-            let depth = depth - 1;
-            if depth > 0 {
-                result.context = In::LispBlockComment { depth };
-            } else {
-                result.context = In::Code;
-            }
+            result.context = In::LispBlockComment { depth: depth - 1 };
         },
         (In::LispBlockCommentPost { depth }, _) => {
             result.context = In::LispBlockComment { depth };
