@@ -834,22 +834,6 @@ fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
         result.context = In::Code;
     }
 }
-
-fn in_lisp_reader_syntax_on_vline(result: &mut State<'_>) {
-    result.context = In::LispBlockComment { depth: 1 };
-}
-fn in_lisp_reader_syntax_on_bang(result: &mut State<'_>) {
-    result.context = In::GuileBlockComment;
-}
-fn in_lisp_block_comment_pre_on_vline(result: &mut State<'_>, depth: usize) {
-    result.context = In::LispBlockComment { depth: depth + 1 };
-}
-fn in_lisp_block_comment_pre_on_else(result: &mut State<'_>, depth: usize) {
-    result.context = In::LispBlockComment { depth };
-}
-fn in_lisp_block_comment_on_nsign(result: &mut State<'_>, depth: usize) {
-    result.context = In::LispBlockCommentPre { depth };
-}
 fn in_lisp_block_comment_on_vline(result: &mut State<'_>, depth: usize) {
     result.context = In::LispBlockCommentPost { depth };
 }
@@ -860,12 +844,6 @@ fn in_lisp_block_comment_post_on_nsign(result: &mut State<'_>, depth: usize) {
     } else {
         result.context = In::Code;
     }
-}
-fn in_guile_block_comment_on_bang(result: &mut State<'_>) {
-    result.context = In::GuileBlockCommentPost;
-}
-fn in_guile_block_comment_post_on_nsign(result: &mut State<'_>) {
-    result.context = In::Code;
 }
 fn in_lisp_reader_syntax_on_open_brack<'a>(result: &mut State<'a>) {
     result.hy_bracket_tag.clear();
@@ -929,8 +907,10 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::String { delim }, ch) if result.string_delimiters.contains(&ch.to_string()) => in_string_on_quote(result, delim),
         (In::String { delim }, "|") if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
         (In::String { .. }, _) => (),
-        (In::LispReaderSyntax, "|") if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
-        (In::LispReaderSyntax, "!") if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
+        (In::LispReaderSyntax, "|") if result.lisp_block_comments_enabled => {
+            result.context = In::LispBlockComment { depth: 1 };
+        },
+        (In::LispReaderSyntax, "!") if result.guile_block_comments_enabled => { result.context = In::GuileBlockComment; },
         (In::LispReaderSyntax, ";") if result.scheme_sexp_comments_enabled => { result.context = In::Code; },
         (In::LispReaderSyntax, "[") if result.hy_bracket_strings_enabled => in_lisp_reader_syntax_on_open_brack(result),
         (In::LispReaderSyntax, _) => {
@@ -938,18 +918,20 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
             result.context = In::Code;
             on_context(result)?
         },
-        (In::LispBlockCommentPre { depth }, "|") => in_lisp_block_comment_pre_on_vline(result, depth),
-        (In::LispBlockCommentPre { depth }, _) => in_lisp_block_comment_pre_on_else(result, depth),
-        (In::LispBlockComment { depth }, "#") => in_lisp_block_comment_on_nsign(result, depth),
+        (In::LispBlockCommentPre { depth }, "|") => {
+            result.context = In::LispBlockComment { depth: depth + 1 };
+        },
+        (In::LispBlockCommentPre { depth }, _) => { result.context = In::LispBlockComment { depth }; },
+        (In::LispBlockComment { depth }, "#") => { result.context = In::LispBlockCommentPre { depth }; },
         (In::LispBlockComment { depth }, "|") => in_lisp_block_comment_on_vline(result, depth),
         (In::LispBlockComment { .. }, _) => (),
         (In::LispBlockCommentPost { depth }, "#") => in_lisp_block_comment_post_on_nsign(result, depth),
         (In::LispBlockCommentPost { depth }, _) => {
             result.context = In::LispBlockComment { depth };
         },
-        (In::GuileBlockComment, "!") => in_guile_block_comment_on_bang(result),
+        (In::GuileBlockComment, "!") => { result.context = In::GuileBlockCommentPost; },
         (In::GuileBlockComment, _) => (),
-        (In::GuileBlockCommentPost, "#") => in_guile_block_comment_post_on_nsign(result),
+        (In::GuileBlockCommentPost, "#") => { result.context = In::Code },
         (In::GuileBlockCommentPost, _) => {
             result.context = In::GuileBlockComment;
         },
