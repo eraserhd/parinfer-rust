@@ -913,16 +913,11 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::JanetLongStringPre { open_delim_len }, _) => {
             result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
         },
+        (In::JanetLongString { open_delim_len, close_delim_len }, "`") if open_delim_len == close_delim_len + 1 => {
+            result.context = In::Code;
+        },
         (In::JanetLongString { open_delim_len, close_delim_len }, "`") => {
-            let close_delim_len = close_delim_len + 1;
-            if open_delim_len == close_delim_len {
-                result.context = In::Code;
-            } else {
-                result.context = In::JanetLongString {
-                    open_delim_len,
-                    close_delim_len,
-                };
-            }
+            result.context = In::JanetLongString { open_delim_len, close_delim_len: close_delim_len + 1 };
         },
         (In::JanetLongString { open_delim_len, close_delim_len }, _) => {
             if close_delim_len > 0 {
