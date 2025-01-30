@@ -999,10 +999,9 @@ fn after_backslash(result: &mut State<'_>) -> Result<()> {
 // {{{1 Character dispatch
 
 fn on_context(result: &mut State<'_>) -> Result<()> {
-    let ch = result.ch;
     match (result.context, result.ch) {
-        (In::Code, _) if ch == result.comment_char => in_code_on_comment_char(result),
-        (In::Code, _) if result.string_delimiters.contains(&ch.to_string()) => in_code_on_quote(result),
+        (In::Code, ch) if ch == result.comment_char => in_code_on_comment_char(result),
+        (In::Code, ch) if result.string_delimiters.contains(&ch.to_string()) => in_code_on_quote(result),
         (In::Code, "(" | "[" | "{") => in_code_on_open_paren(result),
         (In::Code, ")" | "]" | "}") => in_code_on_close_paren(result)?,
         (In::Code, VERTICAL_LINE) if result.lisp_vline_symbols_enabled => in_code_on_quote(result),
@@ -1010,91 +1009,47 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::Code, GRAVE) if result.janet_long_strings_enabled => in_code_on_grave(result),
         (In::Code, TAB) => in_code_on_tab(result),
         (In::Code, _) => (),
-        (In::Comment, _) => match ch {
-            _ if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
-            VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
-            GRAVE if result.janet_long_strings_enabled => in_comment_on_quote(result),
-            _ => (),
-        },
-        (In::String { delim }, _) => match ch {
-            _ if result.string_delimiters.contains(&ch.to_string()) => {
-                in_string_on_quote(result, delim)
-            }
-            VERTICAL_LINE if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
-            _ => (),
-        },
+        (In::Comment, ch) if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
+        (In::Comment, VERTICAL_LINE) if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
+        (In::Comment, GRAVE) if result.janet_long_strings_enabled => in_comment_on_quote(result),
+        (In::Comment, _) => (),
+        (In::String { delim }, ch) if result.string_delimiters.contains(&ch.to_string()) => in_string_on_quote(result, delim),
+        (In::String { delim }, VERTICAL_LINE) if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
+        (In::String { .. }, _) => (),
+        (In::LispReaderSyntax, VERTICAL_LINE) if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
+        (In::LispReaderSyntax, BANG) if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
+        (In::LispReaderSyntax, ";") if result.scheme_sexp_comments_enabled => in_lisp_reader_syntax_on_semicolon(result),
+        (In::LispReaderSyntax, "[") if result.hy_bracket_strings_enabled => in_lisp_reader_syntax_on_open_brack(result),
         (In::LispReaderSyntax, _) => {
-            match ch {
-                VERTICAL_LINE if result.lisp_block_comments_enabled => {
-                    in_lisp_reader_syntax_on_vline(result)
-                }
-                BANG if result.guile_block_comments_enabled => {
-                    in_lisp_reader_syntax_on_bang(result)
-                }
-                ";" if result.scheme_sexp_comments_enabled => {
-                    in_lisp_reader_syntax_on_semicolon(result)
-                }
-                "[" if result.hy_bracket_strings_enabled => {
-                    in_lisp_reader_syntax_on_open_brack(result)
-                }
-                _ => {
-                    // Backtrack!
-                    result.context = In::Code;
-                    on_context(result)?
-                }
-            }
-        }
-        (In::LispBlockCommentPre { depth }, _) => match ch {
-            VERTICAL_LINE => in_lisp_block_comment_pre_on_vline(result, depth),
-            _ => in_lisp_block_comment_pre_on_else(result, depth),
+            // Backtrack!
+            result.context = In::Code;
+            on_context(result)?
         },
-        (In::LispBlockComment { depth }, _) => match ch {
-            NUMBER_SIGN => in_lisp_block_comment_on_nsign(result, depth),
-            VERTICAL_LINE => in_lisp_block_comment_on_vline(result, depth),
-            _ => (),
+        (In::LispBlockCommentPre { depth }, VERTICAL_LINE) => in_lisp_block_comment_pre_on_vline(result, depth),
+        (In::LispBlockCommentPre { depth }, _) => in_lisp_block_comment_pre_on_else(result, depth),
+        (In::LispBlockComment { depth }, NUMBER_SIGN) => in_lisp_block_comment_on_nsign(result, depth),
+        (In::LispBlockComment { depth }, VERTICAL_LINE) => in_lisp_block_comment_on_vline(result, depth),
+        (In::LispBlockComment { .. }, _) => (),
+        (In::LispBlockCommentPost { depth }, NUMBER_SIGN) => in_lisp_block_comment_post_on_nsign(result, depth),
+        (In::LispBlockCommentPost { depth }, _) => in_lisp_block_comment_post_on_else(result, depth),
+        (In::GuileBlockComment, BANG) => in_guile_block_comment_on_bang(result),
+        (In::GuileBlockComment, _) => (),
+        (In::GuileBlockCommentPost, NUMBER_SIGN) => in_guile_block_comment_post_on_nsign(result),
+        (In::GuileBlockCommentPost, _) => in_guile_block_comment_post_on_else(result),
+        (In::JanetLongStringPre { open_delim_len }, GRAVE) => in_janet_long_string_pre_on_grave(result, open_delim_len),
+        (In::JanetLongStringPre { open_delim_len }, _) => in_janet_long_string_pre_on_else(result, open_delim_len),
+        (In::JanetLongString { open_delim_len, close_delim_len }, GRAVE) => {
+            in_janet_long_string_on_grave(result, open_delim_len, close_delim_len)
         },
-        (In::LispBlockCommentPost { depth }, _) => match ch {
-            NUMBER_SIGN => in_lisp_block_comment_post_on_nsign(result, depth),
-            _ => in_lisp_block_comment_post_on_else(result, depth),
+        (In::JanetLongString { open_delim_len, close_delim_len }, _) => {
+            in_janet_long_string_on_else(result, open_delim_len, close_delim_len)
         },
-        (In::GuileBlockComment, _) => {
-            if ch == BANG {
-                in_guile_block_comment_on_bang(result)
-            }
-        }
-        (In::GuileBlockCommentPost, _) => match ch {
-            NUMBER_SIGN => in_guile_block_comment_post_on_nsign(result),
-            _ => in_guile_block_comment_post_on_else(result),
-        },
-        (In::JanetLongStringPre { open_delim_len }, _) => match ch {
-            GRAVE => in_janet_long_string_pre_on_grave(result, open_delim_len),
-            _ => in_janet_long_string_pre_on_else(result, open_delim_len),
-        },
-        (In::JanetLongString {
-            open_delim_len,
-            close_delim_len,
-        }, _) => match ch {
-            GRAVE => in_janet_long_string_on_grave(result, open_delim_len, close_delim_len),
-            _ => in_janet_long_string_on_else(result, open_delim_len, close_delim_len),
-        },
-        (In::HyBracketStringPre, _) => {
-            match ch {
-                "[" => in_hy_bracket_string_pre_on_open_brack(result),
-                _ => in_hy_bracket_string_pre_on_else(result),
-            }
-        },
-        (In::HyBracketString, _) => {
-            match ch {
-                "]" => in_hy_bracket_string_on_close_brack(result),
-                _ => (),
-            }
-        },
-        (In::HyBracketStringPost, _) => {
-            match ch {
-                "]" => in_hy_bracket_string_post_on_close_brack(result),
-                _ => in_hy_bracket_string_post_on_else(result),
-            }
-        },
+        (In::HyBracketStringPre, "[") => in_hy_bracket_string_pre_on_open_brack(result),
+        (In::HyBracketStringPre, _) => in_hy_bracket_string_pre_on_else(result),
+        (In::HyBracketString, "]") => in_hy_bracket_string_on_close_brack(result),
+        (In::HyBracketString, _) => in_hy_bracket_string_on_close_brack(result),
+        (In::HyBracketStringPost, "]") => in_hy_bracket_string_post_on_close_brack(result),
+        (In::HyBracketStringPost, _) => in_hy_bracket_string_post_on_else(result),
     }
 
     Ok(())
