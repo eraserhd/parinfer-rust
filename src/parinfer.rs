@@ -834,21 +834,6 @@ fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
         result.context = In::Code;
     }
 }
-fn in_lisp_block_comment_on_vline(result: &mut State<'_>, depth: usize) {
-    result.context = In::LispBlockCommentPost { depth };
-}
-fn in_lisp_block_comment_post_on_nsign(result: &mut State<'_>, depth: usize) {
-    let depth = depth - 1;
-    if depth > 0 {
-        result.context = In::LispBlockComment { depth };
-    } else {
-        result.context = In::Code;
-    }
-}
-fn in_lisp_reader_syntax_on_open_brack<'a>(result: &mut State<'a>) {
-    result.hy_bracket_tag.clear();
-    result.context = In::HyBracketStringPre;
-}
 fn in_hy_bracket_string_post_on_close_brack<'a>(result: &mut State<'a>) {
     if result.hy_bracket_tag_remaining.is_empty() {
         result.context = In::Code;
@@ -912,7 +897,10 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         },
         (In::LispReaderSyntax, "!") if result.guile_block_comments_enabled => { result.context = In::GuileBlockComment; },
         (In::LispReaderSyntax, ";") if result.scheme_sexp_comments_enabled => { result.context = In::Code; },
-        (In::LispReaderSyntax, "[") if result.hy_bracket_strings_enabled => in_lisp_reader_syntax_on_open_brack(result),
+        (In::LispReaderSyntax, "[") if result.hy_bracket_strings_enabled => {
+            result.hy_bracket_tag.clear();
+            result.context = In::HyBracketStringPre;
+        },
         (In::LispReaderSyntax, _) => {
             // Backtrack!
             result.context = In::Code;
@@ -923,9 +911,16 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         },
         (In::LispBlockCommentPre { depth }, _) => { result.context = In::LispBlockComment { depth }; },
         (In::LispBlockComment { depth }, "#") => { result.context = In::LispBlockCommentPre { depth }; },
-        (In::LispBlockComment { depth }, "|") => in_lisp_block_comment_on_vline(result, depth),
+        (In::LispBlockComment { depth }, "|") => { result.context = In::LispBlockCommentPost { depth }; },
         (In::LispBlockComment { .. }, _) => (),
-        (In::LispBlockCommentPost { depth }, "#") => in_lisp_block_comment_post_on_nsign(result, depth),
+        (In::LispBlockCommentPost { depth }, "#") => {
+            let depth = depth - 1;
+            if depth > 0 {
+                result.context = In::LispBlockComment { depth };
+            } else {
+                result.context = In::Code;
+            }
+        },
         (In::LispBlockCommentPost { depth }, _) => {
             result.context = In::LispBlockComment { depth };
         },
