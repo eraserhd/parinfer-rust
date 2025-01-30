@@ -841,10 +841,6 @@ fn in_lisp_reader_syntax_on_vline(result: &mut State<'_>) {
 fn in_lisp_reader_syntax_on_bang(result: &mut State<'_>) {
     result.context = In::GuileBlockComment;
 }
-fn in_lisp_reader_syntax_on_semicolon(result: &mut State<'_>) {
-    result.context = In::Code;
-}
-
 fn in_lisp_block_comment_pre_on_vline(result: &mut State<'_>, depth: usize) {
     result.context = In::LispBlockComment { depth: depth + 1 };
 }
@@ -924,9 +920,7 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
             result.context = In::JanetLongStringPre { open_delim_len: 1 };
             cache_error_pos(result, ErrorName::UnclosedQuote);
         },
-        (In::Code, "\t") => {
-            result.ch = "  ";
-        },
+        (In::Code, "\t") => { result.ch = "  "; },
         (In::Code, _) => (),
         (In::Comment, ch) if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
         (In::Comment, "|") if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
@@ -937,7 +931,7 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::String { .. }, _) => (),
         (In::LispReaderSyntax, "|") if result.lisp_block_comments_enabled => in_lisp_reader_syntax_on_vline(result),
         (In::LispReaderSyntax, "!") if result.guile_block_comments_enabled => in_lisp_reader_syntax_on_bang(result),
-        (In::LispReaderSyntax, ";") if result.scheme_sexp_comments_enabled => in_lisp_reader_syntax_on_semicolon(result),
+        (In::LispReaderSyntax, ";") if result.scheme_sexp_comments_enabled => { result.context = In::Code; },
         (In::LispReaderSyntax, "[") if result.hy_bracket_strings_enabled => in_lisp_reader_syntax_on_open_brack(result),
         (In::LispReaderSyntax, _) => {
             // Backtrack!
