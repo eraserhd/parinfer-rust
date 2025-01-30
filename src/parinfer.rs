@@ -819,11 +819,6 @@ fn in_comment_on_quote(result: &mut State<'_>) {
         cache_error_pos(result, ErrorName::QuoteDanger);
     }
 }
-fn in_string_on_quote<'a>(result: &mut State<'a>, delim: &'a str) {
-    if delim == result.ch {
-        result.context = In::Code;
-    }
-}
 
 fn on_backslash(result: &mut State<'_>) {
     result.escape = Now::Escaping;
@@ -877,8 +872,7 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::Comment, "|") if result.lisp_vline_symbols_enabled => in_comment_on_quote(result),
         (In::Comment, "`") if result.janet_long_strings_enabled => in_comment_on_quote(result),
         (In::Comment, _) => (),
-        (In::String { delim }, ch) if result.string_delimiters.contains(&ch.to_string()) => in_string_on_quote(result, delim),
-        (In::String { delim }, "|") if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
+        (In::String { delim }, ch) if delim == ch => { result.context = In::Code; },
         (In::String { .. }, _) => (),
         (In::LispReaderSyntax, "|") if result.lisp_block_comments_enabled => {
             result.context = In::LispBlockComment { depth: 1 };
