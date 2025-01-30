@@ -15,7 +15,7 @@ Rather than switching between "paren" mode and "indent" mode, parinfer uses info
 
 Dependencies:
 
-* https://www.rust-lang.org/en-US/install.html[rust] >= 1.36
+* https://www.rust-lang.org/en-US/install.html[rust] >= ~1.83 ?
 * `clang` and `libclang-dev` packages or equivalent for your OS
 
 
@@ -229,6 +229,7 @@ This wouldn’t be possible without the work of others:
 * Mitsuhiro Nakamura - Support for Common Lisp and Scheme.
 * ElKowar - User-defined string-delimiters and support for Yuck.
 * Graham Enos - Updating Rust edition
+* Sunjay Cauligi - Support for Hy
 
 == License
 

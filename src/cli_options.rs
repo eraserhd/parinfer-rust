@@ -23,6 +23,7 @@ enum Language {
     Racket,
     Guile,
     Scheme,
+    Hy,
 }
 
 pub struct Options {
@@ -65,6 +66,10 @@ const SCHEME_SEXP_COMMENTS: YesNoDefaultOption = YesNoDefaultOption {
     name: "scheme-sexp-comments",
     description: "recognize #;( scheme sexp comments )",
 };
+const HY_BRACKET_STRINGS_OPTION : YesNoDefaultOption = YesNoDefaultOption {
+    name: "hy-bracket-strings",
+    description: "recognize #[hy-style[ bracket strings ]hy-style]```",
+};
 
 fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
@@ -78,11 +83,12 @@ fn options() -> getopts::Options {
         "FMT",
     );
     GUILE_BLOCK_COMMENTS_OPTION.add(&mut options);
+    HY_BRACKET_STRINGS_OPTION.add(&mut options);
     JANET_LONG_STRINGS_OPTION.add(&mut options);
     options.optopt(
         "l",
         "language",
-        "'clojure', 'janet', 'lisp', 'racket', 'guile', 'scheme' (default: 'clojure')",
+        "'clojure', 'guile', 'hy', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')",
         "LANG",
     );
     LISP_BLOCK_COMMENTS_OPTION.add(&mut options);
@@ -113,15 +119,17 @@ struct Defaults {
     guile_block_comments: bool,
     scheme_sexp_comments: bool,
     janet_long_strings: bool,
+    hy_bracket_strings: bool,
 }
 
 fn parse_language(language: Option<String>) -> Language {
     match language {
         Some(ref s) if s == "clojure" => Language::Clojure,
+        Some(ref s) if s == "guile" => Language::Guile,
+        Some(ref s) if s == "hy" => Language::Hy,
         Some(ref s) if s == "janet" => Language::Janet,
         Some(ref s) if s == "lisp" => Language::Lisp,
         Some(ref s) if s == "racket" => Language::Racket,
-        Some(ref s) if s == "guile" => Language::Guile,
         Some(ref s) if s == "scheme" => Language::Scheme,
         None => Language::Clojure,
         // Unknown language.  Defaults kind of work for most lisps
@@ -137,6 +145,7 @@ fn language_defaults(language: Language) -> Defaults {
             guile_block_comments: false,
             scheme_sexp_comments: false,
             janet_long_strings: false,
+            hy_bracket_strings: false,
         },
         Language::Janet => Defaults {
             lisp_vline_symbols: false,
@@ -144,6 +153,7 @@ fn language_defaults(language: Language) -> Defaults {
             guile_block_comments: false,
             scheme_sexp_comments: false,
             janet_long_strings: true,
+            hy_bracket_strings: false,
         },
         Language::Lisp => Defaults {
             lisp_vline_symbols: true,
@@ -151,6 +161,7 @@ fn language_defaults(language: Language) -> Defaults {
             guile_block_comments: false,
             scheme_sexp_comments: false,
             janet_long_strings: false,
+            hy_bracket_strings: false,
         },
         Language::Racket => Defaults {
             lisp_vline_symbols: true,
@@ -158,6 +169,7 @@ fn language_defaults(language: Language) -> Defaults {
             guile_block_comments: false,
             scheme_sexp_comments: true,
             janet_long_strings: false,
+            hy_bracket_strings: false,
         },
         Language::Guile => Defaults {
             lisp_vline_symbols: true,
@@ -165,6 +177,7 @@ fn language_defaults(language: Language) -> Defaults {
             guile_block_comments: true,
             scheme_sexp_comments: true,
             janet_long_strings: false,
+            hy_bracket_strings: false,
         },
         Language::Scheme => Defaults {
             lisp_vline_symbols: true,
@@ -172,6 +185,15 @@ fn language_defaults(language: Language) -> Defaults {
             guile_block_comments: false,
             scheme_sexp_comments: true,
             janet_long_strings: false,
+            hy_bracket_strings: false,
+        },
+        Language::Hy => Defaults {
+            lisp_vline_symbols: false,
+            lisp_block_comments: false,
+            guile_block_comments: false,
+            scheme_sexp_comments: false,
+            janet_long_strings: false,
+            hy_bracket_strings: true,
         },
     }
 }
@@ -265,6 +287,10 @@ impl Options {
         self.invertible_flag("scheme-sexp-comments")
     }
 
+    fn hy_bracket_strings(&self) -> Option<bool> {
+        self.invertible_flag("hy-bracket-strings")
+    }
+
     pub fn request(&self, input: &mut dyn Read) -> io::Result<Request> {
         match self.input_type() {
             InputType::Text => {
@@ -274,6 +300,7 @@ impl Options {
                     guile_block_comments,
                     scheme_sexp_comments,
                     janet_long_strings,
+                    hy_bracket_strings,
                 } = language_defaults(parse_language(self.matches.opt_str("language")));
                 let mut text = String::new();
                 input.read_to_string(&mut text)?;
@@ -301,6 +328,7 @@ impl Options {
                             .scheme_sexp_comments()
                             .unwrap_or(scheme_sexp_comments),
                         janet_long_strings: self.janet_long_strings().unwrap_or(janet_long_strings),
+                        hy_bracket_strings: self.hy_bracket_strings().unwrap_or(hy_bracket_strings),
                     },
                 })
             }
@@ -311,6 +339,7 @@ impl Options {
                     guile_block_comments,
                     scheme_sexp_comments,
                     janet_long_strings,
+                    hy_bracket_strings,
                 } = language_defaults(parse_language(env::var("kak_opt_filetype").ok()));
                 Ok(Request {
                     mode: String::from(self.mode()),
@@ -338,6 +367,7 @@ impl Options {
                         guile_block_comments,
                         scheme_sexp_comments,
                         janet_long_strings,
+                        hy_bracket_strings,
                     },
                 })
             }
@@ -372,13 +402,21 @@ mod tests {
         let clojure = for_args(&["--language=clojure"]);
         let scheme = for_args(&["--language=scheme"]);
         let janet = for_args(&["--language=janet"]);
+        let hy = for_args(&["--language=hy"]);
 
         assert!(!clojure.options.lisp_vline_symbols);
         assert!(scheme.options.lisp_vline_symbols);
+        assert!(!hy.options.lisp_vline_symbols);
 
         assert!(!clojure.options.janet_long_strings);
         assert!(!scheme.options.janet_long_strings);
         assert!(janet.options.janet_long_strings);
+        assert!(!hy.options.janet_long_strings);
+
+        assert!(!clojure.options.hy_bracket_strings);
+        assert!(!scheme.options.hy_bracket_strings);
+        assert!(!janet.options.hy_bracket_strings);
+        assert!(hy.options.hy_bracket_strings);
     }
 
     #[test]

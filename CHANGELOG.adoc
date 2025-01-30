@@ -4,6 +4,10 @@ ChangeLog
 https://github.com/eraserhd/parinfer-rust/compare/v0.5.0...HEAD[Unreleased]
 ---------------------------------------------------------------------------
 
+=== Added
+
+* Added support for https://hylang.org/[Hy].
+
 https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[v0.5.0]
 -----------------------------------------------------------------------
 
@@ -15,11 +19,11 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.3...HEAD[v0.5.0]
 * Vim errors when opening an unmodifiable buffer.
 * Fix of E523 regression (often triggered by using `.`), because Vim
   changed the error to E578
-* Add support for [Dune](https://github.com/ocaml/dune)
+* Add support for https://github.com/ocaml/dune[Dune]
 
 === Added
 
-* Added support for [Yuck](https://github.com/elkowar/eww)
+* Added support for https://github.com/elkowar/eww[Yuck]
 * String delimiters can now be explicitly configured with the 
   `string_delimiters` option.
 * Added -l, --language LANG option to easily specify language defaults.
@@ -71,8 +75,8 @@ https://github.com/eraserhd/parinfer-rust/compare/v0.4.0...v0.4.1[0.4.1]
 === Vim
 
 * Add support for loading with Vim/Neovim `packadd`
-* Add support for [Fennel](https://fennel-lang.org)
-* Add support for [Janet](https://janet-lang.org)
+* Add support for https://fennel-lang.org[Fennel]
+* Add support for https://janet-lang.org[Janet]
 
 === Kakoune
 

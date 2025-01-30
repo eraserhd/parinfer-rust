@@ -125,6 +125,7 @@ fn make_option() -> Result<Options> {
         guile_block_comments: false,
         scheme_sexp_comments: false,
         janet_long_strings: false,
+        hy_bracket_strings: false,
     })
 }
 
@@ -161,6 +162,7 @@ fn new_options(
         guile_block_comments: false,
         scheme_sexp_comments: false,
         janet_long_strings: false,
+        hy_bracket_strings: false,
     })
 }
 

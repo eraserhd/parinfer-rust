@@ -38,6 +38,8 @@ pub struct Options {
     pub scheme_sexp_comments: bool,
     #[serde(default = "Options::default_false")]
     pub janet_long_strings: bool,
+    #[serde(default = "Options::default_false")]
+    pub hy_bracket_strings: bool,
 }
 
 impl Options {
