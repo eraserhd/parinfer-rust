@@ -873,6 +873,8 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::Comment, "`") if result.janet_long_strings_enabled => in_comment_on_quote(result),
         (In::Comment, _) => (),
         (In::String { delim }, ch) if delim == ch => { result.context = In::Code; },
+        //(In::String { delim }, ch) if result.string_delimiters.contains(&ch.to_string()) => in_string_on_quote(result, delim),
+        //(In::String { delim }, "|") if result.lisp_vline_symbols_enabled => in_string_on_quote(result, delim),
         (In::String { .. }, _) => (),
         (In::LispReaderSyntax, "|") if result.lisp_block_comments_enabled => {
             result.context = In::LispBlockComment { depth: 1 };
@@ -945,22 +947,17 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
             result.context = In::HyBracketStringPost;
         },
         (In::HyBracketString, _) => (),
+        (In::HyBracketStringPost, "]") if result.hy_bracket_tag_remaining.is_empty() => {
+            result.context = In::Code;
+        },
         (In::HyBracketStringPost, "]") => {
-            if result.hy_bracket_tag_remaining.is_empty() {
-                result.context = In::Code;
-            } else {
-                result.hy_bracket_tag_remaining = result.hy_bracket_tag.clone();
-                result.hy_bracket_tag_remaining.reverse();
-            }
+            result.hy_bracket_tag_remaining = result.hy_bracket_tag.clone();
+            result.hy_bracket_tag_remaining.reverse();
         },
-        (In::HyBracketStringPost, ch) => {
-            let next = result.hy_bracket_tag_remaining.last();
-            if Some(&ch) == next {
-                result.hy_bracket_tag_remaining.pop();
-            } else {
-                result.context = In::HyBracketString;
-            }
+        (In::HyBracketStringPost, ch) if Some(&ch) == result.hy_bracket_tag_remaining.last() => {
+            result.hy_bracket_tag_remaining.pop();
         },
+        (In::HyBracketStringPost, _) => { result.context = In::HyBracketString; },
     }
 
     Ok(())
