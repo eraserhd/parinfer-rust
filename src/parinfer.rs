@@ -919,7 +919,7 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::JanetLongString { open_delim_len, close_delim_len }, "`") => {
             result.context = In::JanetLongString { open_delim_len, close_delim_len: close_delim_len + 1 };
         },
-        (In::JanetLongString { open_delim_len, close_delim_len }, _) => {
+        (In::JanetLongString { open_delim_len, .. }, _) => {
             result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
         },
         (In::HyBracketStringPre, "[") => { result.context = In::HyBracketString; },
