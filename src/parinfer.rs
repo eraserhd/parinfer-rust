@@ -865,10 +865,6 @@ fn in_lisp_block_comment_post_on_nsign(result: &mut State<'_>, depth: usize) {
         result.context = In::Code;
     }
 }
-fn in_lisp_block_comment_post_on_else(result: &mut State<'_>, depth: usize) {
-    result.context = In::LispBlockComment { depth };
-}
-
 fn in_guile_block_comment_on_bang(result: &mut State<'_>) {
     result.context = In::GuileBlockCommentPost;
 }
@@ -954,7 +950,9 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::LispBlockComment { depth }, "|") => in_lisp_block_comment_on_vline(result, depth),
         (In::LispBlockComment { .. }, _) => (),
         (In::LispBlockCommentPost { depth }, "#") => in_lisp_block_comment_post_on_nsign(result, depth),
-        (In::LispBlockCommentPost { depth }, _) => in_lisp_block_comment_post_on_else(result, depth),
+        (In::LispBlockCommentPost { depth }, _) => {
+            result.context = In::LispBlockComment { depth };
+        },
         (In::GuileBlockComment, "!") => in_guile_block_comment_on_bang(result),
         (In::GuileBlockComment, _) => (),
         (In::GuileBlockCommentPost, "#") => in_guile_block_comment_post_on_nsign(result),
