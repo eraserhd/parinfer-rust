@@ -879,24 +879,9 @@ fn in_guile_block_comment_on_bang(result: &mut State<'_>) {
 fn in_guile_block_comment_post_on_nsign(result: &mut State<'_>) {
     result.context = In::Code;
 }
-fn in_code_on_grave(result: &mut State<'_>) {
-    result.context = In::JanetLongStringPre { open_delim_len: 1 };
-    cache_error_pos(result, ErrorName::UnclosedQuote);
-}
-fn in_janet_long_string_pre_on_else(result: &mut State<'_>, open_delim_len: usize) {
-    result.context = In::JanetLongString {
-        open_delim_len,
-        close_delim_len: 0,
-    };
-}
 fn in_lisp_reader_syntax_on_open_brack<'a>(result: &mut State<'a>) {
     result.hy_bracket_tag.clear();
     result.context = In::HyBracketStringPre;
-}
-fn in_hy_bracket_string_on_close_brack<'a>(result: &mut State<'a>) {
-    result.hy_bracket_tag_remaining = result.hy_bracket_tag.clone();
-    result.hy_bracket_tag_remaining.reverse();
-    result.context = In::HyBracketStringPost;
 }
 fn in_hy_bracket_string_post_on_close_brack<'a>(result: &mut State<'a>) {
     if result.hy_bracket_tag_remaining.is_empty() {
@@ -943,7 +928,10 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::Code, "#") if result.lisp_reader_syntax_enabled => {
             result.context = In::LispReaderSyntax;
         },
-        (In::Code, "`") if result.janet_long_strings_enabled => in_code_on_grave(result),
+        (In::Code, "`") if result.janet_long_strings_enabled => {
+            result.context = In::JanetLongStringPre { open_delim_len: 1 };
+            cache_error_pos(result, ErrorName::UnclosedQuote);
+        },
         (In::Code, "\t") => in_code_on_tab(result),
         (In::Code, _) => (),
         (In::Comment, ch) if result.string_delimiters.contains(&ch.to_string()) => in_comment_on_quote(result),
@@ -978,7 +966,9 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         (In::JanetLongStringPre { open_delim_len }, "`") => {
             result.context = In::JanetLongStringPre { open_delim_len: open_delim_len + 1 };
         },
-        (In::JanetLongStringPre { open_delim_len }, _) => in_janet_long_string_pre_on_else(result, open_delim_len),
+        (In::JanetLongStringPre { open_delim_len }, _) => {
+            result.context = In::JanetLongString { open_delim_len, close_delim_len: 0 };
+        },
         (In::JanetLongString { open_delim_len, close_delim_len }, "`") => {
             let close_delim_len = close_delim_len + 1;
             if open_delim_len == close_delim_len {
@@ -1000,7 +990,11 @@ fn on_context(result: &mut State<'_>) -> Result<()> {
         },
         (In::HyBracketStringPre, "[") => { result.context = In::HyBracketString; },
         (In::HyBracketStringPre, _) => { result.hy_bracket_tag.push(result.ch); },
-        (In::HyBracketString, "]") => in_hy_bracket_string_on_close_brack(result),
+        (In::HyBracketString, "]") => {
+            result.hy_bracket_tag_remaining = result.hy_bracket_tag.clone();
+            result.hy_bracket_tag_remaining.reverse();
+            result.context = In::HyBracketStringPost;
+        },
         (In::HyBracketString, _) => (),
         (In::HyBracketStringPost, "]") => in_hy_bracket_string_post_on_close_brack(result),
         (In::HyBracketStringPost, ch) => {
