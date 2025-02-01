@@ -139,62 +139,49 @@ struct LanguageFeatures {
 
 impl LanguageFeatures {
     fn for_language(language: Language) -> Self {
+        let common = Self {
+            lisp_vline_symbols: false,
+            lisp_block_comments: false,
+            guile_block_comments: false,
+            scheme_sexp_comments: false,
+            janet_long_strings: false,
+            hy_bracket_strings: false,
+        };
         match language {
             Language::Clojure => Self {
-                lisp_vline_symbols: false,
-                lisp_block_comments: false,
-                guile_block_comments: false,
-                scheme_sexp_comments: false,
-                janet_long_strings: false,
-                hy_bracket_strings: false,
+                ..common
             },
             Language::Janet => Self {
-                lisp_vline_symbols: false,
-                lisp_block_comments: false,
-                guile_block_comments: false,
-                scheme_sexp_comments: false,
                 janet_long_strings: true,
-                hy_bracket_strings: false,
+                ..common
             },
             Language::Lisp => Self {
                 lisp_vline_symbols: true,
                 lisp_block_comments: true,
-                guile_block_comments: false,
-                scheme_sexp_comments: false,
-                janet_long_strings: false,
-                hy_bracket_strings: false,
+                ..common
             },
             Language::Racket => Self {
                 lisp_vline_symbols: true,
                 lisp_block_comments: true,
-                guile_block_comments: false,
                 scheme_sexp_comments: true,
-                janet_long_strings: false,
-                hy_bracket_strings: false,
+                ..common
             },
             Language::Guile => Self {
                 lisp_vline_symbols: true,
                 lisp_block_comments: true,
                 guile_block_comments: true,
                 scheme_sexp_comments: true,
-                janet_long_strings: false,
-                hy_bracket_strings: false,
+                ..common
             },
             Language::Scheme => Self {
                 lisp_vline_symbols: true,
                 lisp_block_comments: true,
-                guile_block_comments: false,
                 scheme_sexp_comments: true,
-                janet_long_strings: false,
-                hy_bracket_strings: false,
+                ..common
             },
             Language::Hy => Self {
-                lisp_vline_symbols: false,
-                lisp_block_comments: false,
-                guile_block_comments: false,
-                scheme_sexp_comments: false,
-                janet_long_strings: false,
                 hy_bracket_strings: true,
+                ..common
             },
         }
     }
