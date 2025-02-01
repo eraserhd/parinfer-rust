@@ -18,12 +18,13 @@ pub enum OutputType {
 
 enum Language {
     Clojure,
+    Guile,
+    Hy,
     Janet,
     Lisp,
+    Picolisp,
     Racket,
-    Guile,
     Scheme,
-    Hy,
 }
 
 pub struct Options {
@@ -120,6 +121,7 @@ fn parse_language(language: Option<String>) -> Language {
         Some(ref s) if s == "hy" => Language::Hy,
         Some(ref s) if s == "janet" => Language::Janet,
         Some(ref s) if s == "lisp" => Language::Lisp,
+        Some(ref s) if s == "picolisp" => Language::Picolisp,
         Some(ref s) if s == "racket" => Language::Racket,
         Some(ref s) if s == "scheme" => Language::Scheme,
         None => Language::Clojure,
@@ -153,11 +155,28 @@ impl LanguageFeatures {
             Language::Clojure => Self {
                 ..common
             },
+            Language::Guile => Self {
+                lisp_vline_symbols: true,
+                lisp_block_comments: true,
+                guile_block_comments: true,
+                scheme_sexp_comments: true,
+                ..common
+            },
+            Language::Hy => Self {
+                hy_bracket_strings: true,
+                ..common
+            },
             Language::Janet => Self {
                 janet_long_strings: true,
                 ..common
             },
             Language::Lisp => Self {
+                lisp_vline_symbols: true,
+                lisp_block_comments: true,
+                ..common
+            },
+            Language::Picolisp => Self {
+                comment_char: '#',
                 lisp_vline_symbols: true,
                 lisp_block_comments: true,
                 ..common
@@ -168,21 +187,10 @@ impl LanguageFeatures {
                 scheme_sexp_comments: true,
                 ..common
             },
-            Language::Guile => Self {
-                lisp_vline_symbols: true,
-                lisp_block_comments: true,
-                guile_block_comments: true,
-                scheme_sexp_comments: true,
-                ..common
-            },
             Language::Scheme => Self {
                 lisp_vline_symbols: true,
                 lisp_block_comments: true,
                 scheme_sexp_comments: true,
-                ..common
-            },
-            Language::Hy => Self {
-                hy_bracket_strings: true,
                 ..common
             },
         }

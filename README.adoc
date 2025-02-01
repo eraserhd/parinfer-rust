@@ -109,7 +109,7 @@ Add this to your `+kakrc+`
 plug "eraserhd/parinfer-rust" do %{
     cargo install --force --path .
 } config %{
-    hook global WinSetOption filetype=(clojure|lisp|scheme|racket) %{
+    hook global WinSetOption filetype=(clojure|lisp|picolisp|racket|scheme) %{
         parinfer-enable-window -smart
     }
 }
@@ -135,7 +135,7 @@ Add this to your `+kakrc+`
 
 [source,kak]
 ----
-hook global WinSetOption filetype=(clojure|lisp|scheme|racket) %{
+hook global WinSetOption filetype=(clojure|lisp|picolisp|racket|scheme) %{
     parinfer-enable-window -smart
 }
 ----
