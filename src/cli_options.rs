@@ -113,15 +113,6 @@ pub fn usage() -> String {
     options().usage("Usage: parinfer-rust [options]")
 }
 
-struct LanguageFeatures {
-    lisp_vline_symbols: bool,
-    lisp_block_comments: bool,
-    guile_block_comments: bool,
-    scheme_sexp_comments: bool,
-    janet_long_strings: bool,
-    hy_bracket_strings: bool,
-}
-
 fn parse_language(language: Option<String>) -> Language {
     match language {
         Some(ref s) if s == "clojure" => Language::Clojure,
@@ -137,64 +128,75 @@ fn parse_language(language: Option<String>) -> Language {
     }
 }
 
-fn language_defaults(language: Language) -> LanguageFeatures {
-    match language {
-        Language::Clojure => LanguageFeatures {
-            lisp_vline_symbols: false,
-            lisp_block_comments: false,
-            guile_block_comments: false,
-            scheme_sexp_comments: false,
-            janet_long_strings: false,
-            hy_bracket_strings: false,
-        },
-        Language::Janet => LanguageFeatures {
-            lisp_vline_symbols: false,
-            lisp_block_comments: false,
-            guile_block_comments: false,
-            scheme_sexp_comments: false,
-            janet_long_strings: true,
-            hy_bracket_strings: false,
-        },
-        Language::Lisp => LanguageFeatures {
-            lisp_vline_symbols: true,
-            lisp_block_comments: true,
-            guile_block_comments: false,
-            scheme_sexp_comments: false,
-            janet_long_strings: false,
-            hy_bracket_strings: false,
-        },
-        Language::Racket => LanguageFeatures {
-            lisp_vline_symbols: true,
-            lisp_block_comments: true,
-            guile_block_comments: false,
-            scheme_sexp_comments: true,
-            janet_long_strings: false,
-            hy_bracket_strings: false,
-        },
-        Language::Guile => LanguageFeatures {
-            lisp_vline_symbols: true,
-            lisp_block_comments: true,
-            guile_block_comments: true,
-            scheme_sexp_comments: true,
-            janet_long_strings: false,
-            hy_bracket_strings: false,
-        },
-        Language::Scheme => LanguageFeatures {
-            lisp_vline_symbols: true,
-            lisp_block_comments: true,
-            guile_block_comments: false,
-            scheme_sexp_comments: true,
-            janet_long_strings: false,
-            hy_bracket_strings: false,
-        },
-        Language::Hy => LanguageFeatures {
-            lisp_vline_symbols: false,
-            lisp_block_comments: false,
-            guile_block_comments: false,
-            scheme_sexp_comments: false,
-            janet_long_strings: false,
-            hy_bracket_strings: true,
-        },
+struct LanguageFeatures {
+    lisp_vline_symbols: bool,
+    lisp_block_comments: bool,
+    guile_block_comments: bool,
+    scheme_sexp_comments: bool,
+    janet_long_strings: bool,
+    hy_bracket_strings: bool,
+}
+
+impl LanguageFeatures {
+    fn for_language(language: Language) -> Self {
+        match language {
+            Language::Clojure => Self {
+                lisp_vline_symbols: false,
+                lisp_block_comments: false,
+                guile_block_comments: false,
+                scheme_sexp_comments: false,
+                janet_long_strings: false,
+                hy_bracket_strings: false,
+            },
+            Language::Janet => Self {
+                lisp_vline_symbols: false,
+                lisp_block_comments: false,
+                guile_block_comments: false,
+                scheme_sexp_comments: false,
+                janet_long_strings: true,
+                hy_bracket_strings: false,
+            },
+            Language::Lisp => Self {
+                lisp_vline_symbols: true,
+                lisp_block_comments: true,
+                guile_block_comments: false,
+                scheme_sexp_comments: false,
+                janet_long_strings: false,
+                hy_bracket_strings: false,
+            },
+            Language::Racket => Self {
+                lisp_vline_symbols: true,
+                lisp_block_comments: true,
+                guile_block_comments: false,
+                scheme_sexp_comments: true,
+                janet_long_strings: false,
+                hy_bracket_strings: false,
+            },
+            Language::Guile => Self {
+                lisp_vline_symbols: true,
+                lisp_block_comments: true,
+                guile_block_comments: true,
+                scheme_sexp_comments: true,
+                janet_long_strings: false,
+                hy_bracket_strings: false,
+            },
+            Language::Scheme => Self {
+                lisp_vline_symbols: true,
+                lisp_block_comments: true,
+                guile_block_comments: false,
+                scheme_sexp_comments: true,
+                janet_long_strings: false,
+                hy_bracket_strings: false,
+            },
+            Language::Hy => Self {
+                lisp_vline_symbols: false,
+                lisp_block_comments: false,
+                guile_block_comments: false,
+                scheme_sexp_comments: false,
+                janet_long_strings: false,
+                hy_bracket_strings: true,
+            },
+        }
     }
 }
 
@@ -301,7 +303,7 @@ impl Options {
                     scheme_sexp_comments,
                     janet_long_strings,
                     hy_bracket_strings,
-                } = language_defaults(parse_language(self.matches.opt_str("language")));
+                } = LanguageFeatures::for_language(parse_language(self.matches.opt_str("language")));
                 let mut text = String::new();
                 input.read_to_string(&mut text)?;
                 Ok(Request {
@@ -340,7 +342,7 @@ impl Options {
                     scheme_sexp_comments,
                     janet_long_strings,
                     hy_bracket_strings,
-                } = language_defaults(parse_language(env::var("kak_opt_filetype").ok()));
+                } = LanguageFeatures::for_language(parse_language(env::var("kak_opt_filetype").ok()));
                 Ok(Request {
                     mode: String::from(self.mode()),
                     text: env::var("kak_selection").unwrap(),
