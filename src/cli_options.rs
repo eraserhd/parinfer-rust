@@ -129,6 +129,7 @@ fn parse_language(language: Option<String>) -> Language {
 }
 
 struct LanguageFeatures {
+    comment_char: char,
     lisp_vline_symbols: bool,
     lisp_block_comments: bool,
     guile_block_comments: bool,
@@ -140,6 +141,7 @@ struct LanguageFeatures {
 impl LanguageFeatures {
     fn for_language(language: Language) -> Self {
         let common = Self {
+            comment_char: ';',
             lisp_vline_symbols: false,
             lisp_block_comments: false,
             guile_block_comments: false,
@@ -229,10 +231,10 @@ impl Options {
         }
     }
 
-    fn comment_char(&self) -> char {
+    fn comment_char(&self) -> Option<char> {
         match self.matches.opt_str("comment-char") {
-            None => ';',
-            Some(ref s) if s.chars().count() == 1 => s.chars().next().unwrap(),
+            None => None,
+            Some(ref s) if s.chars().count() == 1 => Some(s.chars().next().unwrap()),
             Some(ref _s) => panic!("comment character must be a single character"),
         }
     }
@@ -284,6 +286,7 @@ impl Options {
         match self.input_type() {
             InputType::Text => {
                 let LanguageFeatures {
+                    comment_char,
                     lisp_vline_symbols,
                     lisp_block_comments,
                     guile_block_comments,
@@ -303,7 +306,7 @@ impl Options {
                         prev_text: None,
                         prev_cursor_x: None,
                         prev_cursor_line: None,
-                        comment_char: self.comment_char(),
+                        comment_char: self.comment_char().unwrap_or(comment_char),
                         string_delimiters: self.string_delimiters(),
                         selection_start_line: None,
                         lisp_vline_symbols: self.lisp_vline_symbols().unwrap_or(lisp_vline_symbols),
@@ -323,6 +326,7 @@ impl Options {
             }
             InputType::Kakoune => {
                 let LanguageFeatures {
+                    comment_char,
                     lisp_vline_symbols,
                     lisp_block_comments,
                     guile_block_comments,
@@ -348,7 +352,7 @@ impl Options {
                         prev_cursor_line: env::var("kak_opt_parinfer_previous_cursor_line")
                             .map(|s| s.parse::<LineNumber>().unwrap() - 1)
                             .ok(),
-                        comment_char: self.comment_char(),
+                        comment_char: self.comment_char().unwrap_or(comment_char),
                         string_delimiters: self.string_delimiters(),
                         selection_start_line: None,
                         lisp_vline_symbols,
