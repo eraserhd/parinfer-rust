@@ -113,7 +113,7 @@ pub fn usage() -> String {
     options().usage("Usage: parinfer-rust [options]")
 }
 
-struct Defaults {
+struct LanguageFeatures {
     lisp_vline_symbols: bool,
     lisp_block_comments: bool,
     guile_block_comments: bool,
@@ -132,14 +132,14 @@ fn parse_language(language: Option<String>) -> Language {
         Some(ref s) if s == "racket" => Language::Racket,
         Some(ref s) if s == "scheme" => Language::Scheme,
         None => Language::Clojure,
-        // Unknown language.  Defaults kind of work for most lisps
+        // Unknown language.  LanguageFeatures kind of work for most lisps
         Some(_) => Language::Clojure,
     }
 }
 
-fn language_defaults(language: Language) -> Defaults {
+fn language_defaults(language: Language) -> LanguageFeatures {
     match language {
-        Language::Clojure => Defaults {
+        Language::Clojure => LanguageFeatures {
             lisp_vline_symbols: false,
             lisp_block_comments: false,
             guile_block_comments: false,
@@ -147,7 +147,7 @@ fn language_defaults(language: Language) -> Defaults {
             janet_long_strings: false,
             hy_bracket_strings: false,
         },
-        Language::Janet => Defaults {
+        Language::Janet => LanguageFeatures {
             lisp_vline_symbols: false,
             lisp_block_comments: false,
             guile_block_comments: false,
@@ -155,7 +155,7 @@ fn language_defaults(language: Language) -> Defaults {
             janet_long_strings: true,
             hy_bracket_strings: false,
         },
-        Language::Lisp => Defaults {
+        Language::Lisp => LanguageFeatures {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
             guile_block_comments: false,
@@ -163,7 +163,7 @@ fn language_defaults(language: Language) -> Defaults {
             janet_long_strings: false,
             hy_bracket_strings: false,
         },
-        Language::Racket => Defaults {
+        Language::Racket => LanguageFeatures {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
             guile_block_comments: false,
@@ -171,7 +171,7 @@ fn language_defaults(language: Language) -> Defaults {
             janet_long_strings: false,
             hy_bracket_strings: false,
         },
-        Language::Guile => Defaults {
+        Language::Guile => LanguageFeatures {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
             guile_block_comments: true,
@@ -179,7 +179,7 @@ fn language_defaults(language: Language) -> Defaults {
             janet_long_strings: false,
             hy_bracket_strings: false,
         },
-        Language::Scheme => Defaults {
+        Language::Scheme => LanguageFeatures {
             lisp_vline_symbols: true,
             lisp_block_comments: true,
             guile_block_comments: false,
@@ -187,7 +187,7 @@ fn language_defaults(language: Language) -> Defaults {
             janet_long_strings: false,
             hy_bracket_strings: false,
         },
-        Language::Hy => Defaults {
+        Language::Hy => LanguageFeatures {
             lisp_vline_symbols: false,
             lisp_block_comments: false,
             guile_block_comments: false,
@@ -294,7 +294,7 @@ impl Options {
     pub fn request(&self, input: &mut dyn Read) -> io::Result<Request> {
         match self.input_type() {
             InputType::Text => {
-                let Defaults {
+                let LanguageFeatures {
                     lisp_vline_symbols,
                     lisp_block_comments,
                     guile_block_comments,
@@ -333,7 +333,7 @@ impl Options {
                 })
             }
             InputType::Kakoune => {
-                let Defaults {
+                let LanguageFeatures {
                     lisp_vline_symbols,
                     lisp_block_comments,
                     guile_block_comments,
