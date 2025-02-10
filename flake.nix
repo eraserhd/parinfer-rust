@@ -63,8 +63,16 @@
           ]);
         });
     })) // {
-      overlays.default = final: prev: {
+      overlays.default = final: prev: let
         parinfer-rust = prev.callPackage ./derivation.nix {};
+      in {
+        inherit parinfer-rust;
+        kakounePlugins = prev.kakounePlugins // {
+          inherit parinfer-rust;
+        };
+        vimPlugins = prev.vimPlugins // {
+          inherit parinfer-rust;
+        };
       };
     };
 }
