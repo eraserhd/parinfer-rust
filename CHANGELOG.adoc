@@ -4,6 +4,12 @@ ChangeLog
 https://github.com/eraserhd/parinfer-rust/compare/v0.5.0...HEAD[Unreleased]
 ---------------------------------------------------------------------------
 
+=== Fixed
+
+* Kakoune: Instead of expecting the binary in the path, tries to detect the
+  path, which can be overridden with the parinfer_path option.  Looks in
+  `~/.cargo/bin` first.
+
 === Added
 
 * Added support for https://hylang.org/[Hy].

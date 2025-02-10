@@ -32,6 +32,9 @@ parinfer-disable-window %{
 
 provide-module parinfer %{
 
+declare-option -docstring "Full path to parinfer-rust binary" \
+str parinfer_path %sh{PATH=~/.cargo/bin:"$PATH" command -v parinfer-rust}
+
 declare-option -docstring "Whether to automatically update the buffer on changes" \
 bool parinfer_enabled false
 
@@ -99,7 +102,7 @@ parinfer -params ..2 %{
             # kak_opt_parinfer_previous_cursor_line,
             # kak_opt_parinfer_select_switches,
             # kak_selection
-            exec parinfer-rust --mode=$mode --input-format=kakoune --output-format=kakoune
+            exec "$kak_opt_parinfer_path" --mode=$mode --input-format=kakoune --output-format=kakoune
         }
         evaluate-commands %{
             set-option buffer parinfer_previous_text %val{selection}

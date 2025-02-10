@@ -21,7 +21,8 @@ rustPlatform.buildRustPackage rec {
 
   postInstall = ''
     mkdir -p $out/share/kak/autoload/plugins
-    cp rc/parinfer.kak $out/share/kak/autoload/plugins/
+    sed "s,^str parinfer_path .*,str parinfer_path '${placeholder "out"}/bin/parinfer-rust'," \
+      rc/parinfer.kak >$out/share/kak/autoload/plugins/parinfer.kak
 
     rtpPath=$out/share/vim-plugins/parinfer-rust
     mkdir -p $rtpPath/plugin
