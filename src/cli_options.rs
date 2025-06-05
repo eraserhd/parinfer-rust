@@ -167,6 +167,7 @@ impl LanguageFeatures {
                 ..common
             },
             Language::Janet => Self {
+                comment_char: '#',
                 janet_long_strings: true,
                 ..common
             },
