@@ -8,8 +8,8 @@ extern crate unicode_segmentation;
 extern crate unicode_width;
 
 mod changes;
-mod parinfer;
-mod types;
+pub mod parinfer;
+pub mod types;
 
 #[macro_use]
 #[cfg(feature = "emacs")]
