@@ -40,6 +40,8 @@ pub struct Options {
     pub janet_long_strings: bool,
     #[serde(default = "Options::default_false")]
     pub hy_bracket_strings: bool,
+    #[serde(default = "Options::default_true")]
+    pub line_comment_quotes: bool,
 }
 
 impl Options {
@@ -49,6 +51,10 @@ impl Options {
 
     fn default_false() -> bool {
         false
+    }
+
+    fn default_true() -> bool {
+        true
     }
 
     fn default_comment() -> char {

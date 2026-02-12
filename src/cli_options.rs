@@ -71,6 +71,10 @@ const HY_BRACKET_STRINGS_OPTION : YesNoDefaultOption = YesNoDefaultOption {
     name: "hy-bracket-strings",
     description: "recognize #[hy-style[ bracket strings ]hy-style]```",
 };
+const LINE_COMMENT_QUOTES_OPTION: YesNoDefaultOption = YesNoDefaultOption {
+    name: "line-comment-quotes",
+    description: "check for balanced quotes inside line comments.",
+};
 
 fn options() -> getopts::Options {
     let mut options = getopts::Options::new();
@@ -92,6 +96,7 @@ fn options() -> getopts::Options {
         "'clojure', 'guile', 'hy', 'janet', 'lisp', 'racket', 'scheme' (default: 'clojure')",
         "LANG",
     );
+    LINE_COMMENT_QUOTES_OPTION.add(&mut options);
     LISP_BLOCK_COMMENTS_OPTION.add(&mut options);
     LISP_VLINE_SYMBOLS_OPTION.add(&mut options);
     options.optopt(
@@ -138,6 +143,7 @@ struct LanguageFeatures {
     scheme_sexp_comments: bool,
     janet_long_strings: bool,
     hy_bracket_strings: bool,
+    line_comment_quotes: bool,
 }
 
 impl LanguageFeatures {
@@ -150,6 +156,7 @@ impl LanguageFeatures {
             scheme_sexp_comments: false,
             janet_long_strings: false,
             hy_bracket_strings: false,
+            line_comment_quotes: true,
         };
         match language {
             Language::Clojure => Self {
@@ -174,6 +181,7 @@ impl LanguageFeatures {
             Language::Lisp => Self {
                 lisp_vline_symbols: true,
                 lisp_block_comments: true,
+                line_comment_quotes: false,
                 ..common
             },
             Language::Picolisp => Self {
@@ -291,6 +299,10 @@ impl Options {
         self.invertible_flag("hy-bracket-strings")
     }
 
+    fn line_comment_quotes(&self) -> Option<bool> {
+        self.invertible_flag("line-comment-quotes")
+    }
+
     pub fn request(&self, input: &mut dyn Read) -> io::Result<Request> {
         match self.input_type() {
             InputType::Text => {
@@ -302,6 +314,7 @@ impl Options {
                     scheme_sexp_comments,
                     janet_long_strings,
                     hy_bracket_strings,
+                    line_comment_quotes,
                 } = LanguageFeatures::for_language(parse_language(self.matches.opt_str("language")));
                 let mut text = String::new();
                 input.read_to_string(&mut text)?;
@@ -330,6 +343,7 @@ impl Options {
                             .unwrap_or(scheme_sexp_comments),
                         janet_long_strings: self.janet_long_strings().unwrap_or(janet_long_strings),
                         hy_bracket_strings: self.hy_bracket_strings().unwrap_or(hy_bracket_strings),
+                        line_comment_quotes: self.line_comment_quotes().unwrap_or(line_comment_quotes),
                     },
                 })
             }
@@ -342,6 +356,7 @@ impl Options {
                     scheme_sexp_comments,
                     janet_long_strings,
                     hy_bracket_strings,
+                    line_comment_quotes,
                 } = LanguageFeatures::for_language(parse_language(env::var("kak_opt_filetype").ok()));
                 Ok(Request {
                     mode: String::from(self.mode()),
@@ -370,6 +385,7 @@ impl Options {
                         scheme_sexp_comments,
                         janet_long_strings,
                         hy_bracket_strings,
+                        line_comment_quotes,
                     },
                 })
             }
@@ -419,6 +435,12 @@ mod tests {
         assert!(!scheme.options.hy_bracket_strings);
         assert!(!janet.options.hy_bracket_strings);
         assert!(hy.options.hy_bracket_strings);
+
+        assert!(clojure.options.line_comment_quotes);
+        assert!(scheme.options.line_comment_quotes);
+        assert!(janet.options.line_comment_quotes);
+        assert!(hy.options.line_comment_quotes);
+        assert!(!for_args(&["--language=lisp"]).options.line_comment_quotes);
     }
 
     #[test]
@@ -454,6 +476,34 @@ mod tests {
             !for_args(&["--language=lisp", "--no-lisp-block-comments"])
                 .options
                 .lisp_block_comments
+        );
+    }
+
+    #[test]
+    fn line_comment_quotes() {
+        // Default (clojure): enabled
+        assert!(for_args(&[]).options.line_comment_quotes);
+        // Lisp language: disabled
+        assert!(
+            !for_args(&["--language=lisp"]).options.line_comment_quotes
+        );
+        // Explicit flag enables it
+        assert!(
+            for_args(&["--line-comment-quotes"])
+                .options
+                .line_comment_quotes
+        );
+        // Explicit override on lisp
+        assert!(
+            for_args(&["--language=lisp", "--line-comment-quotes"])
+                .options
+                .line_comment_quotes
+        );
+        // Explicit disable on clojure
+        assert!(
+            !for_args(&["--no-line-comment-quotes"])
+                .options
+                .line_comment_quotes
         );
     }
 }

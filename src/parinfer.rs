@@ -246,6 +246,7 @@ struct State<'a> {
     scheme_sexp_comments_enabled: bool,
     janet_long_strings_enabled: bool,
     hy_bracket_strings_enabled: bool,
+    line_comment_quotes_enabled: bool,
 
     quote_danger: bool,
     tracking_indent: bool,
@@ -340,6 +341,7 @@ fn get_initial_result<'a>(text: &'a str, options: &Options, mode: Mode, smart: b
         scheme_sexp_comments_enabled: options.scheme_sexp_comments,
         janet_long_strings_enabled: options.janet_long_strings,
         hy_bracket_strings_enabled: options.hy_bracket_strings,
+        line_comment_quotes_enabled: options.line_comment_quotes,
 
         quote_danger: false,
         tracking_indent: false,
@@ -809,6 +811,11 @@ fn in_code_on_unmatched_close_paren(result: &mut State<'_>) -> Result<()> {
 fn on_newline(result: &mut State<'_>) {
     if result.is_in_comment() {
         result.context = In::Code;
+        if !result.line_comment_quotes_enabled {
+            // Line comments end at newline, so any quotes inside them are
+            // just prose and cannot affect parsing of subsequent lines.
+            result.quote_danger = false;
+        }
     }
     result.ch = "";
 }
