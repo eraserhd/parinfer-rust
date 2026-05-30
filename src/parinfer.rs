@@ -1840,6 +1840,33 @@ pub fn smart_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
     public_result(process_text(text, options, Mode::Indent, smart))
 }
 
+pub fn check_mode<'a>(text: &'a str, options: &Options) -> Answer<'a> {
+    let result = process_text(text, options, Mode::Paren, false);
+    if result.success {
+        Answer {
+            text: Cow::from(text),
+            cursor_x: result.cursor_x,
+            cursor_line: result.cursor_line,
+            success: true,
+            tab_stops: result.tab_stops,
+            paren_trails: result.paren_trails,
+            parens: result.parens,
+            error: None,
+        }
+    } else {
+        Answer {
+            text: Cow::from(text),
+            cursor_x: result.orig_cursor_x,
+            cursor_line: result.orig_cursor_line,
+            success: false,
+            tab_stops: result.tab_stops,
+            paren_trails: result.paren_trails,
+            parens: result.parens,
+            error: result.error,
+        }
+    }
+}
+
 pub fn process(request: &Request) -> Answer {
     let mut options = request.options.clone();
 
@@ -1853,6 +1880,8 @@ pub fn process(request: &Request) -> Answer {
         indent_mode(&request.text, &options)
     } else if request.mode == "smart" {
         smart_mode(&request.text, &options)
+    } else if request.mode == "check" {
+        check_mode(&request.text, &options)
     } else {
         Answer::from(Error {
             message: String::from("Bad value specified for `mode`"),
@@ -1876,6 +1905,8 @@ pub fn rc_process(request: &SharedRequest) -> Answer<'_> {
         indent_mode(&request.text, &options)
     } else if request.mode == "smart" {
         smart_mode(&request.text, &options)
+    } else if request.mode == "check" {
+        check_mode(&request.text, &options)
     } else {
         Answer::from(Error {
             message: String::from("Bad value specified for `mode`"),

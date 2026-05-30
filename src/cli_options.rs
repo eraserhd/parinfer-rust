@@ -97,7 +97,7 @@ fn options() -> getopts::Options {
     options.optopt(
         "m",
         "mode",
-        "parinfer mode (indent, paren, or smart) (default: smart)",
+        "parinfer mode (indent, paren, smart, or check) (default: smart)",
         "MODE",
     );
     options.optopt(
@@ -216,6 +216,7 @@ impl Options {
             Some(ref s) if s == "i" || s == "indent" => "indent",
             Some(ref s) if s == "p" || s == "paren" => "paren",
             Some(ref s) if s == "s" || s == "smart" => "smart",
+            Some(ref s) if s == "c" || s == "check" => "check",
             _ => panic!("invalid mode specified for `-m`"),
         }
     }

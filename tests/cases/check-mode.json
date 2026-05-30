@@ -1,0 +1,67 @@
+[
+  {
+    "text": "(defn foo [x]\n  (+ x 1))",
+    "options": {},
+    "result": {
+      "text": "(defn foo [x]\n  (+ x 1))",
+      "success": true
+    },
+    "source": {
+      "lineNo": 1,
+      "in": [
+        "(defn foo [x]\n  (+ x 1))"
+      ],
+      "out": "(defn foo [x]\n  (+ x 1))"
+    }
+  },
+  {
+    "text": "(let [a 1\n      ])",
+    "options": {},
+    "result": {
+      "text": "(let [a 1\n      ])",
+      "success": true
+    },
+    "source": {
+      "lineNo": 10,
+      "in": [
+        "(let [a 1\n      ])"
+      ],
+      "out": "(let [a 1\n      ])"
+    }
+  },
+  {
+    "text": "(foo",
+    "options": {},
+    "result": {
+      "error": {
+        "name": "unclosed-paren",
+        "lineNo": 0,
+        "x": 0
+      },
+      "text": "(foo",
+      "success": false
+    },
+    "source": {
+      "lineNo": 19,
+      "in": [
+        "(foo"
+      ],
+      "out": "(foo\n^ error: unclosed-paren"
+    }
+  },
+  {
+    "text": "(cond->\n {:auth-token auth-token\n  :request request\n  :action-id action}\n  target-service-id (assoc :target-service-id target-service-id)\n  resource (assoc :resource resource))",
+    "options": {},
+    "result": {
+      "text": "(cond->\n {:auth-token auth-token\n  :request request\n  :action-id action}\n  target-service-id (assoc :target-service-id target-service-id)\n  resource (assoc :resource resource))",
+      "success": true
+    },
+    "source": {
+      "lineNo": 9999,
+      "in": [
+        "(cond->\n {:auth-token auth-token\n  :request request\n  :action-id action}\n  target-service-id (assoc :target-service-id target-service-id)\n  resource (assoc :resource resource))"
+      ],
+      "out": "(cond->\n {:auth-token auth-token\n  :request request\n  :action-id action}\n  target-service-id (assoc :target-service-id target-service-id)\n  resource (assoc :resource resource))"
+    }
+  }
+]

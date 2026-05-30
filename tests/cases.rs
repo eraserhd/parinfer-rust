@@ -12,6 +12,7 @@ use std::ffi::{CStr, CString};
 const INDENT_MODE_CASES: &str = include_str!("cases/indent-mode.json");
 const PAREN_MODE_CASES: &str = include_str!("cases/paren-mode.json");
 const SMART_MODE_CASES: &str = include_str!("cases/smart-mode.json");
+const CHECK_MODE_CASES: &str = include_str!("cases/check-mode.json");
 
 type LineNumber = usize;
 type Column = usize;
@@ -276,6 +277,21 @@ pub fn smart_mode() {
     for case in cases {
         let input = json!({
             "mode": "smart",
+            "text": &case.text,
+            "options": &case.options
+        })
+        .to_string();
+        let answer: serde_json::Value = serde_json::from_str(&run(&input)).unwrap();
+        case.check2(answer);
+    }
+}
+
+#[test]
+pub fn check_mode() {
+    let cases: Vec<Case> = serde_json::from_str(CHECK_MODE_CASES).unwrap();
+    for case in cases {
+        let input = json!({
+            "mode": "check",
             "text": &case.text,
             "options": &case.options
         })
