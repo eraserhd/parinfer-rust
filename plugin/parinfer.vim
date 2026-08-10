@@ -60,23 +60,32 @@ command! ParinferOff let g:parinfer_enabled = 0
 " Common Lisp and Scheme: ignore parens in symbols enclosed by ||
 au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_vline_symbols = 1
 au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_vline_symbols = 1
+au FileType lisp let b:parinfer_lisp_vline_symbols = 1
+au FileType scheme,racket let b:parinfer_lisp_vline_symbols = 1
 
 " Common Lisp and Scheme: ignore parens in block comments
 au BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_block_comments = 1
 au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_block_comments = 1
+au FileType lisp let b:parinfer_lisp_block_comments = 1
+au FileType scheme,racket let b:parinfer_lisp_block_comments = 1
 
 " Scheme (SRFI-62): S-expression comment
 au BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_scheme_sexp_comments = 1
+au FileType scheme,racket let b:parinfer_scheme_sexp_comments = 1
 
 " Comment settings
 au BufNewFile,BufRead *.janet let b:parinfer_comment_char = "#"
+au FileType janet let b:parinfer_comment_char = "#"
 
 " Quote settings
 au BufNewFile,BufRead *.yuck let b:parinfer_string_delimiters = ['"', "'", "`"]
+au FileType yuck let b:parinfer_string_delimiters = ['"', "'", "`"]
 
 " Long strings settings
 au BufNewFile,BufRead *.janet let b:parinfer_janet_long_strings = 1
 au BufNewFile,BufRead *.hy let b:parinfer_hy_bracket_strings = 1
+au FileType janet let b:parinfer_janet_long_strings = 1
+au FileType hy let b:parinfer_hy_bracket_strings = 1
 
 " Logging {{{1
 
